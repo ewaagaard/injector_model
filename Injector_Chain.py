@@ -12,14 +12,8 @@ class CERN_Injector_Chain:
     Representation of the CERN Injector Chain for different ions with linear space charge effects 
     """
     def __init__(self, ion_type, ion_data, ion_type_ref='Pb'):
-        self.ion_type = ion_type
-        self.ion_data = ion_data[ion_type]
-        self.mass_GeV = self.ion_data['mass [GeV]']
-        self.Z = self.ion_data['Z']
-        self.A = self.ion_data['A']
-        self.Q = self.ion_data['Q before stripping']
-        self.strip_ratio = self.ion_data['LEIR-PS Stripping Efficiency']
-        self.linac3_current_uA = self.ion_data['Linac3 current [uA]']
+        self.full_ion_data = ion_data
+        self.init_ion(ion_type)
         self.debug_mode = False
        
         # Also initiate reference values
@@ -33,6 +27,20 @@ class CERN_Injector_Chain:
         if self.debug_mode:
             print(f"Initiate. Type: {self.ion_type}")
             print("Q = {}, Z = {}\n".format(self.Q, self.Z))
+
+
+    def init_ion(self, ion_type):
+        """
+        Initialize ion species for a given type 
+        """
+        self.ion_type = ion_type
+        self.ion_data = self.full_ion_data[ion_type]
+        self.mass_GeV = self.ion_data['mass [GeV]']
+        self.Z = self.ion_data['Z']
+        self.A = self.ion_data['A']
+        self.Q = self.ion_data['Q before stripping']
+        self.strip_ratio = self.ion_data['LEIR-PS Stripping Efficiency']
+        self.linac3_current_uA = self.ion_data['Linac3 current [uA]']
 
 
     def beta(self, gamma):
@@ -243,14 +251,40 @@ class CERN_Injector_Chain:
     
     
     def simulate_injection(self):
-        # Call methods in sequence
-        #self.linac3()
-        #self.leir()
-        #self.stripper_foil_leir_ps()
-        #self.ps()
-        #self.stripper_foil_ps_sps()
+        """
+        Simulate full injection with Linac3, LEIR, PS and SPS for a given ion type
+        """
+        self.linac3()
+        self.leir()
+        self.stripper_foil_leir_ps()
+        self.ps()
+        self.stripper_foil_ps_sps()
         self.sps()
-        #self.space_charge_tune_shift()
+        self.space_charge_tune_shift()
+
+
+    def simulate_injection_all_ions(self, return_dataframe=True):
+        """
+        Simulate full injection with Linac3, LEIR, PS and SPS for all ions given in table
+        """
+        # Initiate row of ions per bunch (Nb) and charges per bunch (Nq)
+        self.full_ion_data.loc["Nb_SPS"] = np.NaN
+        self.full_ion_data.loc["Nq_SPS"] = np.NaN
+        
+        # Iterate over all ions in data 
+        for i, ion_type in enumerate(ion_data.columns):
+            self.init_ion(ion_type)
+            self.simulate_injection()
+            self.full_ion_data.loc["Nq_SPS"][ion_type] = self.Nq_SPS_extr
+            self.full_ion_data.loc["Nb_SPS"][ion_type] = self.Nb_SPS_extr
+        
+        
+        # Copy to new dataframe and select only the relevant rows
+        df_ions = self.full_ion_data.copy()
+        df_ions = df_ions[-2:].transpose() # select two last rows, i.e. number of charges and ions per bunch
+        
+        if return_dataframe:
+            return df_ions
 
 
 # Test the class 
@@ -258,6 +292,9 @@ if __name__ == '__main__':
     ion_type = 'Pb'
     ion_data = pd.read_csv("Data/Ion_species.csv", sep=';', header=0, index_col=0).T
 
+    injector_chain = CERN_Injector_Chain(ion_type, ion_data)
+    df = injector_chain.simulate_injection_all_ions()
+"""
     # Iterate over the different ions 
     for ion_type in ion_data.columns:
         # Instantiate the Injector Chain and simulate injection
@@ -265,9 +302,6 @@ if __name__ == '__main__':
         injector_chain.simulate_injection()
         #print("\nGamma SPS inj: {:.3f}".format(injector_chain.gamma_SPS_inj))
         #print("\nGamma SPS extr: {:.3f}".format(injector_chain.gamma_SPS_extr))
-        #"""
-        print("SPS extraction for {}: \nNr of charges = {:.2e}, \nNr of ions = {:.2e}\n".format(injector_chain.ion_type, 
-                                                                                              injector_chain.Nq_SPS_extr,
-                                                                                          injector_chain.Nb_SPS_extr))
-        #"""
-        del injector_chain
+        #print("SPS extraction for {}: \nNr of charges = {:.2e}, \nNr of ions = {:.2e}\n".format(injector_chain.ion_type, 
+        #del injector_chain
+"""
