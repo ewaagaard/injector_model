@@ -267,24 +267,44 @@ class CERN_Injector_Chain:
         """
         Simulate full injection with Linac3, LEIR, PS and SPS for all ions given in table
         """
+        
         # Initiate row of ions per bunch (Nb) and charges per bunch (Nq)
-        self.full_ion_data.loc["Nb_SPS"] = np.NaN
-        self.full_ion_data.loc["Nq_SPS"] = np.NaN
+        self.ion_Nb_data = pd.DataFrame(index=self.full_ion_data.transpose().index)
+        self.ion_Nb_data["Nb_LEIR"] = np.NaN
+        self.ion_Nb_data["Nq_LEIR"] = np.NaN
+        self.ion_Nb_data["Nb_PS"] = np.NaN
+        self.ion_Nb_data["Nq_PS"] = np.NaN
+        self.ion_Nb_data["Nb_SPS"] = np.NaN
+        self.ion_Nb_data["Nq_SPS"] = np.NaN
+        
+        # Create dataframes or gamma injection and extraction data 
+        self.ion_gamma_inj_data = pd.DataFrame(columns=['LEIR', 'PS', 'SPS'], 
+                                               index=self.full_ion_data.transpose().index)
+        self.ion_gamma_extr_data = self.ion_gamma_inj_data.copy()
         
         # Iterate over all ions in data 
         for i, ion_type in enumerate(ion_data.columns):
             self.init_ion(ion_type)
             self.simulate_injection()
-            self.full_ion_data.loc["Nq_SPS"][ion_type] = self.Nq_SPS_extr
-            self.full_ion_data.loc["Nb_SPS"][ion_type] = self.Nb_SPS_extr
-        
-        
-        # Copy to new dataframe and select only the relevant rows
-        df_ions = self.full_ion_data.copy()
-        df_ions = df_ions[-2:].transpose() # select two last rows, i.e. number of charges and ions per bunch
-        
+            
+            # Add the intensities into a table 
+            self.ion_Nb_data["Nb_LEIR"][ion_type] = self.Nb_LEIR_extr
+            self.ion_Nb_data["Nq_LEIR"][ion_type] = self.Nq_LEIR_extr
+            self.ion_Nb_data["Nb_PS"][ion_type] = self.Nb_PS_extr
+            self.ion_Nb_data["Nq_PS"][ion_type] = self.Nq_PS_extr
+            self.ion_Nb_data["Nb_SPS"][ion_type] = self.Nb_SPS_extr
+            self.ion_Nb_data["Nq_SPS"][ion_type] = self.Nq_SPS_extr
+
+            # Add the gamma of injection and extraction into a table 
+            self.ion_gamma_inj_data['LEIR'][ion_type] = self.gamma_LEIR_inj
+            self.ion_gamma_extr_data['LEIR'][ion_type] = self.gamma_LEIR_extr
+            self.ion_gamma_inj_data['PS'][ion_type] = self.gamma_PS_inj
+            self.ion_gamma_extr_data['PS'][ion_type] = self.gamma_PS_extr
+            self.ion_gamma_inj_data['SPS'][ion_type] = self.gamma_SPS_inj
+            self.ion_gamma_extr_data['SPS'][ion_type] = self.gamma_SPS_extr
+
         if return_dataframe:
-            return df_ions
+            return self.ion_Nb_data #df_ions
 
 
 # Test the class 
@@ -293,7 +313,16 @@ if __name__ == '__main__':
     ion_data = pd.read_csv("Data/Ion_species.csv", sep=';', header=0, index_col=0).T
 
     injector_chain = CERN_Injector_Chain(ion_type, ion_data)
-    df = injector_chain.simulate_injection_all_ions()
+    df_Nb = injector_chain.simulate_injection_all_ions()
+    
+    # Compare to reference intensities
+    ref_Table_SPS = pd.read_csv('Data/SPS_final_intensities_WG5_and_Hannes.csv', delimiter=';', index_col=0)
+    ref_Table_LEIR = pd.read_csv('Data/LEIR_final_intensities_Nicolo.csv', delimiter=';', index_col=0)
+    df_Nb['SPS_WG5_ratio'] = df_Nb['Nb_SPS']/ref_Table_SPS['WG5 Intensity']
+    df_Nb['SPS_Hannes_ratio'] = df_Nb['Nb_SPS']/ref_Table_SPS['Hannes Intensity ']
+    df_Nb['LEIR_Nicolo_ratio'] = df_Nb['Nb_LEIR']/ref_Table_LEIR['Nicolo Intensity']
+    print(df_Nb.head(10))
+
 """
     # Iterate over the different ions 
     for ion_type in ion_data.columns:
