@@ -11,3 +11,5 @@ xsuite_lines
 *.tfs
 *.parquet
 *.txt
+*.pyc
+__pycache__
