@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-First test of the CERN Injector Chain for different ions
+Simulation model of the CERN Injector Chain for different ions
 - by Elias Waagaard 
 """
 import pandas as pd
 import numpy as np
 import math
 from scipy.constants import e
-import matplotlib.pyplot as plt
 from collections import defaultdict
 
 class CERN_Injector_Chain:
@@ -43,7 +42,7 @@ class CERN_Injector_Chain:
         self.ion_type_ref = ion_type_ref
         self.ion0_referenceValues() 
 
-        ######### Reference mode for SPS space charge scaling ############
+        ######### Reference mode for SPS gamma at injection ############
         self.use_Roderiks_gamma = True
 
         #For printing some reference values
@@ -66,10 +65,6 @@ class CERN_Injector_Chain:
         # Values from first tables in Roderik's notebook
         self.linac3_current = self.ion_data['Linac3 current [uA]'] * 1e-6
         self.linac3_pulseLength = self.ion_data['Linac3 pulse length [us]'] * 1e-6
-        
-        # Take Roderik's last linac3 values from Reyes table
-        #self.linac3_pulseLength  = 200e-6
-        #self.linac3_current = 70e-6
 
         # General rules - stripping and transmission
         self.LEIR_injection_efficiency = 0.5
@@ -259,7 +254,7 @@ class CERN_Injector_Chain:
         Calculate gamma at entrance and exit of the SPS, and transmitted bunch intensity 
         Space charge limit comes from gamma at injection
         """
-        # Calculate gamma at injection
+        # Calculate gamma at injection, simply scaling with the kinetic energy per nucleon as of today
         self.gamma_SPS_inj = (self.mass_GeV + self.E_kin_per_A_SPS_inj * self.A)/self.mass_GeV
         self.gamma_SPS_extr = (self.mass_GeV + self.E_kin_per_A_SPS_extr * self.A)/self.mass_GeV
          
@@ -295,7 +290,7 @@ class CERN_Injector_Chain:
     
     
     def space_charge_tune_shift(self):
-        # Calculate the space charge tune shift for each accelerator
+        # Calculate the space charge tune shift for each accelerator - use PySCRDT
         pass
     
     
@@ -382,7 +377,6 @@ class CERN_Injector_Chain:
         ionsPerBunchExtractedLEIR = self.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
         ionsPerBunchExtractedPS = ionsPerBunchExtractedLEIR *(self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else 1) * self.PS_transmission / self.PS_splitting
         ionsPerBunchSPSinj = ionsPerBunchExtractedPS * (self.PS_SPS_transmission_efficiency if self.Z == self.Q or self.LEIR_PS_strip else self.PS_SPS_stripping_efficiency)
-        # OLD LINEL: # ionsPerBunchSPSinj = ionsPerBunchExtractedPS * (self.PS_SPS_stripping_efficiency if self.PS_SPS_strip else self.PS_SPS_transmission_efficiency)
         
         # Calculate ion transmission for SPS 
         spaceChargeLimitSPS = self.linearIntensityLimit(
