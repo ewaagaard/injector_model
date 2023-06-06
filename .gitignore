@@ -1,0 +1,13 @@
+ps
+sps
+.DS_Store
+*.c
+*.o
+*.csv
+*.png
+xsuite_lines
+*.json
+*.seq
+*.tfs
+*.parquet
+*.txt
