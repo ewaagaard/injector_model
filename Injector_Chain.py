@@ -23,13 +23,16 @@ class CERN_Injector_Chain:
                  nPulsesLEIR = 1,
                  LEIR_bunches = 1,
                  PS_splitting = 1,
-                 account_for_SPS_transmission=True
+                 account_for_SPS_transmission=True,
+                 LEIR_PS_strip=False
                  ):
         
         self.full_ion_data = ion_data
+        self.LEIR_PS_strip = LEIR_PS_strip
         self.init_ion(ion_type)
         self.debug_mode = False
         self.account_for_SPS_transmission = account_for_SPS_transmission
+        
         
         # Rules for splitting and bunches 
         self.nPulsesLEIR = nPulsesLEIR
@@ -71,11 +74,10 @@ class CERN_Injector_Chain:
         # General rules - stripping and transmission
         self.LEIR_injection_efficiency = 0.5
         self.LEIR_transmission = 0.8
-        self.LEIR_PS_strip = False
         self.LEIR_PS_stripping_efficiency = self.ion_data['LEIR-PS Stripping Efficiency']
         self.PS_transmission = 0.9
-        self.PS_SPS_transmission_efficiency = 0.9
-        self.PS_SPS_strip = True
+        self.PS_SPS_transmission_efficiency = 1.0 # 0.9 is what we see today, but Roderik uses 1.0
+        self.PS_SPS_strip = not self.LEIR_PS_strip  # if we have LEIR-PS stripping, no stripping PS-SPS
         self.PS_SPS_stripping_efficiency = 0.9  # default value until we have other value
         self.SPS_transmission = 0.62
         self.SPS_slipstacking_transmission = 1.0
@@ -261,9 +263,22 @@ class CERN_Injector_Chain:
         self.gamma_SPS_inj = (self.mass_GeV + self.E_kin_per_A_SPS_inj * self.A)/self.mass_GeV
         self.gamma_SPS_extr = (self.mass_GeV + self.E_kin_per_A_SPS_extr * self.A)/self.mass_GeV
          
-        # For comparison on how Roderik scales the gamma
+        # For comparison on how Roderik scales the gamma - scale directly with charge/mass before stripping 
+        # (same magnetic rigidity at PS extraction for all ion species)
         if self.use_Roderiks_gamma:
-            self.gamma_SPS_inj =  self.gamma0_SPS_inj*(self.Q/54)/(self.mass_GeV/self.m0_GeV)
+            # old version not considering LEIR-PS stripping, approximate scaling of gamma 
+            #self.gamma_SPS_inj =  self.gamma0_SPS_inj*(self.Q/54)/(self.mass_GeV/self.m0_GeV) 
+            
+            # In this version below, consider LEIR-PS stripping and thus higher magnetic rigidity 
+            # exact gamma expression for given magnetic rigidity, see Roderik's notebook 
+            # Brho = P/Q is constant at PS extraction and SPS injection
+            # Use P = m*gamma*beta*c
+            # gamma = np.sqrt(1 + ((Q/Q0)/(m/m0))**2 + (gamma0**2 - 1))
+            self.gamma_SPS_inj =  np.sqrt(
+                                    1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
+                                    * (self.gamma0_SPS_inj**2 - 1)
+                                   )
+            #print("{}: gamma SPS inj: {}".format(self.ion_type, self.gamma_SPS_inj))
         
         # Calculate outgoing intensity from linear scaling 
         self.Nb_SPS_extr = self.linearIntensityLimit(
@@ -360,20 +375,25 @@ class CERN_Injector_Chain:
                                                fully_stripped=False
                                                )
         
+       #print("{}: SC limit LEIR: {}".format(self.ion_type,  spaceChargeLimitLEIR))
         nPulsesLEIR = (min(7, math.ceil(spaceChargeLimitLEIR / (ionsPerPulseLinac3 * self.LEIR_injection_efficiency))) if self.nPulsesLEIR == 0 else self.nPulsesLEIR)
         
         #print("{}: SC limit LEIR: {:.3e}, ions per pulse: {:.3e}, injection eff: {:.3e}".format(self.ion_type, 
         #                                                                 self.spaceChargeLimitLEIR, 
         #                                                                 self.ionsPerPulseLinac3,
         #                                                                 self.LEIR_injection_efficiency))
-        print("{}: npulses LEIR: {}".format(self.ion_type, nPulsesLEIR))
+        #print("{}: npulses LEIR: {}".format(self.ion_type, nPulsesLEIR))
         
         totalIntLEIR = ionsPerPulseLinac3*nPulsesLEIR * self.LEIR_injection_efficiency
-
+        #print("{}: tot int LEIR: {}".format(self.ion_type, totalIntLEIR))
+        
         # Calculate extracted intensity per bunch
         ionsPerBunchExtractedLEIR = self.LEIR_transmission * min(totalIntLEIR, spaceChargeLimitLEIR) / self.LEIR_bunches
+        #print("{}: extracted ions per bunch LEIR: {}".format(self.ion_type, ionsPerBunchExtractedLEIR))
         ionsPerBunchExtractedPS = ionsPerBunchExtractedLEIR *(self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else 1) * self.PS_transmission / self.PS_splitting
-        ionsPerBunchSPSinj = ionsPerBunchExtractedPS * (self.PS_SPS_stripping_efficiency if self.PS_SPS_strip else self.PS_SPS_transmission_efficiency)
+        #print("{}: extracted ions per bunch PS: {}".format(self.ion_type, ionsPerBunchExtractedPS))
+        ionsPerBunchSPSinj = ionsPerBunchExtractedPS * (self.PS_SPS_transmission_efficiency if self.Z == self.Q or self.LEIR_PS_strip else self.PS_SPS_stripping_efficiency)
+        # OLD LINEL: # ionsPerBunchSPSinj = ionsPerBunchExtractedPS * (self.PS_SPS_stripping_efficiency if self.PS_SPS_strip else self.PS_SPS_transmission_efficiency)
         
         # Calculate ion transmission for SPS 
         spaceChargeLimitSPS = self.linearIntensityLimit(
@@ -385,7 +405,7 @@ class CERN_Injector_Chain:
                                                gamma_0 = self.gamma0_SPS_inj,  # use gamma at extraction
                                                fully_stripped=True
                                                )
-    
+        #print("{}: SC limit SPS: {}".format(self.ion_type,  spaceChargeLimitSPS))
         ionsPerBunchLHC = min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * self.SPS_transmission * self.SPS_slipstacking_transmission
     
         result = {
@@ -484,19 +504,55 @@ if __name__ == '__main__':
                                           PS_splitting = 2,
                                           account_for_SPS_transmission=True)
     result = injector_chain2.calculate_LHC_bunch_intensity()
-    print("Ion type: {}".format(ion_type))
-    print(result)
     
     # Calculate LHC bunch intensity for all ions
     df = injector_chain2.calculate_LHC_bunch_intensity_all_ion_species()
-    print(df)
 
 
-    ## TRY WITHOUT PS SPLITTING LIKE RODERIK DID 
+    ## TRY WITHOUT PS SPLITTING
+    injector_chain3 = CERN_Injector_Chain(ion_type, 
+                                          ion_data, 
+                                          nPulsesLEIR = 0,
+                                          LEIR_bunches = 2,
+                                          PS_splitting = 1,
+                                          account_for_SPS_transmission=True)
+    df3 = injector_chain3.calculate_LHC_bunch_intensity_all_ion_species()
 
+
+    ## WITH PS SPLITTING AND LEIR-PS STRIPPING
+    injector_chain4 = CERN_Injector_Chain(ion_type, 
+                                          ion_data, 
+                                          nPulsesLEIR = 0,
+                                          LEIR_bunches = 2,
+                                          PS_splitting = 2,
+                                          account_for_SPS_transmission=True,
+                                          LEIR_PS_strip=True
+                                          )
+    df4 = injector_chain4.calculate_LHC_bunch_intensity_all_ion_species()
+
+    ## WITH NO SPLITTING AND LEIR-PS STRIPPING
+    injector_chain5 = CERN_Injector_Chain(ion_type, 
+                                          ion_data, 
+                                          nPulsesLEIR = 0,
+                                          LEIR_bunches = 2,
+                                          PS_splitting = 1,
+                                          account_for_SPS_transmission=True,
+                                          LEIR_PS_strip=True
+                                          )
+    df5 = injector_chain5.calculate_LHC_bunch_intensity_all_ion_species()
 
     #### PLOT THE DATA #######
+    SMALL_SIZE = 12
+    MEDIUM_SIZE = 15
+    BIGGER_SIZE = 20
     plt.rcParams["font.family"] = "serif"
+    plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+    plt.rc('axes', titlesize=BIGGER_SIZE)    # fontsize of the axes title
+    plt.rc('axes', labelsize=BIGGER_SIZE)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=MEDIUM_SIZE)   # fontsize of the tick labels
+    plt.rc('ytick', labelsize=MEDIUM_SIZE)   # fontsize of the tick labels
+    plt.rc('legend', fontsize=SMALL_SIZE)   # legend fontsize
+    plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
     colors = ['green', 'blue', 'purple', 'brown', 'teal', 'coral', 'cyan', 'darkred']
     
     # Colormap - Build the colour maps
@@ -507,19 +563,59 @@ if __name__ == '__main__':
     x = np.arange(len(df.index))
 
     fig, ax = plt.subplots(1, 1, figsize = (6,5))
+    fig.suptitle("")
     bar2 = ax.bar(x - bar_width/2, ref_Table_SPS['WG5 Intensity']*df['atomicNumber'], bar_width, color='red', label='WG5') #
-    bar1 = ax.bar(x + bar_width/2, df['LHCChargesPerBunch'], bar_width, color='blue', label='New') #
+    bar1 = ax.bar(x + bar_width/2, df['LHCChargesPerBunch'], bar_width, color='blue', label='Baseline scenario') #
     #ax.bar_label(bar1, labels=[f'{e:,.1e}' for e in df['LHCChargesPerBunch']], padding=3, color='black', fontsize=9) 
     ax.set_xticks(x)
     ax.set_xticklabels(df.index)
     ax.set_ylabel("LHC charges per bunch")
     ax.legend()
     
+    # Baseline scenario
     fig2, ax2 = plt.subplots(1, 1, figsize = (6,5))
     bar22 = ax2.bar(x - bar_width/2, ref_Table_SPS['WG5 Intensity']*df['massNumber'], bar_width, color='red', label='WG5') #
-    bar12 = ax2.bar(x + bar_width/2, df['LHCionsPerBunch']*df['massNumber'], bar_width, color='blue', label='New') #
-    #ax.bar_label(bar1, labels=[f'{e:,.1e}' for e in df['LHCChargesPerBunch']], padding=3, color='black', fontsize=9) 
+    bar12 = ax2.bar(x + bar_width/2, df['LHCionsPerBunch']*df['massNumber'], bar_width, color='blue', label='Baseline scenario') #
     ax2.set_xticks(x)
     ax2.set_xticklabels(df.index)
     ax2.set_ylabel("Nucleons per bunch")
     ax2.legend()
+    
+    # No PS splitting 
+    bar_width2 = 0.25
+    fig3, ax3 = plt.subplots(1, 1, figsize = (6,5))
+    bar31 = ax3.bar(x - bar_width2, ref_Table_SPS['WG5 Intensity']*df['massNumber'], bar_width2, color='red', label='WG5') #
+    bar32 = ax3.bar(x, df['LHCionsPerBunch']*df['massNumber'], bar_width2, color='blue', label='Baseline scenario') #
+    bar33 = ax3.bar(x + bar_width2, df3['LHCionsPerBunch']*df3['massNumber'], bar_width2, color='gold', label='No PS splitting') #
+    ax3.set_xticks(x)
+    ax3.set_xticklabels(df.index)
+    ax3.set_ylabel("Nucleons per bunch")
+    ax3.legend()
+    
+    # Interpretation - Ca and Xe higher intensity due to higher LEIR charge state 
+    # for In, LEIR is the limitation, i.e. can only inject intensities in the SPS that are below space charge limit
+    
+    # LEIR-PS stripping
+    bar_width4 = 0.2
+    fig4, ax4 = plt.subplots(1, 1, figsize = (6,5))
+    bar41 = ax4.bar(x - 1.5*bar_width4, ref_Table_SPS['WG5 Intensity']*df['massNumber'], bar_width4, color='red', label='WG5') #
+    bar42 = ax4.bar(x - 0.5*bar_width4, df['LHCionsPerBunch']*df['massNumber'], bar_width4, color='blue', label='Baseline scenario') #
+    bar43 = ax4.bar(x + 0.5*bar_width4, df3['LHCionsPerBunch']*df3['massNumber'], bar_width4, color='gold', label='No PS splitting') #
+    bar44 = ax4.bar(x + 1.5*bar_width4, df4['LHCionsPerBunch']*df4['massNumber'], bar_width4, color='limegreen', label='LEIR-PS stripping') #
+    ax4.set_xticks(x)
+    ax4.set_xticklabels(df.index)
+    ax4.set_ylabel("Nucleons per bunch")
+    ax4.legend()
+    
+    # LEIR-PS stripping and NO PS splitting
+    bar_width5 = 0.15
+    fig5, ax5 = plt.subplots(1, 1, figsize = (6,5))
+    bar51 = ax5.bar(x, ref_Table_SPS['WG5 Intensity']*df['massNumber'], bar_width5, color='red', label='WG5') #
+    bar52 = ax5.bar(x + bar_width5, df['LHCionsPerBunch']*df['massNumber'], bar_width5, color='blue', label='Baseline scenario') #
+    bar53 = ax5.bar(x + 2*bar_width5, df3['LHCionsPerBunch']*df3['massNumber'], bar_width5, color='gold', label='No PS splitting') #
+    bar54 = ax5.bar(x + 3*bar_width5, df4['LHCionsPerBunch']*df4['massNumber'], bar_width5, color='limegreen', label='LEIR-PS stripping') #
+    bar55 = ax5.bar(x + 4*bar_width5, df5['LHCionsPerBunch']*df5['massNumber'], bar_width5, color='magenta', label='LEIR-PS striping, \nno PS splitting') #
+    ax5.set_xticks(x + 2*bar_width5)
+    ax5.set_xticklabels(df.index)
+    ax5.set_ylabel("Nucleons per bunch")
+    ax5.legend()
