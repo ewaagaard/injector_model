@@ -5,25 +5,25 @@ Main script to calculate final nucleon intensity into the LHC for different case
 """
 import matplotlib.pyplot as plt
 import pandas as pd 
-from Injector_Chain import CERN_Injector_Chain
+from injector_model import InjectorChain
 import numpy as np
 
 # Load ion data and initialize for test for bunch intensities 
-ion_data = pd.read_csv("Data/Ion_species.csv", sep=';', header=0, index_col=0).T
+ion_data = pd.read_csv("../data/Ion_species.csv", sep=';', header=0, index_col=0).T
 ion_type = 'Pb'
-injector_chain = CERN_Injector_Chain(ion_type, ion_data, account_for_SPS_transmission=False)
+injector_chain = InjectorChain(ion_type, ion_data, account_for_SPS_transmission=False)
 df_Nb = injector_chain.simulate_SpaceCharge_intensity_limit_all_ions()
 
 # Compare to reference intensities
-ref_Table_SPS = pd.read_csv('Data/SPS_final_intensities_WG5_and_Hannes.csv', delimiter=';', index_col=0)
-ref_Table_LEIR = pd.read_csv('Data/LEIR_final_intensities_Nicolo.csv', delimiter=';', index_col=0)
+ref_Table_SPS = pd.read_csv('../data/SPS_final_intensities_WG5_and_Hannes.csv', delimiter=';', index_col=0)
+ref_Table_LEIR = pd.read_csv('../data/LEIR_final_intensities_Nicolo.csv', delimiter=';', index_col=0)
 df_Nb['SPS_WG5_ratio'] = df_Nb['Nb_SPS']/ref_Table_SPS['WG5 Intensity']
 df_Nb['SPS_Hannes_ratio'] = df_Nb['Nb_SPS']/ref_Table_SPS['Hannes Intensity ']
 df_Nb['LEIR_Nicolo_ratio'] = df_Nb['Nb_LEIR']/ref_Table_LEIR['Nicolo Intensity']
 
 # Calculate the bunch intensity going into the LHC - now Roderik accounts for SPS transmission
 # Roderik uses Reyes excel as input table for linac3: 200 us pulse length, 70 uA
-injector_chain2 = CERN_Injector_Chain(ion_type, 
+injector_chain2 = InjectorChain(ion_type, 
                                       ion_data, 
                                       nPulsesLEIR = 0,
                                       LEIR_bunches = 2,
@@ -38,7 +38,7 @@ df = injector_chain2.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True
 
 ## TRY WITHOUT PS SPLITTING
 output_2 ='2_no_PS_splitting'
-injector_chain3 = CERN_Injector_Chain(ion_type, 
+injector_chain3 = InjectorChain(ion_type, 
                                       ion_data, 
                                       nPulsesLEIR = 0,
                                       LEIR_bunches = 2,
@@ -49,7 +49,7 @@ df3 = injector_chain3.calculate_LHC_bunch_intensity_all_ion_species(save_csv=Tru
 
 ## WITH PS SPLITTING AND LEIR-PS STRIPPING
 output_3 = '3_LEIR_PS_stripping'
-injector_chain4 = CERN_Injector_Chain(ion_type, 
+injector_chain4 = InjectorChain(ion_type, 
                                       ion_data, 
                                       nPulsesLEIR = 0,
                                       LEIR_bunches = 2,
@@ -61,7 +61,7 @@ df4 = injector_chain4.calculate_LHC_bunch_intensity_all_ion_species(save_csv=Tru
 
 ## WITH NO SPLITTING AND LEIR-PS STRIPPING
 output_4 = '4_no_PS_splitting_and_LEIR_PS_stripping'
-injector_chain5 = CERN_Injector_Chain(ion_type, 
+injector_chain5 = InjectorChain(ion_type, 
                                       ion_data, 
                                       nPulsesLEIR = 0,
                                       LEIR_bunches = 2,
@@ -98,7 +98,7 @@ ax.set_xticklabels(df.index)
 ax.set_ylabel("LHC charges per bunch")
 ax.legend()
 fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
-fig.savefig('Output/{}_ChargesPerBunch.png'.format(output_1), dpi=250)
+fig.savefig('../output/{}_ChargesPerBunch.png'.format(output_1), dpi=250)
 
 # Baseline scenario
 fig2, ax2 = plt.subplots(1, 1, figsize = (6,5))
@@ -109,7 +109,7 @@ ax2.set_xticklabels(df.index)
 ax2.set_ylabel("Nucleons per bunch")
 ax2.legend()
 fig2.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
-fig2.savefig('Output/{}_NucleonsPerBunch.png'.format(output_1), dpi=250)
+fig2.savefig('../output/{}_NucleonsPerBunch.png'.format(output_1), dpi=250)
 
 # No PS splitting 
 bar_width2 = 0.25
@@ -122,7 +122,7 @@ ax3.set_xticklabels(df.index)
 ax3.set_ylabel("Nucleons per bunch")
 ax3.legend()
 fig3.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
-fig3.savefig('Output/{}.png'.format(output_2), dpi=250)
+fig3.savefig('../output/{}.png'.format(output_2), dpi=250)
 
 # Interpretation - Ca and Xe higher intensity due to higher LEIR charge state 
 # for In, LEIR is the limitation, i.e. can only inject intensities in the SPS that are below space charge limit
@@ -139,7 +139,7 @@ ax4.set_xticklabels(df.index)
 ax4.set_ylabel("Nucleons per bunch")
 ax4.legend()
 fig4.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
-fig4.savefig('Output/{}.png'.format(output_3), dpi=250)
+fig4.savefig('../output/{}.png'.format(output_3), dpi=250)
 
 # LEIR-PS stripping and NO PS splitting
 bar_width5 = 0.15
@@ -154,7 +154,7 @@ ax5.set_xticklabels(df.index)
 ax5.set_ylabel("Nucleons per bunch")
 ax5.legend()
 fig5.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
-fig5.savefig('Output/{}.png'.format(output_3), dpi=250)
+fig5.savefig('../output/{}.png'.format(output_3), dpi=250)
 
 # A lower charge state in LEIR pushes the LEIR space charge limit further
 # Fully stripped ions in PS and SPS means higher SPS space charge limit 

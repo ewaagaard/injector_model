@@ -10,7 +10,7 @@ import math
 from scipy.constants import e
 from collections import defaultdict
 
-class CERN_Injector_Chain:
+class InjectorChain:
     """
     Representation of the CERN Injector Chain for different ions with linear space charge effects 
     to calculte maximum intensity limits
@@ -23,7 +23,8 @@ class CERN_Injector_Chain:
                  LEIR_bunches = 1,
                  PS_splitting = 1,
                  account_for_SPS_transmission=True,
-                 LEIR_PS_strip=False
+                 LEIR_PS_strip=False,
+                 consider_PS_space_charge_limit=True,
                  ):
         
         self.full_ion_data = ion_data
@@ -31,7 +32,7 @@ class CERN_Injector_Chain:
         self.init_ion(ion_type)
         self.debug_mode = False
         self.account_for_SPS_transmission = account_for_SPS_transmission
-        
+        self.consider_PS_space_charge_limit = consider_PS_space_charge_limit
         
         # Rules for splitting and bunches 
         self.nPulsesLEIR = nPulsesLEIR
@@ -41,6 +42,9 @@ class CERN_Injector_Chain:
         # Also initiate reference values
         self.ion_type_ref = ion_type_ref
         self.ion0_referenceValues() 
+
+        # Save path
+        self.save_path = '../output'
 
         ######### Reference mode for SPS gamma at injection ############
         self.use_Roderiks_gamma = True
@@ -166,7 +170,7 @@ class CERN_Injector_Chain:
             self.gamma0_LEIR_extr = (self.m0_GeV + self.E_kin_per_A_LEIR_extr * 208)/self.m0_GeV
             
             # PS - reference case for Pb54+ --> BEFORE stripping
-            self.Nq0_PS_extr = 8e10  # number of observed charges extracted at PS for nominal beam
+            self.Nq0_PS_extr =  6e10 # from November 2022 ionlifetime MD, previously 8e10  # number of observed charges extracted at PS for nominal beam
             self.Q0_PS = 54.0
             self.Nb0_PS_extr = self.Nq0_PS_extr/self.Q0_PS
             self.gamma0_PS_inj = (self.m0_GeV + self.E_kin_per_A_PS_inj * 208)/self.m0_GeV
@@ -366,7 +370,7 @@ class CERN_Injector_Chain:
                                                Nb_0 = self.Nb0_LEIR_extr, 
                                                charge_0 = self.Q0_LEIR, # partially stripped charged state 
                                                m_0 = self.m0_GeV,  
-                                               gamma_0 = self.gamma0_LEIR_extr,  # use gamma at extraction
+                                               gamma_0 = self.gamma0_LEIR_extr,  # use gamma at LEIR extraction
                                                fully_stripped=False
                                                )
         
@@ -376,16 +380,32 @@ class CERN_Injector_Chain:
         # Calculate extracted intensity per bunch
         ionsPerBunchExtractedLEIR = self.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
         ionsPerBunchExtractedPS = ionsPerBunchExtractedLEIR *(self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else 1) * self.PS_transmission / self.PS_splitting
-        ionsPerBunchSPSinj = ionsPerBunchExtractedPS * (self.PS_SPS_transmission_efficiency if self.Z == self.Q or self.LEIR_PS_strip else self.PS_SPS_stripping_efficiency)
+
+        spaceChargeLimitPS = self.linearIntensityLimit(
+                                        m = self.mass_GeV, 
+                                        gamma = self.gamma_PS_inj,  
+                                        Nb_0 = self.Nb0_PS_extr, 
+                                        charge_0 = self.Q0_PS, # partially stripped charged state 
+                                        m_0 = self.m0_GeV,  
+                                        gamma_0 = self.gamma0_PS_inj,  # use gamma at PS inj
+                                        fully_stripped = self.LEIR_PS_strip # fully stripped if LEIR-PS strip
+                                        )
         
+        # If space charge limit in PS is considered, choose the minimum between the SC limit and the extracted ionsPerBunchPS
+        if self.consider_PS_space_charge_limit:
+            ionsPerBunchPS = min(spaceChargeLimitPS, ionsPerBunchExtractedPS)
+        ionsPerBunchPS = ionsPerBunchExtractedPS
+        #print("Space charge limit PS: {:.3e} vs extracted ions PS: {:.3e}".format(spaceChargeLimitPS, ionsPerBunchExtractedPS))
+
         # Calculate ion transmission for SPS 
+        ionsPerBunchSPSinj = ionsPerBunchPS * (self.PS_SPS_transmission_efficiency if self.Z == self.Q or self.LEIR_PS_strip else self.PS_SPS_stripping_efficiency)
         spaceChargeLimitSPS = self.linearIntensityLimit(
                                                m = self.mass_GeV, 
                                                gamma = self.gamma_SPS_inj,  
                                                Nb_0 = self.Nb0_SPS_extr, 
                                                charge_0 = self.Q0_SPS, 
                                                m_0 = self.m0_GeV,  
-                                               gamma_0 = self.gamma0_SPS_inj,
+                                               gamma_0 = self.gamma0_SPS_inj, # use gamma at SPS inj
                                                fully_stripped=True
                                                )
         ionsPerBunchLHC = min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * self.SPS_transmission * self.SPS_slipstacking_transmission
@@ -405,6 +425,7 @@ class CERN_Injector_Chain:
             "LEIR_gamma": self.gamma_LEIR_inj,
             "LEIR_extractedIonPerBunch": ionsPerBunchExtractedLEIR,
             "LEIR_transmission": self.LEIR_transmission, 
+            "PS_space_charge_limit": spaceChargeLimitPS,
             "PS_splitting": self.PS_splitting, 
             "PS_transmission": self.PS_transmission, 
             "PS_ionsExtractedPerBunch": ionsPerBunchExtractedPS,
@@ -457,7 +478,7 @@ class CERN_Injector_Chain:
             df_save = df_all_ions.copy()
             df_save[float_columns]  = df_save[float_columns].applymap(self.format_large_numbers)
             df_save = df_save.T
-            df_save.to_csv("Output/{}.csv".format(output_name))
+            df_save.to_csv("{}/{}.csv".format(self.save_path, output_name))
             
         return df_all_ions
     
