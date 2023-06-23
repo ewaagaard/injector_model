@@ -13,7 +13,7 @@ In this repository, we develop a simulation tool for different ions based on the
 - The directory `data` contains input data for different ion in `Ion_species.csv` and stable isotopes for all considered ion species, generated from `stable_isotopes.py`
 - **Input**: pandas dataframe with ion data, can be loaded from `data/Ion_species.csv`. The intensity limit for a single ion can be calculated (specifying the ion type). The class is instantiated as in this example:
   ```python
-  from injector_model.injector_model import Injector_Chain
+  from injector_model import Injector_Chain
   
   injector_chain = CERN_Injector_Chain(ion_type, 
                         ion_data, 
