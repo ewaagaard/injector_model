@@ -394,7 +394,11 @@ class InjectorChain:
         # If space charge limit in PS is considered, choose the minimum between the SC limit and the extracted ionsPerBunchPS
         if self.consider_PS_space_charge_limit:
             ionsPerBunchPS = min(spaceChargeLimitPS, ionsPerBunchExtractedPS)
-        ionsPerBunchPS = ionsPerBunchExtractedPS
+            if spaceChargeLimitPS < ionsPerBunchExtractedPS:
+                print("\nIon type: {}".format(self.ion_type))
+                print("Space charge limit PS: {:.3e} vs extracted ions PS: {:.3e}".format(spaceChargeLimitPS, ionsPerBunchExtractedPS))
+        else:
+            ionsPerBunchPS = ionsPerBunchExtractedPS
         #print("Space charge limit PS: {:.3e} vs extracted ions PS: {:.3e}".format(spaceChargeLimitPS, ionsPerBunchExtractedPS))
 
         # Calculate ion transmission for SPS 
