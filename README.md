@@ -10,10 +10,10 @@ In this repository, we develop a simulation tool for different ions based on the
 
 - The Python class `CERN_Injector_Chain()` contained in `Injector_Chain.py` aims at modelling different ion species throughout the CERN accelerators. 
 - The example script `Calculate_LHC_intensities.py` imports this class and generates both plots and table for different cases also discussed by Bruce (2021). 
-- The directory `Data` contains input data for different ion in `Ion_species.csv` and stable isotopes for all considered ion species, generated from `stable_isotopes.py`
-- **Input**: pandas dataframe with ion data, can be loaded from `Data/Ion_species.csv`. The intensity limit for a single ion can be calculated (specifying the ion type). The class is instantiated as in this example:
+- The directory `data` contains input data for different ion in `Ion_species.csv` and stable isotopes for all considered ion species, generated from `stable_isotopes.py`
+- **Input**: pandas dataframe with ion data, can be loaded from `data/Ion_species.csv`. The intensity limit for a single ion can be calculated (specifying the ion type). The class is instantiated as in this example:
   ```python
-  from Injector_Chain import CERN_Injector_Chain
+  from injector_model.injector_model import Injector_Chain
   
   injector_chain = CERN_Injector_Chain(ion_type, 
                         ion_data, 
@@ -28,6 +28,6 @@ In this repository, we develop a simulation tool for different ions based on the
 
 ### Example output plot for different scenarios
 
-Various plots are generated in the example script `Calculate_LHC_intensities.py`. The last one, comparing different cases, is presented here:
+Various plots are generated in the example script `calculate_lhc_intensities.py`. The last one, comparing different cases, is presented here:
 
 ![3_LEIR_PS_stripping|200](https://github.com/ewaagaard/InjectorModel/assets/68541324/cacad841-63fd-4aff-8b58-e5ed89b971b5)
