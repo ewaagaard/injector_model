@@ -1,4 +1,4 @@
-# InjectorModel
+# Injector Model for ions at CERN 
 
 ### Background
 
