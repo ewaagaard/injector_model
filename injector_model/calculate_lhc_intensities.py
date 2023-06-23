@@ -24,11 +24,11 @@ df_Nb['LEIR_Nicolo_ratio'] = df_Nb['Nb_LEIR']/ref_Table_LEIR['Nicolo Intensity']
 # Calculate the bunch intensity going into the LHC - now Roderik accounts for SPS transmission
 # Roderik uses Reyes excel as input table for linac3: 200 us pulse length, 70 uA
 injector_chain2 = InjectorChain(ion_type, 
-                                      ion_data, 
-                                      nPulsesLEIR = 0,
-                                      LEIR_bunches = 2,
-                                      PS_splitting = 2,
-                                      account_for_SPS_transmission=True)
+                                ion_data, 
+                                nPulsesLEIR = 0,
+                                LEIR_bunches = 2,
+                                PS_splitting = 2,
+                                account_for_SPS_transmission=True)
 result = injector_chain2.calculate_LHC_bunch_intensity()
 
 # Calculate LHC bunch intensity for all ions
@@ -39,36 +39,36 @@ df = injector_chain2.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True
 ## TRY WITHOUT PS SPLITTING
 output_2 ='2_no_PS_splitting'
 injector_chain3 = InjectorChain(ion_type, 
-                                      ion_data, 
-                                      nPulsesLEIR = 0,
-                                      LEIR_bunches = 2,
-                                      PS_splitting = 1,
-                                      account_for_SPS_transmission=True)
+                                ion_data, 
+                                nPulsesLEIR = 0,
+                                LEIR_bunches = 2,
+                                PS_splitting = 1,
+                                account_for_SPS_transmission=True)
 df3 = injector_chain3.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name=output_2)
 
 
 ## WITH PS SPLITTING AND LEIR-PS STRIPPING
 output_3 = '3_LEIR_PS_stripping'
 injector_chain4 = InjectorChain(ion_type, 
-                                      ion_data, 
-                                      nPulsesLEIR = 0,
-                                      LEIR_bunches = 2,
-                                      PS_splitting = 2,
-                                      account_for_SPS_transmission=True,
-                                      LEIR_PS_strip=True
-                                      )
+                                ion_data, 
+                                nPulsesLEIR = 0,
+                                LEIR_bunches = 2,
+                                PS_splitting = 2,
+                                account_for_SPS_transmission=True,
+                                LEIR_PS_strip=True
+                                )
 df4 = injector_chain4.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name=output_3)
 
 ## WITH NO SPLITTING AND LEIR-PS STRIPPING
 output_4 = '4_no_PS_splitting_and_LEIR_PS_stripping'
 injector_chain5 = InjectorChain(ion_type, 
-                                      ion_data, 
-                                      nPulsesLEIR = 0,
-                                      LEIR_bunches = 2,
-                                      PS_splitting = 1,
-                                      account_for_SPS_transmission=True,
-                                      LEIR_PS_strip=True
-                                      )
+                                ion_data, 
+                                nPulsesLEIR = 0,
+                                LEIR_bunches = 2,
+                                PS_splitting = 1,
+                                account_for_SPS_transmission=True,
+                                LEIR_PS_strip=True
+                                )
 df5 = injector_chain5.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name=output_4)
 
 #### PLOT THE DATA #######
