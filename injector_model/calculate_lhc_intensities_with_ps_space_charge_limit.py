@@ -155,7 +155,7 @@ ax5.set_xticklabels(df.index)
 ax5.set_ylabel("Nucleons per bunch")
 ax5.legend()
 fig5.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
-fig5.savefig('../output/{}.png'.format(output_3), dpi=250)
+fig5.savefig('../output/{}.png'.format(output_4), dpi=250)
 
 # A lower charge state in LEIR pushes the LEIR space charge limit further
 # Fully stripped ions in PS and SPS means higher SPS space charge limit 
