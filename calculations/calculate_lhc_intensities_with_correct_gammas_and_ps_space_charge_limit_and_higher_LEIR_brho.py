@@ -228,7 +228,7 @@ bar_L7_strip = ax_L_strip.bar(x + 6*bar_width_L_strip, df_L_strip['LHC_ionsPerBu
 ax_L_strip.set_xticks(x + 2*bar_width_L_strip)
 ax_L_strip.set_xticklabels(df.index)
 ax_L_strip.set_ylabel("Nucleons per bunch")
-ax_L_strip.legend(font=10)
+ax_L_strip.legend(fontsize=10)
 fig_L_strip.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
 fig_L_strip.savefig('../output/{}.png'.format(output_L_strip), dpi=250)
 

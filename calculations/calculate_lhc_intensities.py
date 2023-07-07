@@ -163,6 +163,7 @@ ax5.legend()
 fig5.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
 fig5.savefig('../output/{}.png'.format(output_4), dpi=250)
 
+print("Succesfully made all plots!")
 # A lower charge state in LEIR pushes the LEIR space charge limit further
 # Fully stripped ions in PS and SPS means higher SPS space charge limit 
 # O and Ar are almost at WG5 intensity, but Xe suffers from the stripping 
