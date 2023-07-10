@@ -409,8 +409,11 @@ class InjectorChain:
         through Linac3, LEIR, PS and SPS considering all the limits of the injectors
         """
         self.simulate_injection_SpaceCharge_limit()
-        # Calculate ion transmission for LEIR 
+        
+        ### LINAC3 ### 
         ionsPerPulseLinac3 = (self.linac3_current * self.linac3_pulseLength) / (self.Q * e)
+        
+        ### LEIR ###
         spaceChargeLimitLEIR = self.linearIntensityLimit(
                                                m = self.mass_GeV, 
                                                gamma = self.gamma_LEIR_extr,  
@@ -422,12 +425,15 @@ class InjectorChain:
                                                )
         
         nPulsesLEIR = (min(7, math.ceil(spaceChargeLimitLEIR / (ionsPerPulseLinac3 * self.LEIR_injection_efficiency))) if self.nPulsesLEIR == 0 else self.nPulsesLEIR)
-        totalIntLEIR = ionsPerPulseLinac3*nPulsesLEIR * self.LEIR_injection_efficiency
-     
+        totalIntLEIR = ionsPerPulseLinac3 * nPulsesLEIR * self.LEIR_injection_efficiency
+        ionsPerBunchExtractedLEIR = self.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
+        LEIR_space_charge_limit_hit = True if totalIntLEIR > spaceChargeLimitLEIR else False 
+            
         # Calculate extracted intensity per bunch
         ionsPerBunchExtractedLEIR = self.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
-        ionsPerBunchExtractedPS = ionsPerBunchExtractedLEIR *(self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else 1) * self.PS_transmission / self.PS_splitting
-
+        ionsPerBunchInjectedPS = ionsPerBunchExtractedLEIR * (self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else 1)
+        ionsPerBunchExtractedPS = ionsPerBunchInjectedPS * self.PS_transmission / self.PS_splitting # maximum intensity without SC
+        
         spaceChargeLimitPS = self.linearIntensityLimit(
                                         m = self.mass_GeV, 
                                         gamma = self.gamma_PS_inj,  
@@ -445,9 +451,9 @@ class InjectorChain:
                 print("\nIon type: {}".format(self.ion_type))
                 print("Space charge limit PS: {:.3e} vs extracted ions PS: {:.3e}".format(spaceChargeLimitPS, ionsPerBunchExtractedPS))
         else:
-            ionsPerBunchPS = ionsPerBunchExtractedPS
-        #print("Space charge limit PS: {:.3e} vs extracted ions PS: {:.3e}".format(spaceChargeLimitPS, ionsPerBunchExtractedPS))
-
+            ionsPerBunchPS = ionsPerBunchExtractedPS  
+        PS_space_charge_limit_hit = True if ionsPerBunchInjectedPS > spaceChargeLimitPS else False 
+        
         # Calculate ion transmission for SPS 
         ionsPerBunchSPSinj = ionsPerBunchPS * (self.PS_SPS_transmission_efficiency if self.Z == self.Q or self.LEIR_PS_strip else self.PS_SPS_stripping_efficiency)
         spaceChargeLimitSPS = self.linearIntensityLimit(
@@ -459,39 +465,50 @@ class InjectorChain:
                                                gamma_0 = self.gamma0_SPS_inj, # use gamma at SPS inj
                                                fully_stripped=True
                                                )
+        SPS_space_charge_limit_hit = True if ionsPerBunchSPSinj > spaceChargeLimitSPS else False
         ionsPerBunchLHC = min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * self.SPS_transmission * self.SPS_slipstacking_transmission
-    
+
         result = {
+            "Ion": self.ion_type,
             "chargeBeforeStrip": int(self.Q),
             "atomicNumber": int(self.Z),
             "massNumber": int(self.A),
             "Linac3_current [A]": self.linac3_current,
             "Linac3_pulse_length [s]": self.linac3_pulseLength, 
-            "Linac3_ionsPerPulse": ionsPerPulseLinac3,
             "LEIR_numberofPulses": nPulsesLEIR,
             "LEIR_injection_efficiency": self.LEIR_injection_efficiency, 
-            "LEIR_maxIntensity": totalIntLEIR,
-            "LEIR_space_charge_limit": spaceChargeLimitLEIR,
             "LEIR_splitting": self.LEIR_bunches,
-            "LEIR_gamma": self.gamma_LEIR_inj,
-            "LEIR_extractedIonPerBunch": ionsPerBunchExtractedLEIR,
             "LEIR_transmission": self.LEIR_transmission, 
-            "PS_space_charge_limit": spaceChargeLimitPS,
             "PS_splitting": self.PS_splitting, 
             "PS_transmission": self.PS_transmission, 
-            "PS_ionsExtractedPerBunch": ionsPerBunchExtractedPS,
-            "gammaInjSPS": self.gamma_SPS_inj,
             "PS_SPS_stripping_efficiency": self.PS_SPS_stripping_efficiency, 
-            "SPS_maxIntensityPerBunch": ionsPerBunchSPSinj,
-            "SPS_spaceChargeLimit": spaceChargeLimitSPS,
-            "SPS_inj_gamma": self.gamma_SPS_inj, 
-            "SPS_accIntensity": min(spaceChargeLimitSPS, ionsPerBunchSPSinj),
             "SPS_transmission": self.SPS_transmission, 
+            "Linac3_ionsPerPulse": ionsPerPulseLinac3,
+            "LEIR_maxIntensity": totalIntLEIR,
+            "LEIR_space_charge_limit": spaceChargeLimitLEIR,
+            "LEIR_extractedIonPerBunch": ionsPerBunchExtractedLEIR,
+            "PS_injectedIonsPerBunch" : ionsPerBunchInjectedPS,
+            "PS_space_charge_limit": spaceChargeLimitPS,
+            "PS_maxIntensity": ionsPerBunchExtractedPS,
+            "PS_ionsExtractedPerBunch":  ionsPerBunchPS,
+            "SPS_inj_ionsPerBunch": ionsPerBunchSPSinj,
+            "SPS_maxIntensity": ionsPerBunchSPSinj,
+            "SPS_spaceChargeLimit": spaceChargeLimitSPS,
             "LHC_ionsPerBunch": ionsPerBunchLHC,
             "LHC_chargesPerBunch": ionsPerBunchLHC * self.Z,
-            "Ion": self.ion_type
+            "LEIR_gamma_inj": self.gamma_LEIR_inj,
+            "LEIR_gamma_extr": self.gamma_LEIR_extr,
+            "PS_gamma_inj": self.gamma_PS_inj,
+            "PS_gamma_extr": self.gamma_PS_extr,
+            "SPS_gamma_inj": self.gamma_SPS_inj,
+            "SPS_gamma_extr": self.gamma_SPS_extr,
+            "LEIR_space_charge_limit_hit": LEIR_space_charge_limit_hit,
+            "consider_PS_space_charge_limit": self.consider_PS_space_charge_limit,
+            "PS_space_charge_limit_hit": PS_space_charge_limit_hit,
+            "SPS_space_charge_limit_hit": SPS_space_charge_limit_hit
         }
         
+
         # Add key of LEIR-PS stripping efficiency if this is done 
         if self.LEIR_PS_strip:
             result["LEIR_PS_strippingEfficiency"] = self.LEIR_PS_stripping_efficiency

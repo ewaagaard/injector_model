@@ -38,8 +38,16 @@ result = injector_chain2.calculate_LHC_bunch_intensity()
 output_1 = '1_baseline'
 df = injector_chain2.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name = output_1)
 
+# output in single-decimal exponential_notation
+df_SC_and_max_intensity = df[['LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity', 'PS_space_charge_limit', 
+			'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
+for col in df_SC_and_max_intensity.columns:
+    df_SC_and_max_intensity[col] = df_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
+df_SC_and_max_intensity.to_csv('../output/{}_for_paper.csv'.format(output_1), index=True)
 
-## TRY WITHOUT PS SPLITTING
+
+
+## 2: TRY WITHOUT PS SPLITTING
 output_2 ='2_no_PS_splitting'
 injector_chain3 = InjectorChain(ion_type, 
                                 ion_data, 
@@ -51,8 +59,14 @@ injector_chain3 = InjectorChain(ion_type,
                                 )
 df3 = injector_chain3.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name=output_2)
 
+df3_SC_and_max_intensity = df3[['LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity', 'PS_space_charge_limit', 
+			'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
+for col in df3_SC_and_max_intensity.columns:
+    df3_SC_and_max_intensity[col] = df3_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
+df3_SC_and_max_intensity.to_csv('../output/{}_for_paper.csv'.format(output_2), index=True)
 
-## WITH PS SPLITTING AND LEIR-PS STRIPPING
+
+## 3: WITH PS SPLITTING AND LEIR-PS STRIPPING
 output_3 = '3_LEIR_PS_stripping'
 injector_chain4 = InjectorChain(ion_type, 
                                 ion_data, 
@@ -65,7 +79,14 @@ injector_chain4 = InjectorChain(ion_type,
                                 )
 df4 = injector_chain4.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name=output_3)
 
-## WITH NO SPLITTING AND LEIR-PS STRIPPING
+df4_SC_and_max_intensity = df4[['LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity', 'PS_space_charge_limit', 
+			'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
+for col in df4_SC_and_max_intensity.columns:
+    df4_SC_and_max_intensity[col] = df4_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
+df4_SC_and_max_intensity.to_csv('../output/{}_for_paper.csv'.format(output_3), index=True)
+
+
+## 4: WITH NO SPLITTING AND LEIR-PS STRIPPING
 output_4 = '4_no_PS_splitting_and_LEIR_PS_stripping'
 injector_chain5 = InjectorChain(ion_type, 
                                 ion_data, 
@@ -77,6 +98,12 @@ injector_chain5 = InjectorChain(ion_type,
                                 consider_PS_space_charge_limit=False
                                 )
 df5 = injector_chain5.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name=output_4)
+
+df5_SC_and_max_intensity = df5[['LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity', 'PS_space_charge_limit', 
+			'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
+for col in df5_SC_and_max_intensity.columns:
+    df5_SC_and_max_intensity[col] = df5_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
+df5_SC_and_max_intensity.to_csv('../output/{}_for_paper.csv'.format(output_4), index=True)
 
 #### PLOT THE DATA #######
 SMALL_SIZE = 12
