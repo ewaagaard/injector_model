@@ -15,7 +15,7 @@ ion_data = pd.read_csv("../data/Ion_species.csv", sep=';', header=0, index_col=0
 ion_type = 'Pb'
 
 # Compare to reference intensities
-ref_Table_SPS = pd.read_csv('../data/SPS_final_intensities_WG5_and_Hannes.csv', delimiter=';', index_col=0)
+ref_Table_SPS = pd.read_csv('../data/test_and_benchmark_data/SPS_final_intensities_WG5_and_Hannes.csv', delimiter=';', index_col=0)
 
 # Calculate the bunch intensity going into the LHC - now Roderik accounts for SPS transmission
 # Roderik uses Reyes excel as input table for linac3: 200 us pulse length, 70 uA
