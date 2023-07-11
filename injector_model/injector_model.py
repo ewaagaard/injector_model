@@ -38,9 +38,9 @@ class InjectorChain:
         self.use_gammas_ref = use_gammas_ref
         # Load ion energy data depending on where stripping is made 
         if self.LEIR_PS_strip:
-            self.ion_energy_data = pd.read_csv('../data/ion_injection_energies_LEIR_PS_strip{}.csv'.format(brho_string), index_col=0)
+            self.ion_energy_data = pd.read_csv('../data/injection_energies/ion_injection_energies_LEIR_PS_strip{}.csv'.format(brho_string), index_col=0)
         else:
-            self.ion_energy_data = pd.read_csv('../data/ion_injection_energies_PS_SPS_strip{}.csv'.format(brho_string), index_col=0)
+            self.ion_energy_data = pd.read_csv('../data/injection_energies/ion_injection_energies_PS_SPS_strip{}.csv'.format(brho_string), index_col=0)
 
         self.init_ion(ion_type)
         self.debug_mode = False
@@ -267,11 +267,11 @@ class InjectorChain:
         # Estimate number of charges at extraction - 10e10 charges for Pb54+, use this as scaling 
         self.Nb_LEIR_extr = self.linearIntensityLimit(
                                                m = self.mass_GeV, 
-                                               gamma = self.gamma_LEIR_extr,  
+                                               gamma = self.gamma_LEIR_inj,  
                                                Nb_0 = self.Nb0_LEIR_extr, 
                                                charge_0 = self.Q0_LEIR, # partially stripped charged state 
                                                m_0 = self.m0_GeV,  
-                                               gamma_0 = self.gamma0_LEIR_extr,  # use gamma at extraction
+                                               gamma_0 = self.gamma0_LEIR_inj,  # use gamma at extraction
                                                fully_stripped=False
                                                )
         
@@ -321,11 +321,11 @@ class InjectorChain:
         # Estimate number of charges at extraction
         self.Nb_PS_extr = self.linearIntensityLimit(
                                                 m = self.mass_GeV, 
-                                                gamma = self.gamma_PS_extr,  
+                                                gamma = self.gamma_PS_inj,  
                                                 Nb_0 = self.Nb0_PS_extr, 
                                                 charge_0 = self.Q0_PS, # partially stripped charged state 
                                                 m_0 = self.m0_GeV,  
-                                                gamma_0 = self.gamma0_PS_extr,  # use gamma at extraction,
+                                                gamma_0 = self.gamma0_PS_inj,  # use gamma at extraction,
                                                 fully_stripped=False
                                                 )
         self.Nq_PS_extr = self.Nb_PS_extr*self.Q  # number of outgoing charges, before any stripping
@@ -372,7 +372,7 @@ class InjectorChain:
         self.Nb_SPS_extr = self.linearIntensityLimit(
                                                m = self.mass_GeV, 
                                                gamma = self.gamma_SPS_inj,  
-                                               Nb_0 = self.Nb0_SPS_extr, 
+                                               Nb_0 = self.Nb0_SPS_extr, # what we can successfully accelerate today
                                                charge_0 = self.Q0_SPS, 
                                                m_0 = self.m0_GeV,  
                                                gamma_0 = self.gamma0_SPS_inj,  # use gamma at extraction
@@ -458,11 +458,11 @@ class InjectorChain:
         ### LEIR ###
         spaceChargeLimitLEIR = self.linearIntensityLimit(
                                                m = self.mass_GeV, 
-                                               gamma = self.gamma_LEIR_extr,  
+                                               gamma = self.gamma_LEIR_inj,  
                                                Nb_0 = self.Nb0_LEIR_extr, 
                                                charge_0 = self.Q0_LEIR, # partially stripped charged state 
                                                m_0 = self.m0_GeV,  
-                                               gamma_0 = self.gamma0_LEIR_extr,  # use gamma at LEIR extraction
+                                               gamma_0 = self.gamma0_LEIR_inj,  # use gamma at LEIR extraction
                                                fully_stripped=False
                                                )
         
@@ -470,12 +470,10 @@ class InjectorChain:
         totalIntLEIR = ionsPerPulseLinac3 * nPulsesLEIR * self.LEIR_injection_efficiency
         ionsPerBunchExtractedLEIR = self.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
         LEIR_space_charge_limit_hit = True if totalIntLEIR > spaceChargeLimitLEIR else False 
-            
-        # Calculate extracted intensity per bunch
         ionsPerBunchExtractedLEIR = self.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
-        ionsPerBunchInjectedPS = ionsPerBunchExtractedLEIR * (self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else 1)
-        ionsPerBunchExtractedPS = ionsPerBunchInjectedPS * self.PS_transmission / self.PS_splitting # maximum intensity without SC
         
+        #### PS ####
+        ionsPerBunchInjectedPS = ionsPerBunchExtractedLEIR * (self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else 1)
         spaceChargeLimitPS = self.linearIntensityLimit(
                                         m = self.mass_GeV, 
                                         gamma = self.gamma_PS_inj,  
@@ -488,16 +486,17 @@ class InjectorChain:
         
         # If space charge limit in PS is considered, choose the minimum between the SC limit and the extracted ionsPerBunchPS
         if self.consider_PS_space_charge_limit:
-            ionsPerBunchPS = min(spaceChargeLimitPS, ionsPerBunchExtractedPS)
-            if spaceChargeLimitPS < ionsPerBunchExtractedPS:
+            ionsPerBunchPS = min(spaceChargeLimitPS, ionsPerBunchInjectedPS)
+            if spaceChargeLimitPS < ionsPerBunchInjectedPS:
                 print("\nIon type: {}".format(self.ion_type))
-                print("Space charge limit PS: {:.3e} vs extracted ions PS: {:.3e}".format(spaceChargeLimitPS, ionsPerBunchExtractedPS))
+                print("Space charge limit PS: {:.3e} vs max injected ions per bunch PS: {:.3e}".format(spaceChargeLimitPS, ionsPerBunchInjectedPS))
         else:
-            ionsPerBunchPS = ionsPerBunchExtractedPS  
+            ionsPerBunchPS = ionsPerBunchInjectedPS 
         PS_space_charge_limit_hit = True if ionsPerBunchInjectedPS > spaceChargeLimitPS else False 
+        ionsPerBunchExtracted_PS = ionsPerBunchPS * self.PS_transmission / self.PS_splitting # maximum intensity without SC
         
         # Calculate ion transmission for SPS 
-        ionsPerBunchSPSinj = ionsPerBunchPS * (self.PS_SPS_transmission_efficiency if self.Z == self.Q or self.LEIR_PS_strip else self.PS_SPS_stripping_efficiency)
+        ionsPerBunchSPSinj = ionsPerBunchExtracted_PS * (self.PS_SPS_transmission_efficiency if self.Z == self.Q or self.LEIR_PS_strip else self.PS_SPS_stripping_efficiency)
         spaceChargeLimitSPS = self.linearIntensityLimit(
                                                m = self.mass_GeV, 
                                                gamma = self.gamma_SPS_inj,  
@@ -531,8 +530,8 @@ class InjectorChain:
             "LEIR_extractedIonPerBunch": ionsPerBunchExtractedLEIR,
             "PS_injectedIonsPerBunch" : ionsPerBunchInjectedPS,
             "PS_space_charge_limit": spaceChargeLimitPS,
-            "PS_maxIntensity": ionsPerBunchExtractedPS,
-            "PS_ionsExtractedPerBunch":  ionsPerBunchPS,
+            "PS_maxIntensity": ionsPerBunchInjectedPS,
+            "PS_ionsExtractedPerBunch":  ionsPerBunchExtracted_PS,
             "SPS_inj_ionsPerBunch": ionsPerBunchSPSinj,
             "SPS_maxIntensity": ionsPerBunchSPSinj,
             "SPS_spaceChargeLimit": spaceChargeLimitSPS,

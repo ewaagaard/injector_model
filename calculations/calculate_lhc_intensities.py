@@ -16,8 +16,8 @@ injector_chain = InjectorChain(ion_type, ion_data, account_for_SPS_transmission=
 df_Nb = injector_chain.simulate_SpaceCharge_intensity_limit_all_ions()
 
 # Compare to reference intensities
-ref_Table_SPS = pd.read_csv('../data/SPS_final_intensities_WG5_and_Hannes.csv', delimiter=';', index_col=0)
-ref_Table_LEIR = pd.read_csv('../data/LEIR_final_intensities_Nicolo.csv', delimiter=';', index_col=0)
+ref_Table_SPS = pd.read_csv('../data/test_and_benchmark_data/SPS_final_intensities_WG5_and_Hannes.csv', delimiter=';', index_col=0)
+ref_Table_LEIR = pd.read_csv('../data/test_and_benchmark_data/LEIR_final_intensities_Nicolo.csv', delimiter=';', index_col=0)
 df_Nb['SPS_WG5_ratio'] = df_Nb['Nb_SPS']/ref_Table_SPS['WG5 Intensity']
 df_Nb['SPS_Hannes_ratio'] = df_Nb['Nb_SPS']/ref_Table_SPS['Hannes Intensity ']
 df_Nb['LEIR_Nicolo_ratio'] = df_Nb['Nb_LEIR']/ref_Table_LEIR['Nicolo Intensity']
