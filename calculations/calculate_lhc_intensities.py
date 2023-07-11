@@ -246,12 +246,23 @@ if __name__ == '__main__':
                                             use_gammas_ref=False
                                             )
     
-    # 3rd case: consider PS space charge limit and use reference energies 
+    # 3rd case: considereference energies 
+    df_new_energy, df2_new_energy, df3_new_energy, df4_new_energy = calculate_LHC_intensities_all_scenarios(
+                                            output_extra_str = '_with_correct_gammas', 
+                                            consider_PS_space_charge_limit=False,
+                                            use_gammas_ref=True,
+                                            return_dataframes=True
+                                            )
+    
+    
+    #df = df[~df.applymap(lambda x: isinstance(x, bool)).any(axis=0)]
+    #df_ratio, df2_ratio, df3_ratio, df4_ratio = df.div(df_new_energy), df2.div(df2_new_energy), df3.div(df3_new_energy), df4.div(df4_new_energy)
+    
+    # 4th case: consider PS space charge limit and use reference energies 
     calculate_LHC_intensities_all_scenarios(
                                             output_extra_str = '_with_correct_gammas_and_PS_space_charge_limit', 
                                             consider_PS_space_charge_limit=True,
-                                            use_gammas_ref=True
+                                            use_gammas_ref=True,
+                                            return_dataframes=True
                                             )
-    
-
     
