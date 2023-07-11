@@ -242,6 +242,27 @@ class InjectorChain:
         else: 
             self.gamma_LEIR_inj = (self.mass_GeV + self.E_kin_per_A_LEIR_inj * self.A)/self.mass_GeV
             self.gamma_LEIR_extr = (self.mass_GeV + self.E_kin_per_A_LEIR_extr * self.A)/self.mass_GeV
+            
+            """
+            # ADDED WAY OF CALCULATING RODERIK'S GAMMA
+            if self.use_Roderiks_gamma:
+                # old version not considering LEIR-PS stripping, approximate scaling of gamma 
+                #self.gamma_SPS_inj =  self.gamma0_SPS_inj*(self.Q/54)/(self.mass_GeV/self.m0_GeV) 
+                
+                # In this version below, consider LEIR-PS stripping and thus higher magnetic rigidity 
+                # exact gamma expression for given magnetic rigidity, see Roderik's notebook 
+                # Brho = P/Q is constant at PS extraction and SPS injection
+                # Use P = m*gamma*beta*c
+                # gamma = np.sqrt(1 + ((Q/Q0)/(m/m0))**2 + (gamma0**2 - 1))
+                self.gamma_LEIR_inj =  np.sqrt(
+                                        1 + (((self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
+                                        * (self.gamma0_LEIR_inj**2 - 1)
+                                        )
+                self.gamma_LEIR_extr =  np.sqrt(
+                                        1 + (((self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
+                                        * (self.gamma0_LEIR_extr**2 - 1)
+                                        )
+                """
                 
         # Estimate number of charges at extraction - 10e10 charges for Pb54+, use this as scaling 
         self.Nb_LEIR_extr = self.linearIntensityLimit(
@@ -275,6 +296,27 @@ class InjectorChain:
         else:         
             self.gamma_PS_inj = (self.mass_GeV + self.E_kin_per_A_PS_inj * self.A)/self.mass_GeV
             self.gamma_PS_extr = (self.mass_GeV + self.E_kin_per_A_PS_extr * self.A)/self.mass_GeV
+            
+            #"""
+            # ADDED WAY OF CALCULATING RODERIK'S GAMMA
+            if self.use_Roderiks_gamma:
+                # old version not considering LEIR-PS stripping, approximate scaling of gamma 
+                #self.gamma_SPS_inj =  self.gamma0_SPS_inj*(self.Q/54)/(self.mass_GeV/self.m0_GeV) 
+                
+                # In this version below, consider LEIR-PS stripping and thus higher magnetic rigidity 
+                # exact gamma expression for given magnetic rigidity, see Roderik's notebook 
+                # Brho = P/Q is constant at PS extraction and SPS injection
+                # Use P = m*gamma*beta*c
+                # gamma = np.sqrt(1 + ((Q/Q0)/(m/m0))**2 + (gamma0**2 - 1))
+                self.gamma_PS_inj =  np.sqrt(
+                                        1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
+                                        * (self.gamma0_PS_inj**2 - 1)
+                                        )
+                self.gamma_PS_extr =  np.sqrt(
+                                        1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
+                                        * (self.gamma0_PS_extr**2 - 1)
+                                        )
+            #"""
         
         # Estimate number of charges at extraction
         self.Nb_PS_extr = self.linearIntensityLimit(

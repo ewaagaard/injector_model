@@ -28,7 +28,7 @@ class InjectionEnergies:
         self.LEIR_PS_strip = LEIR_PS_strip  # if stripping occurs between LEIR-PS or PS-SPS (as today)
 
         # Magnetic rigidity of different accelerators 
-        self.Linac3_E_per_u = 4200000.0 # [eV/nucleon] at extraction
+        self.Linac3_E_per_u = 4.2e6  # [eV/nucleon] at extraction
         self.LEIR_Brho  = 4.8 # [Tm] @extraction
         self.PS_B       = 1.2368 # [T] - magnetic field in PS, from Heiko Damerau
         self.PS_MinB    = 383 * 1e-4 # [T] - minimum magnetic field in PS, (Gauss to Tesla) from Heiko Damerau
@@ -127,8 +127,6 @@ class InjectionEnergies:
         self.beta_PS_inj = self.beta_LEIR_extr
         self.p_PS_inj = self.calcMomentum_from_gamma(self.gamma_PS_inj, q_PS)
         self.E_kin_per_u_PS_inj = self.calcKineticEnergyPerNucleon(self.p_PS_inj, q_PS)
-        
-        #self.p_PS_inj = self.p_LEIR_extr
         self.p_PS_inj_proton_equiv = self.p_PS_inj / q_PS
         self.Brho_PS_inj = self.calcBrho(self.p_PS_inj, q_PS) # same as LEIR extraction if no stripping, else will be different  
         
@@ -142,6 +140,7 @@ class InjectionEnergies:
         elif B_PS_inj > self.PS_MaxB:
             print("\nA = {}, Q_low = {}, m_ion = {:.2f} u, Z = {}".format(self.A, self.Q_low, self.m_ion_in_u, self.Z))
             print('B = {:.4f} in PS at injection is too HIGH!'.format(B_PS_inj))
+            raise ValueError("B field in PS is too high!")
         else:
             self.PS_B_field_is_too_low = False
 
