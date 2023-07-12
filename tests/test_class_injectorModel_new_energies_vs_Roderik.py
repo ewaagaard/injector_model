@@ -13,7 +13,7 @@ ion_data = pd.read_csv("../data/Ion_species.csv", sep=';', header=0, index_col=0
 ion_type = 'Pb'
 
 # Load reference values from Roderik Bruce's Mathematica notebook output (2021)
-Roderik_LHC_charges_per_bunch = pd.read_csv('../data/Roderik_2021_LHC_charges_per_bunch_output.csv', index_col=0)
+Roderik_LHC_charges_per_bunch = pd.read_csv('../data/test_and_benchmark_data/Roderik_2021_LHC_charges_per_bunch_output.csv', index_col=0)
 ref_val = Roderik_LHC_charges_per_bunch.sort_values('Z')
 
 

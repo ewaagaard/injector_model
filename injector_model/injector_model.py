@@ -26,7 +26,8 @@ class InjectorChain:
                  LEIR_PS_strip=False,
                  consider_PS_space_charge_limit=True,
                  use_gammas_ref=False,
-                 higher_brho_LEIR=False
+                 higher_brho_LEIR=False,
+                 save_path_csv = '../output/csv_tables'
                  ):
         
         self.full_ion_data = ion_data
@@ -36,6 +37,7 @@ class InjectorChain:
 
         # Check whether to load relativistic gamma data from injection_energies
         self.use_gammas_ref = use_gammas_ref
+        
         # Load ion energy data depending on where stripping is made 
         if self.LEIR_PS_strip:
             self.ion_energy_data = pd.read_csv('../data/injection_energies/ion_injection_energies_LEIR_PS_strip{}.csv'.format(brho_string), index_col=0)
@@ -57,13 +59,7 @@ class InjectorChain:
         self.ion0_referenceValues() 
 
         # Save path
-        self.save_path = '../output'
-
-        ######### Reference mode for SPS gamma at injection ############
-        # Decide whether to use reference relativistic gammas from injection_energies module
-        self.use_Roderiks_gamma = True
-        if use_gammas_ref:
-            self.use_Roderiks_gamma = False
+        self.save_path = save_path_csv
 
         #For printing some reference values
         if self.debug_mode:
@@ -224,11 +220,6 @@ class InjectorChain:
             raise ValueError('Other reference ion type than Pb does not yet exist!')
    
     
-    def linac3(self):
-        # Calculate the relativistic Lorentz factor at the entrance and exit of Linac3
-        pass
-    
-    
     def leir(self):
         """
         Calculate gamma at entrance and exit of the LEIR and transmitted bunch intensity 
@@ -241,28 +232,7 @@ class InjectorChain:
             self.gamma_LEIR_extr = self.LEIR_gamma_extr_ref
         else: 
             self.gamma_LEIR_inj = (self.mass_GeV + self.E_kin_per_A_LEIR_inj * self.A)/self.mass_GeV
-            self.gamma_LEIR_extr = (self.mass_GeV + self.E_kin_per_A_LEIR_extr * self.A)/self.mass_GeV
-            
-            """
-            # ADDED WAY OF CALCULATING RODERIK'S GAMMA
-            if self.use_Roderiks_gamma:
-                # old version not considering LEIR-PS stripping, approximate scaling of gamma 
-                #self.gamma_SPS_inj =  self.gamma0_SPS_inj*(self.Q/54)/(self.mass_GeV/self.m0_GeV) 
-                
-                # In this version below, consider LEIR-PS stripping and thus higher magnetic rigidity 
-                # exact gamma expression for given magnetic rigidity, see Roderik's notebook 
-                # Brho = P/Q is constant at PS extraction and SPS injection
-                # Use P = m*gamma*beta*c
-                # gamma = np.sqrt(1 + ((Q/Q0)/(m/m0))**2 + (gamma0**2 - 1))
-                self.gamma_LEIR_inj =  np.sqrt(
-                                        1 + (((self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
-                                        * (self.gamma0_LEIR_inj**2 - 1)
-                                        )
-                self.gamma_LEIR_extr =  np.sqrt(
-                                        1 + (((self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
-                                        * (self.gamma0_LEIR_extr**2 - 1)
-                                        )
-                """
+            self.gamma_LEIR_extr = (self.mass_GeV + self.E_kin_per_A_LEIR_extr * self.A)/self.mass_GeV         
                 
         # Estimate number of charges at extraction - 10e10 charges for Pb54+, use this as scaling 
         self.Nb_LEIR_extr = self.linearIntensityLimit(
@@ -294,29 +264,15 @@ class InjectorChain:
             self.gamma_PS_inj = self.PS_gamma_inj_ref
             self.gamma_PS_extr = self.PS_gamma_extr_ref
         else:         
-            self.gamma_PS_inj = (self.mass_GeV + self.E_kin_per_A_PS_inj * self.A)/self.mass_GeV
-            self.gamma_PS_extr = (self.mass_GeV + self.E_kin_per_A_PS_extr * self.A)/self.mass_GeV
-            
-            #"""
-            # ADDED WAY OF CALCULATING RODERIK'S GAMMA
-            if self.use_Roderiks_gamma:
-                # old version not considering LEIR-PS stripping, approximate scaling of gamma 
-                #self.gamma_SPS_inj =  self.gamma0_SPS_inj*(self.Q/54)/(self.mass_GeV/self.m0_GeV) 
-                
-                # In this version below, consider LEIR-PS stripping and thus higher magnetic rigidity 
-                # exact gamma expression for given magnetic rigidity, see Roderik's notebook 
-                # Brho = P/Q is constant at PS extraction and SPS injection
-                # Use P = m*gamma*beta*c
-                # gamma = np.sqrt(1 + ((Q/Q0)/(m/m0))**2 + (gamma0**2 - 1))
-                self.gamma_PS_inj =  np.sqrt(
-                                        1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
-                                        * (self.gamma0_PS_inj**2 - 1)
-                                        )
-                self.gamma_PS_extr =  np.sqrt(
-                                        1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
-                                        * (self.gamma0_PS_extr**2 - 1)
-                                        )
-            #"""
+
+            self.gamma_PS_inj =  np.sqrt(
+                                    1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
+                                    * (self.gamma0_PS_inj**2 - 1)
+                                    )
+            self.gamma_PS_extr =  np.sqrt(
+                                    1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
+                                    * (self.gamma0_PS_extr**2 - 1)
+                                    )
         
         # Estimate number of charges at extraction
         self.Nb_PS_extr = self.linearIntensityLimit(
@@ -348,25 +304,12 @@ class InjectorChain:
             self.gamma_SPS_inj = self.SPS_gamma_inj_ref
             self.gamma_SPS_extr = self.SPS_gamma_extr_ref
         else:     
-            self.gamma_SPS_inj = (self.mass_GeV + self.E_kin_per_A_SPS_inj * self.A)/self.mass_GeV
+            # In his notebook, Roderik considers same magnetic rigidity at PS extraction for all ion species: Brho = P/Q, P = m*gamma*beta*c
+            self.gamma_SPS_inj =  np.sqrt(
+                                    1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
+                                    * (self.gamma0_SPS_inj**2 - 1)
+                                )
             self.gamma_SPS_extr = (self.mass_GeV + self.E_kin_per_A_SPS_extr * self.A)/self.mass_GeV
-         
-            # For comparison on how Roderik scales the gamma - scale directly with charge/mass before stripping 
-            # (same magnetic rigidity at PS extraction for all ion species)
-            if self.use_Roderiks_gamma:
-                # old version not considering LEIR-PS stripping, approximate scaling of gamma 
-                #self.gamma_SPS_inj =  self.gamma0_SPS_inj*(self.Q/54)/(self.mass_GeV/self.m0_GeV) 
-                
-                # In this version below, consider LEIR-PS stripping and thus higher magnetic rigidity 
-                # exact gamma expression for given magnetic rigidity, see Roderik's notebook 
-                # Brho = P/Q is constant at PS extraction and SPS injection
-                # Use P = m*gamma*beta*c
-                # gamma = np.sqrt(1 + ((Q/Q0)/(m/m0))**2 + (gamma0**2 - 1))
-                self.gamma_SPS_inj =  np.sqrt(
-                                        1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
-                                        * (self.gamma0_SPS_inj**2 - 1)
-                                    )
-                #print("{}: gamma SPS inj: {}".format(self.ion_type, self.gamma_SPS_inj))
         
         # Calculate outgoing intensity from linear scaling 
         self.Nb_SPS_extr = self.linearIntensityLimit(
@@ -380,24 +323,15 @@ class InjectorChain:
                                                )
     
         self.Nq_SPS_extr = self.Nb_SPS_extr*self.Z  # number of outgoing charges
-    
-    
-    def space_charge_tune_shift(self):
-        # Calculate the space charge tune shift for each accelerator - use PySCRDT
-        pass
-    
+      
     
     def simulate_injection_SpaceCharge_limit(self):
         """
         Simulate space charge limit in full injection through Linac3, LEIR, PS and SPS for a given ion type
         """
-        self.linac3()
         self.leir()
-        self.stripper_foil_leir_ps()
         self.ps()
-        self.stripper_foil_ps_sps()
         self.sps()
-        self.space_charge_tune_shift()
 
 
     def simulate_SpaceCharge_intensity_limit_all_ions(self, return_dataframe=True):
@@ -528,11 +462,9 @@ class InjectorChain:
             "LEIR_maxIntensity": totalIntLEIR,
             "LEIR_space_charge_limit": spaceChargeLimitLEIR,
             "LEIR_extractedIonPerBunch": ionsPerBunchExtractedLEIR,
-            "PS_injectedIonsPerBunch" : ionsPerBunchInjectedPS,
             "PS_space_charge_limit": spaceChargeLimitPS,
             "PS_maxIntensity": ionsPerBunchInjectedPS,
             "PS_ionsExtractedPerBunch":  ionsPerBunchExtracted_PS,
-            "SPS_inj_ionsPerBunch": ionsPerBunchSPSinj,
             "SPS_maxIntensity": ionsPerBunchSPSinj,
             "SPS_spaceChargeLimit": spaceChargeLimitSPS,
             "LHC_ionsPerBunch": ionsPerBunchLHC,
@@ -546,7 +478,10 @@ class InjectorChain:
             "LEIR_space_charge_limit_hit": LEIR_space_charge_limit_hit,
             "consider_PS_space_charge_limit": self.consider_PS_space_charge_limit,
             "PS_space_charge_limit_hit": PS_space_charge_limit_hit,
-            "SPS_space_charge_limit_hit": SPS_space_charge_limit_hit
+            "SPS_space_charge_limit_hit": SPS_space_charge_limit_hit,
+            "LEIR_ratio_SC_limit_maxIntensity": spaceChargeLimitLEIR / totalIntLEIR,
+            "PS_ratio_SC_limit_maxIntensity": spaceChargeLimitPS / ionsPerBunchInjectedPS,
+            "SPS_ratio_SC_limit_maxIntensity": spaceChargeLimitSPS / ionsPerBunchSPSinj
         }
         
 

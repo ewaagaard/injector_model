@@ -13,7 +13,7 @@ ion_data = pd.read_csv("../data/Ion_species.csv", sep=';', header=0, index_col=0
 ion_type = 'Pb'
 
 # Load reference values from Roderik Bruce's Mathematica notebook output (2021)
-Roderik_LHC_charges_per_bunch = pd.read_csv('../data/Roderik_2021_LHC_charges_per_bunch_output.csv', index_col=0)
+Roderik_LHC_charges_per_bunch = pd.read_csv('../data/test_and_benchmark_data/Roderik_2021_LHC_charges_per_bunch_output.csv', index_col=0)
 ref_val = Roderik_LHC_charges_per_bunch.sort_values('Z')
 
 
@@ -63,7 +63,7 @@ class TestClass_injectorModel_linearSpaceCharge:
                                         LEIR_PS_strip=True,
                                         consider_PS_space_charge_limit=False
                                         )
-        df_ps_leir_strip = injector_chain3.calculate_LHC_bunch_intensity_all_ion_species()
+        df_ps_leir_strip = injector_chain3.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name='output')
         assert np.all(np.isclose(ref_val['LEIR_PS_strip'].values, df_ps_leir_strip['LHC_chargesPerBunch'].values, rtol=1e-2))   
         
         
