@@ -232,7 +232,13 @@ class InjectorChain:
             self.gamma_LEIR_extr = self.LEIR_gamma_extr_ref
         else: 
             self.gamma_LEIR_inj = (self.mass_GeV + self.E_kin_per_A_LEIR_inj * self.A)/self.mass_GeV
-            self.gamma_LEIR_extr = (self.mass_GeV + self.E_kin_per_A_LEIR_extr * self.A)/self.mass_GeV         
+            
+            self.gamma_LEIR_extr =  np.sqrt(
+                                    1 + ((self.Q / 54) / (self.mass_GeV/self.m0_GeV))**2
+                                    * (self.gamma0_LEIR_extr**2 - 1)
+                                    )
+            
+            #self.gamma_LEIR_extr = (self.mass_GeV + self.E_kin_per_A_LEIR_extr * self.A)/self.mass_GeV         
                 
         # Estimate number of charges at extraction - 10e10 charges for Pb54+, use this as scaling 
         self.Nb_LEIR_extr = self.linearIntensityLimit(
@@ -265,10 +271,7 @@ class InjectorChain:
             self.gamma_PS_extr = self.PS_gamma_extr_ref
         else:         
 
-            self.gamma_PS_inj =  np.sqrt(
-                                    1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
-                                    * (self.gamma0_PS_inj**2 - 1)
-                                    )
+            self.gamma_PS_inj =  self.gamma_LEIR_extr
             self.gamma_PS_extr =  np.sqrt(
                                     1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
                                     * (self.gamma0_PS_extr**2 - 1)
@@ -421,9 +424,9 @@ class InjectorChain:
         # If space charge limit in PS is considered, choose the minimum between the SC limit and the extracted ionsPerBunchPS
         if self.consider_PS_space_charge_limit:
             ionsPerBunchPS = min(spaceChargeLimitPS, ionsPerBunchInjectedPS)
-            if spaceChargeLimitPS < ionsPerBunchInjectedPS:
-                print("\nIon type: {}".format(self.ion_type))
-                print("Space charge limit PS: {:.3e} vs max injected ions per bunch PS: {:.3e}".format(spaceChargeLimitPS, ionsPerBunchInjectedPS))
+            #if spaceChargeLimitPS < ionsPerBunchInjectedPS:
+            #    print("\nIon type: {}".format(self.ion_type))
+            #    print("Space charge limit PS: {:.3e} vs max injected ions per bunch PS: {:.3e}".format(spaceChargeLimitPS, ionsPerBunchInjectedPS))
         else:
             ionsPerBunchPS = ionsPerBunchInjectedPS 
         PS_space_charge_limit_hit = True if ionsPerBunchInjectedPS > spaceChargeLimitPS else False 
