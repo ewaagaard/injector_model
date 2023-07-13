@@ -207,13 +207,13 @@ def vary_isotope_and_plot(
         #### PLOTTING - Make figure for all the isotopes ####
         fig, ax = plt.subplots(1, 1, figsize = (6,5))
         fig.suptitle(ion, fontsize=20)
-        ax.plot(A_default, Nb0, 'ro', markersize=10.5, alpha=0.8, label='Baseline with default isotope')
+        if WG5_intensity[ion] > 0.0:
+            ax.axhline(y = WG5_intensity[ion], color='red', label='WG5')
+        ax.plot(A_default, Nb0, 'ro', markersize=14.5, alpha=0.8, label='Baseline with default isotope')
         ax.plot(A_states, Nb1_array, color='blue', marker='o', linewidth=3, linestyle='-', label='Baseline')
         ax.plot(A_states, Nb2_array, linestyle='--', marker='o', color='gold', linewidth=3, label='No PS splitting') #
         ax.plot(A_states, Nb3_array, linestyle='-.', marker='o', color='limegreen', linewidth=3, label='LEIR-PS stripping') #
         ax.plot(A_states, Nb4_array, linestyle='--', marker='o', color='gray', linewidth=3, label='LEIR-PS stripping, \nno PS splitting') #
-        if WG5_intensity[ion] > 0.0:
-            ax.axhline(y = WG5_intensity[ion], color='red', label='WG5')
         ax.set_ylabel('LHC bunch intensity')
         ax.set_xlabel('Mass number A')
         ax.legend()

@@ -243,6 +243,7 @@ if __name__ == '__main__':
     calculate_LHC_intensities_all_scenarios(
                                             output_extra_str = '_with_PS_space_charge_limit', #
                                             consider_PS_space_charge_limit=True,
+                                            generate_tables_for_paper = True,
                                             use_gammas_ref=False
                                             )
     

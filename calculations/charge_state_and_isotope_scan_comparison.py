@@ -71,7 +71,7 @@ def plot_Nb_dataframes(
     ax6.bar(x + 3*bar_width5, df3['LHC_ionsPerBunch'].astype(float)*mass_number, bar_width5, color='limegreen', label='LEIR-PS stripping') #
     ax6.bar(x + 4*bar_width5, df4['LHC_ionsPerBunch'].astype(float)*mass_number, bar_width5, color='gray', label='LEIR-PS stripping, \nno PS splitting') #
     ax6.bar(x + 5*bar_width5, df_best_isotope['2_Nb_best']*mass_number, bar_width5, color='green', label='Best isotope,\nno PS splitting') #
-    ax6.bar(x + 6*bar_width5, df_best_isotope['4_Nb_best']*mass_number, bar_width5, color='cyan', label='Best isotope,\nno LEIR-PS strip + PS splitting') #
+    ax6.bar(x + 6*bar_width5, df_best_isotope['4_Nb_best']*mass_number, bar_width5, color='cyan', label='Best isotope,\nLEIR-PS strip + PS splitting') #
     ax6.set_xticks(x + 2*bar_width5)
     ax6.set_xticklabels(df.index)
     ax6.set_ylabel("Nucleons per bunch")
