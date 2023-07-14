@@ -127,6 +127,7 @@ def vary_charge_state_and_plot(
         # Create empty array for all the LHC bunch intensities, LEIR SC limit and SPS SC limit  
         Nb1_array, Nb2_array, Nb3_array, Nb4_array = np.zeros(len(Q_states)), np.zeros(len(Q_states)), np.zeros(len(Q_states)), np.zeros(len(Q_states)) 
         SC_SPS1_array, SC_SPS2_array, SC_SPS3_array, SC_SPS4_array = np.zeros(len(Q_states)), np.zeros(len(Q_states)), np.zeros(len(Q_states)), np.zeros(len(Q_states)) 
+        SC_PS1_array, SC_PS2_array, SC_PS3_array, SC_PS4_array = np.zeros(len(Q_states)), np.zeros(len(Q_states)), np.zeros(len(Q_states)), np.zeros(len(Q_states))
         SC_LEIR1_array, SC_LEIR2_array, SC_LEIR3_array, SC_LEIR4_array = np.zeros(len(Q_states)), np.zeros(len(Q_states)), np.zeros(len(Q_states)), np.zeros(len(Q_states))
         gammas_SPS1_array, gammas_SPS2_array, gammas_SPS3_array, gammas_SPS4_array = np.zeros(len(Q_states)), np.zeros(len(Q_states)), np.zeros(len(Q_states)), np.zeros(len(Q_states)) 
         
@@ -158,6 +159,11 @@ def vary_charge_state_and_plot(
             SC_LEIR3_array[j] = result3['LEIR_space_charge_limit']
             SC_LEIR4_array[j] = result4['LEIR_space_charge_limit']
             
+            SC_PS1_array[j] = result1['PS_space_charge_limit']
+            SC_PS2_array[j] = result2['PS_space_charge_limit']
+            SC_PS3_array[j] = result3['PS_space_charge_limit']
+            SC_PS4_array[j] = result4['PS_space_charge_limit']
+            
             SC_SPS1_array[j] = result1['SPS_spaceChargeLimit']
             SC_SPS2_array[j] = result2['SPS_spaceChargeLimit']
             SC_SPS3_array[j] = result3['SPS_spaceChargeLimit']
@@ -179,6 +185,10 @@ def vary_charge_state_and_plot(
                 'LEIR_SC_limit_2_No_PS_split': SC_LEIR2_array,
                 'LEIR_SC_limit_3_LEIR_PS_strip': SC_LEIR3_array, 
                 'LEIR_SC_limit_4_LEIR_PS_strip_and_no_PS_split': SC_LEIR4_array,
+                'PS_SC_limit_1_Baseline': SC_PS1_array, 
+                'PS_SC_limit_2_No_PS_split': SC_PS2_array,
+                'PS_SC_limit_3_LEIR_PS_strip': SC_PS3_array, 
+                'PS_SC_limit_4_LEIR_PS_strip_and_no_PS_split': SC_PS4_array,
                 'SPS_SC_limit_1_Baseline': SC_SPS1_array, 
                 'SPS_SC_limit_2_No_PS_split': SC_SPS2_array,
                 'SPS_SC_limit_3_LEIR_PS_strip': SC_SPS3_array, 
@@ -215,20 +225,24 @@ def vary_charge_state_and_plot(
         #### PLOTTING - Make figure for the LEIR and SPS space charge limits ####
         fig2, ax2 = plt.subplots(1, 1, figsize = (6,5))
         fig2.suptitle(ion, fontsize=20)
-        ax2.plot(Q_states, SC_LEIR1_array, color='blue', linewidth=3, linestyle='--', label='LEIR SC limit: Baseline')
-        ax2.plot(Q_states, SC_LEIR2_array, linestyle='--', color='gold', linewidth=3, label='LEIR SC limit: No PS splitting') #
-        ax2.plot(Q_states, SC_LEIR3_array, linestyle='--', color='limegreen', linewidth=3, label='LEIR SC limit: LEIR-PS stripping') #
-        ax2.plot(Q_states, SC_LEIR4_array, linestyle='--', color='gray', linewidth=3, label='LEIR SC limit: LEIR-PS stripping, \nno PS splitting') #
-        ax2.plot(Q_states, SC_SPS1_array, color='blue', linewidth=3, linestyle=':', label='SPS SC limit: Baseline')
-        ax2.plot(Q_states, SC_SPS2_array, linestyle=':', color='gold', linewidth=3, label='SPS SC limit: No PS splitting') #
-        ax2.plot(Q_states, SC_SPS3_array, linestyle=':', color='limegreen', linewidth=3, label='SPS SC limit: LEIR-PS stripping') #
-        ax2.plot(Q_states, SC_SPS4_array, linestyle=':', color='gray', linewidth=3, label='SPS SC limit: LEIR-PS stripping, \nno PS splitting') #
+        ax2.plot(Q_states, SC_LEIR1_array, color='blue', linewidth=4, linestyle='-', label='LEIR SC limit: Baseline')
+        ax2.plot(Q_states, SC_LEIR2_array, linestyle='-', color='gold', linewidth=4, label='LEIR SC limit: No PS splitting') #
+        ax2.plot(Q_states, SC_LEIR3_array, linestyle='-', color='limegreen', linewidth=4, label='LEIR SC limit: LEIR-PS stripping') #
+        ax2.plot(Q_states, SC_LEIR4_array, linestyle='-', color='gray', linewidth=4, label='LEIR SC limit: LEIR-PS stripping, \nno PS splitting') #
+        ax2.plot(Q_states, SC_SPS1_array, color='blue', linewidth=3.5, linestyle='--', label='SPS SC limit: Baseline')
+        ax2.plot(Q_states, SC_SPS2_array, linestyle='--', color='gold', linewidth=3.5, label='SPS SC limit: No PS splitting') #
+        ax2.plot(Q_states, SC_SPS3_array, linestyle='--', color='limegreen', linewidth=3.5, label='SPS SC limit: LEIR-PS stripping') #
+        ax2.plot(Q_states, SC_SPS4_array, linestyle='--', color='gray', linewidth=3.5, label='SPS SC limit: LEIR-PS stripping, \nno PS splitting')
+        ax2.plot(Q_states, SC_PS1_array, color='blue', linewidth=3, linestyle=':', label='PS SC limit: Baseline')
+        ax2.plot(Q_states, SC_PS2_array, linestyle=':', color='gold', linewidth=3, label='PS SC limit: No PS splitting') #
+        ax2.plot(Q_states, SC_PS3_array, linestyle=':', color='limegreen', linewidth=3, label='PS SC limit: LEIR-PS stripping') #
+        ax2.plot(Q_states, SC_PS4_array, linestyle=':', color='gray', linewidth=3, label='PS SC limit: LEIR-PS stripping, \nno PS splitting') 
         #if WG5_intensity[ion] > 0.0:
         #    ax2.axhline(y = WG5_intensity[ion], color='red', label='WG5')
         ax2.set_ylabel('Space charge limit')
         ax2.set_xlabel('LEIR charge state')
         ax2.set_yscale('log')
-        ax2.legend()
+        ax2.legend(fontsize=6)
         fig2.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         if save_fig:
             fig2.savefig('../output/figures/charge_state_scan/LEIR_SPS_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
@@ -265,7 +279,7 @@ def vary_charge_state_and_plot(
     for row in axs:
         row[0].set_ylabel('LHC bunch intensity', fontsize=13)
     
-    handles, labels = ax3.get_legend_handles_labels()
+    #handles, labels = ax3.get_legend_handles_labels()
     #fig0.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, 0), fontsize=6)
     
     fig0.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)    

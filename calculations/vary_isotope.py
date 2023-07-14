@@ -125,6 +125,14 @@ def vary_isotope_and_plot(
     # Empty array to contain all dataframes
     ion_dataframes = []
     
+    # Ion figure
+    num_rows = len(ion_data.T.index) // 2  # Integer division to determine the number of rows
+    num_cols = 2  # Two columns
+    
+    # Create the combined figure with subplots
+    fig0, axs = plt.subplots(num_rows, num_cols, figsize=(8.27, 10.2))
+    #fig0.suptitle("Isotope Scan", fontsize=20)
+    
     # Iterate over all ion species 
     count = 1
     for ion, row in ion_data.T.iterrows():
@@ -244,8 +252,42 @@ def vary_isotope_and_plot(
             fig2.savefig('../output/figures/isotope_scan/isotope_scan_LEIR_SPS_SC_limit_{}_{}.png'.format(ion, output_name), dpi=250)
         plt.close()
         
-        count += 1
+        # Also fill in the big combined subplot
+        row3 = (count-1) // num_cols  # Row index
+        col3 = (count-1) % num_cols  # Column index
+        ax3 = axs[row3, col3]  # Select the current subplot
+
+        # Plot the data for the current ion
+        ax3.plot(A_default, Nb0, 'ro', markersize=11, alpha=0.8, label='Baseline with default isotope state')
+        if WG5_intensity[ion] > 0.0:
+            ax3.axhline(y=WG5_intensity[ion], color='red', label='WG5')
+        ax3.plot(A_states, Nb1_array,  marker='o', color='blue', linewidth=3, linestyle='-', label='Baseline')
+        ax3.plot(A_states, Nb2_array,  marker='o', linestyle='--', color='gold', linewidth=3, label='No PS splitting')
+        ax3.plot(A_states, Nb3_array,  marker='o', linestyle='-.', color='limegreen', linewidth=3, label='LEIR-PS stripping')
+        ax3.plot(A_states, Nb4_array,  marker='o', linestyle='--', color='gray', linewidth=3, label='LEIR-PS stripping, \nno PS splitting')
+        ax3.set_title(ion)  # Set the ion name as the title for the current subplot
         
+        # Add legend in oxygen plot
+        if count == 2:
+            ax3.legend(fontsize=6)
+        
+        count += 1
+
+    # Combined figure - Share y-axes for the same row
+    # Share x-label for the same column
+    for col in range(num_cols):
+        axs[-1, col].set_xlabel('Mass number A', fontsize=13)
+    
+    # Share y-label for the same row
+    for row in axs:
+        row[0].set_ylabel('LHC bunch intensity', fontsize=13)
+    
+    fig0.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)    
+    # Save the combined figure
+    if save_fig:
+        fig0.savefig('../output/figures/isotope_scan/combined_isotope_scan{}.png'.format(output_name), dpi=250)
+    plt.close()    
+    
     return ion_dataframes
 
 if __name__ == '__main__': 
