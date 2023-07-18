@@ -98,6 +98,12 @@ def plot_Nb_dataframes(
     if savefig:
         fig7.savefig('../output/figures/combined_isotope_and_charge_state_scan/best_charge_states_and_isotopes{}.png'.format(output_extra_str), dpi=250)
     plt.close()
+    
+    # Find relative increase of best charge state and isotope
+    df_ratio_best_case_charge_state = (df_best_charge_state['2_Nb_best']*mass_number) / (df['LHC_ionsPerBunch'].astype(float)*mass_number)
+    df_ratio_best_case_isotope = (df_best_isotope['2_Nb_best']*mass_number) / (df['LHC_ionsPerBunch'].astype(float)*mass_number)
+    
+    return df_ratio_best_case_charge_state, df_ratio_best_case_isotope
 
 
 if __name__ == '__main__': 
@@ -121,22 +127,30 @@ if __name__ == '__main__':
     df_best_isotope_ps_sc = pd.read_csv('../output/csv_tables/isotope_scan/best_isotope/best_Nb_isotope_scan_with_PC_SC_limit.csv', index_col=0)
     
     # First check case without PS space charge 
-    plot_Nb_dataframes(
-                        df1,
-                        df2,
-                        df3,
-                        df4,
-                        df_best_charge_state,
-                        df_best_isotope
-                        )
+    df_ratio_best_case_charge_state, df_ratio_best_case_isotope = plot_Nb_dataframes(
+                                                                                    df1,
+                                                                                    df2,
+                                                                                    df3,
+                                                                                    df4,
+                                                                                    df_best_charge_state,
+                                                                                    df_best_isotope
+                                                                                    )
     
     # Then check case with PS space charge 
-    plot_Nb_dataframes(
-                        df1_ps_sc,
-                        df2_ps_sc,
-                        df3_ps_sc,
-                        df4_ps_sc,
-                        df_best_charge_state_ps_sc,
-                        df_best_isotope_ps_sc,
-                        output_extra_str='__with_PS_SC_limit'
-                        )
+    df_ratio_best_case_charge_state_ps_sc, df_ratio_best_case_isotope_ps_sc = plot_Nb_dataframes(
+                                                                                                df1_ps_sc,
+                                                                                                df2_ps_sc,
+                                                                                                df3_ps_sc,
+                                                                                                df4_ps_sc,
+                                                                                                df_best_charge_state_ps_sc,
+                                                                                                df_best_isotope_ps_sc,
+                                                                                                output_extra_str='__with_PS_SC_limit'
+                                                                                                )
+    
+    # Make a big dataframe with PS space charge with best charge state and isotope combined
+    df_best = pd.DataFrame(index=df_ratio_best_case_charge_state_ps_sc.index)
+    df_best['Q_boost'] = df_best_charge_state_ps_sc['2_Q_best']  # best charge state for case without PS splitting 
+    df_best['Nb_Q_boost'] = df_ratio_best_case_charge_state_ps_sc
+    df_best['A_boost'] = df_best_isotope_ps_sc['2_A_best']
+    df_best['Nb_A_boost'] = df_ratio_best_case_isotope_ps_sc
+    df_best.to_csv('../output/csv_tables/best_combined_from_scan/best_A_and_Q_ratios_to_baseline.csv')

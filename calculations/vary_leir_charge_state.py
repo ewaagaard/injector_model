@@ -50,6 +50,7 @@ def calculate_LHC_intensities_all_scenarios_vary_charge_state(
                                     )
     injector_chain1.Q = Q  # update charge state before stripping
     result1 = injector_chain1.calculate_LHC_bunch_intensity()
+    SC_limits1 = injector_chain1.space_charge_limit_effect_on_LHC_bunch_intensity()
 
     ## 2: TRY WITHOUT PS SPLITTING
     injector_chain2 = InjectorChain(ion_type, 
@@ -62,6 +63,7 @@ def calculate_LHC_intensities_all_scenarios_vary_charge_state(
                                     )
     injector_chain2.Q = Q  # update charge state before stripping
     result2 = injector_chain2.calculate_LHC_bunch_intensity()
+    SC_limits2 = injector_chain2.space_charge_limit_effect_on_LHC_bunch_intensity()
     
      
     ## 3: WITH PS SPLITTING AND LEIR-PS STRIPPING
@@ -75,9 +77,9 @@ def calculate_LHC_intensities_all_scenarios_vary_charge_state(
                                     consider_PS_space_charge_limit = consider_PS_space_charge_limit,
                                     use_gammas_ref = use_gammas_ref
                                     )
-    
     injector_chain3.Q = Q  # update charge state before stripping
     result3 = injector_chain3.calculate_LHC_bunch_intensity()
+    SC_limits3 = injector_chain3.space_charge_limit_effect_on_LHC_bunch_intensity()
     
     
     ## 4: WITH NO SPLITTING AND LEIR-PS STRIPPING
@@ -93,8 +95,9 @@ def calculate_LHC_intensities_all_scenarios_vary_charge_state(
                                     )
     injector_chain4.Q = Q  # update charge state before stripping
     result4 = injector_chain4.calculate_LHC_bunch_intensity()
+    SC_limits4 = injector_chain4.space_charge_limit_effect_on_LHC_bunch_intensity()
     
-    return result1, result2, result3, result4
+    return result1, result2, result3, result4, SC_limits1, SC_limits2, SC_limits3, SC_limits4
 
 # Function to vary charge state and return a dictionary 
 def vary_charge_state_and_plot(
@@ -132,7 +135,7 @@ def vary_charge_state_and_plot(
         gammas_SPS1_array, gammas_SPS2_array, gammas_SPS3_array, gammas_SPS4_array = np.zeros(len(Q_states)), np.zeros(len(Q_states)), np.zeros(len(Q_states)), np.zeros(len(Q_states)) 
         
         # First check default intensity from standard charge state
-        result01, result02, result03, result04 = calculate_LHC_intensities_all_scenarios_vary_charge_state(
+        result01, result02, result03, result04, SC_limits01, SC_limits02, SC_limits03, SC_limits04 = calculate_LHC_intensities_all_scenarios_vary_charge_state(
                                                                                                         Q_default,
                                                                                                         ion, 
                                                                                                         consider_PS_space_charge_limit,
@@ -142,7 +145,7 @@ def vary_charge_state_and_plot(
         
         # Iterate over all the Q_states 
         for j, Q in enumerate(Q_states):
-            result1, result2, result3, result4 = calculate_LHC_intensities_all_scenarios_vary_charge_state(
+            result1, result2, result3, result4, SC_limits1, SC_limits2, SC_limits3, SC_limits4 = calculate_LHC_intensities_all_scenarios_vary_charge_state(
                                                                                                         Q,
                                                                                                         ion, 
                                                                                                         consider_PS_space_charge_limit,
@@ -154,20 +157,20 @@ def vary_charge_state_and_plot(
             Nb3_array[j] = result3['LHC_ionsPerBunch']
             Nb4_array[j] = result4['LHC_ionsPerBunch']
                         
-            SC_LEIR1_array[j] = result1['LEIR_space_charge_limit']
-            SC_LEIR2_array[j] = result2['LEIR_space_charge_limit']
-            SC_LEIR3_array[j] = result3['LEIR_space_charge_limit']
-            SC_LEIR4_array[j] = result4['LEIR_space_charge_limit']
+            SC_LEIR1_array[j] = SC_limits1[0] 
+            SC_LEIR2_array[j] = SC_limits2[0] 
+            SC_LEIR3_array[j] = SC_limits3[0] 
+            SC_LEIR4_array[j] = SC_limits4[0] 
             
-            SC_PS1_array[j] = result1['PS_space_charge_limit']
-            SC_PS2_array[j] = result2['PS_space_charge_limit']
-            SC_PS3_array[j] = result3['PS_space_charge_limit']
-            SC_PS4_array[j] = result4['PS_space_charge_limit']
+            SC_PS1_array[j] = SC_limits1[1]
+            SC_PS2_array[j] = SC_limits2[1]
+            SC_PS3_array[j] = SC_limits3[1]
+            SC_PS4_array[j] = SC_limits4[1]
             
-            SC_SPS1_array[j] = result1['SPS_spaceChargeLimit']
-            SC_SPS2_array[j] = result2['SPS_spaceChargeLimit']
-            SC_SPS3_array[j] = result3['SPS_spaceChargeLimit']
-            SC_SPS4_array[j] = result4['SPS_spaceChargeLimit']
+            SC_SPS1_array[j] = SC_limits1[2]
+            SC_SPS2_array[j] = SC_limits2[2]
+            SC_SPS3_array[j] = SC_limits3[2]
+            SC_SPS4_array[j] = SC_limits4[2]
             
             gammas_SPS1_array[j] = result1['SPS_gamma_inj']
             gammas_SPS2_array[j] = result2['SPS_gamma_inj']
@@ -222,31 +225,73 @@ def vary_charge_state_and_plot(
             fig.savefig('../output/figures/charge_state_scan/{}_{}_leir_charge_state_scan{}.png'.format(count, ion, output_name), dpi=250)
         plt.close()
         
-        #### PLOTTING - Make figure for the LEIR and SPS space charge limits ####
+        #### PLOTTING SC limits ##### - Make figure for the LEIR and SPS space charge limits 
+        
+        ## 1) baseline case ####
         fig2, ax2 = plt.subplots(1, 1, figsize = (6,5))
-        fig2.suptitle(ion, fontsize=20)
-        ax2.plot(Q_states, SC_LEIR1_array, color='blue', linewidth=4, linestyle='-', label='LEIR SC limit: Baseline')
-        ax2.plot(Q_states, SC_LEIR2_array, linestyle='-', color='gold', linewidth=4, label='LEIR SC limit: No PS splitting') #
-        ax2.plot(Q_states, SC_LEIR3_array, linestyle='-', color='limegreen', linewidth=4, label='LEIR SC limit: LEIR-PS stripping') #
-        ax2.plot(Q_states, SC_LEIR4_array, linestyle='-', color='gray', linewidth=4, label='LEIR SC limit: LEIR-PS stripping, \nno PS splitting') #
-        ax2.plot(Q_states, SC_SPS1_array, color='blue', linewidth=3.5, linestyle='--', label='SPS SC limit: Baseline')
-        ax2.plot(Q_states, SC_SPS2_array, linestyle='--', color='gold', linewidth=3.5, label='SPS SC limit: No PS splitting') #
-        ax2.plot(Q_states, SC_SPS3_array, linestyle='--', color='limegreen', linewidth=3.5, label='SPS SC limit: LEIR-PS stripping') #
-        ax2.plot(Q_states, SC_SPS4_array, linestyle='--', color='gray', linewidth=3.5, label='SPS SC limit: LEIR-PS stripping, \nno PS splitting')
-        ax2.plot(Q_states, SC_PS1_array, color='blue', linewidth=3, linestyle=':', label='PS SC limit: Baseline')
-        ax2.plot(Q_states, SC_PS2_array, linestyle=':', color='gold', linewidth=3, label='PS SC limit: No PS splitting') #
-        ax2.plot(Q_states, SC_PS3_array, linestyle=':', color='limegreen', linewidth=3, label='PS SC limit: LEIR-PS stripping') #
-        ax2.plot(Q_states, SC_PS4_array, linestyle=':', color='gray', linewidth=3, label='PS SC limit: LEIR-PS stripping, \nno PS splitting') 
-        #if WG5_intensity[ion] > 0.0:
-        #    ax2.axhline(y = WG5_intensity[ion], color='red', label='WG5')
-        ax2.set_ylabel('Space charge limit')
+        #fig2.suptitle(ion, fontsize=20)
+        ax2.plot(Q_default, Nb0, 'ro', markersize=12, alpha=0.8, label='Baseline with default charge state')
+        ax2.plot(Q_states, SC_LEIR1_array, color='brown', linewidth=4, linestyle='-', label='LEIR SC limit: Baseline')
+        ax2.plot(Q_states, SC_PS1_array, color='slategrey', linewidth=4, linestyle=':', label='PS SC limit: Baseline')
+        ax2.plot(Q_states, SC_SPS1_array, color='royalblue', linewidth=4, linestyle='--', label='SPS SC limit: Baseline')
+        ax2.set_ylabel('LHC bunch intensity')
         ax2.set_xlabel('LEIR charge state')
-        ax2.set_yscale('log')
-        ax2.legend(fontsize=6)
+        ax2.legend()
+        ax2.set_ylim(0, 2 * np.max(SC_SPS1_array))
         fig2.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         if save_fig:
-            fig2.savefig('../output/figures/charge_state_scan/LEIR_SPS_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
+            fig2.savefig('../output/figures/charge_state_scan/SC_limit/1_baseline_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
         plt.close()
+        
+        ## 2) NO PS split ####
+        fig3, ax3 = plt.subplots(1, 1, figsize = (6,5))
+        #fig3.suptitle(ion, fontsize=20)
+        ax3.plot(Q_default, Nb0, 'ro', markersize=12, alpha=0.8, label='Baseline with default charge state')
+        ax3.plot(Q_states, SC_LEIR2_array, color='brown', linewidth=4, linestyle='-', label='LEIR SC limit: No PS split')
+        ax3.plot(Q_states, SC_PS2_array, color='slategrey', linewidth=4, linestyle=':', label='PS SC limit: No PS split')
+        ax3.plot(Q_states, SC_SPS2_array, color='royalblue', linewidth=4, linestyle='--', label='SPS SC limit: No PS split')
+        ax3.set_ylabel('LHC bunch intensity')
+        ax3.set_xlabel('LEIR charge state')
+        ax3.legend()
+        ax3.set_ylim(0, 2 * np.max(SC_SPS2_array))
+        fig3.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+        if save_fig:
+            fig3.savefig('../output/figures/charge_state_scan/SC_limit/2_NO_PS_split_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
+        plt.close()
+        
+        ## 3) LEIR-PS strip ####
+        fig4, ax4 = plt.subplots(1, 1, figsize = (6,5))
+        #fig4.suptitle(ion, fontsize=20)
+        ax4.plot(Q_default, Nb0, 'ro', markersize=12, alpha=0.8, label='Baseline with default charge state')
+        ax4.plot(Q_states, SC_LEIR3_array, color='brown', linewidth=4, linestyle='-', label='LEIR SC limit: LEIR-PS strip')
+        ax4.plot(Q_states, SC_PS3_array, color='slategrey', linewidth=4, linestyle=':', label='PS SC limit: LEIR-PS strip')
+        ax4.plot(Q_states, SC_SPS3_array, color='royalblue', linewidth=4, linestyle='--', label='SPS SC limit: LEIR-PS strip')
+        ax4.set_ylabel('LHC bunch intensity')
+        ax4.set_xlabel('LEIR charge state')
+        ax4.legend()
+        ax4.set_ylim(0, 2 * np.max(SC_SPS3_array))
+        fig4.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+        if save_fig:
+            fig4.savefig('../output/figures/charge_state_scan/SC_limit/3_LEIR_PS_strip_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
+        plt.close()
+        
+        ## 4) LEIR-PS strip ####
+        fig5, ax5 = plt.subplots(1, 1, figsize = (6,5))
+        #fig5.suptitle(ion, fontsize=20)
+        ax5.plot(Q_default, Nb0, 'ro', markersize=12, alpha=0.8, label='Baseline with default charge state')
+        ax5.plot(Q_states, SC_LEIR4_array, color='brown', linewidth=4, linestyle='-', label='LEIR SC limit: LEIR-PS strip\nand no PS split')
+        ax5.plot(Q_states, SC_PS4_array, color='slategrey', linewidth=4, linestyle=':', label='PS SC limit: LEIR-PS strip\nand no PS split')
+        ax5.plot(Q_states, SC_SPS4_array, color='royalblue', linewidth=4, linestyle='--', label='SPS SC limit: LEIR-PS strip\nand no PS split')
+        ax5.set_ylabel('LHC bunch intensity')
+        ax5.set_xlabel('LEIR charge state')
+        ax5.legend()
+        ax5.set_ylim(0, 2 * np.max(SC_SPS4_array))
+        fig5.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+        if save_fig:
+            fig5.savefig('../output/figures/charge_state_scan/SC_limit/4_LEIR_PS_strip_and_NO_PS_Split_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
+        plt.close()
+        
+        #########
                 
         # Also fill in the big combined subplot
         row3 = (count-1) // num_cols  # Row index

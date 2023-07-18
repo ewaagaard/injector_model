@@ -7,7 +7,8 @@ Simulation model of the CERN Injector Chain for different ions
 import pandas as pd
 import numpy as np
 import math
-from scipy.constants import e
+#from scipy.constants import e
+from scipy import constants
 from collections import defaultdict
 
 class InjectorChain:
@@ -20,8 +21,8 @@ class InjectorChain:
                  ion_data, 
                  ion_type_ref='Pb',
                  nPulsesLEIR = 1,
-                 LEIR_bunches = 1,
-                 PS_splitting = 1,
+                 LEIR_bunches = 2,
+                 PS_splitting = 2,
                  account_for_SPS_transmission=True,
                  LEIR_PS_strip=False,
                  consider_PS_space_charge_limit=True,
@@ -48,6 +49,11 @@ class InjectorChain:
         self.debug_mode = False
         self.account_for_SPS_transmission = account_for_SPS_transmission
         self.consider_PS_space_charge_limit = consider_PS_space_charge_limit
+        
+        # Initiate values for PS B-field
+        self.PS_MinB    = 383 * 1e-4 # [T] - minimum magnetic field in PS, (Gauss to Tesla) from Heiko Damerau
+        self.PS_MaxB    = 1.26 # [T] - minimum magnetic field in PS, from reyes Alemany Fernandez
+        self.PS_rho     = 70.1206 # [m] - PS bending radius 
         
         # Rules for splitting and bunches 
         self.nPulsesLEIR = nPulsesLEIR
@@ -118,6 +124,26 @@ class InjectorChain:
         Relativistic beta factor from gamma factor 
         """
         return np.sqrt(1 - 1/gamma**2)
+    
+
+    def calcMomentum_from_gamma(self, gamma, q):
+        """
+        Calculates mometum from relativistic gamma and charge (number of elementary charges) 
+        considering the electrons that have been stripped 
+        """
+        # Subtract missing electron mass, also expressed in GeV
+        mass_in_eV_stripped = 1e9 * self.mass_GeV - (self.Z - q) * 1e6 * constants.physical_constants['electron mass energy equivalent in MeV'][0]  
+        beta = np.sqrt(1 - 1/gamma**2)
+        p = gamma * mass_in_eV_stripped * beta # in eV/c, so as mass is already in eV/c^2 then a factor c is not needed 
+        return p
+
+
+    def calcBrho(self, p, q):
+        """
+        Calculates Brho from momentum [eV/c] and charge (number of elementary charges) 
+        """
+        Brho = p / (q * constants.c) # in Tm
+        return Brho    
     
     
     def spaceChargeScalingFactor(self, Nb, m, gamma, epsilon, sigma_z, fully_stripped=True):
@@ -390,7 +416,7 @@ class InjectorChain:
         self.simulate_injection_SpaceCharge_limit()
         
         ### LINAC3 ### 
-        ionsPerPulseLinac3 = (self.linac3_current * self.linac3_pulseLength) / (self.Q * e)
+        ionsPerPulseLinac3 = (self.linac3_current * self.linac3_pulseLength) / (self.Q * constants.e)
         
         ### LEIR ###
         spaceChargeLimitLEIR = self.linearIntensityLimit(
@@ -407,7 +433,6 @@ class InjectorChain:
         totalIntLEIR = ionsPerPulseLinac3 * nPulsesLEIR * self.LEIR_injection_efficiency
         ionsPerBunchExtractedLEIR = self.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
         LEIR_space_charge_limit_hit = True if totalIntLEIR > spaceChargeLimitLEIR else False 
-        ionsPerBunchExtractedLEIR = self.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
         
         #### PS ####
         ionsPerBunchInjectedPS = ionsPerBunchExtractedLEIR * (self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else 1)
@@ -420,6 +445,20 @@ class InjectorChain:
                                         gamma_0 = self.gamma0_PS_inj,  # use gamma at PS inj
                                         fully_stripped = self.LEIR_PS_strip # fully stripped if LEIR-PS strip
                                         )
+        
+        # Check that injected momentum is not too low for the PS B-field
+        q_PS = self.Z if self.LEIR_PS_strip else self.Q
+        self.p_PS_inj = self.calcMomentum_from_gamma(self.gamma_PS_inj, q_PS)
+        self.Brho_PS_inj = self.calcBrho(self.p_PS_inj, q_PS) # same as LEIR extraction if no stripping, else will be different 
+        B_PS_inj = self.Brho_PS_inj / self.PS_rho
+        if B_PS_inj < self.PS_MinB:
+            self.PS_B_field_is_too_low = True
+        elif B_PS_inj > self.PS_MaxB:
+            print("\nA = {}, Q_low = {}, m_ion = {:.2f} u, Z = {}".format(self.A, self.Q_low, self.m_ion_in_u, self.Z))
+            print('B = {:.4f} in PS at injection is too HIGH!'.format(B_PS_inj))
+            raise ValueError("B field in PS is too high!")
+        else:
+            self.PS_B_field_is_too_low = False
         
         # If space charge limit in PS is considered, choose the minimum between the SC limit and the extracted ionsPerBunchPS
         if self.consider_PS_space_charge_limit:
@@ -478,6 +517,7 @@ class InjectorChain:
             "PS_gamma_extr": self.gamma_PS_extr,
             "SPS_gamma_inj": self.gamma_SPS_inj,
             "SPS_gamma_extr": self.gamma_SPS_extr,
+            "PS_B_field_is_too_low": self.PS_B_field_is_too_low,
             "LEIR_space_charge_limit_hit": LEIR_space_charge_limit_hit,
             "consider_PS_space_charge_limit": self.consider_PS_space_charge_limit,
             "PS_space_charge_limit_hit": PS_space_charge_limit_hit,
@@ -528,6 +568,67 @@ class InjectorChain:
             df_save.to_csv("{}/{}.csv".format(self.save_path, output_name))
             
         return df_all_ions
+    
+    
+    def space_charge_limit_effect_on_LHC_bunch_intensity(self):
+        """
+        Propagate estimated bunch intensity into LHC for a given ion species
+        considering space charge limit only in LEIR, PS or SPS 
+        --> considering first default baseline case
+        """
+        self.simulate_injection_SpaceCharge_limit()
+    
+        #### LEIR SPACE CHARGE LIMIT ####
+        spaceChargeLimitLEIR = self.linearIntensityLimit(
+                                               m = self.mass_GeV, 
+                                               gamma = self.gamma_LEIR_inj,  
+                                               Nb_0 = self.Nb0_LEIR_extr, 
+                                               charge_0 = self.Q0_LEIR, # partially stripped charged state 
+                                               m_0 = self.m0_GeV,  
+                                               gamma_0 = self.gamma0_LEIR_inj,  # use gamma at LEIR extraction
+                                               fully_stripped=False
+                                               )
+        
+        ionsPerBunchLHC_LEIR_lim = spaceChargeLimitLEIR * self.LEIR_transmission \
+                                *  (self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else 1) \
+                                * self.PS_transmission * (self.PS_SPS_transmission_efficiency if self.Z == self.Q or self.LEIR_PS_strip else self.PS_SPS_stripping_efficiency) \
+                                * self.SPS_transmission / (self.LEIR_bunches * self.PS_splitting)  # divide by number of pulses into LEIR and PS splitting
+        
+
+        #### PS SPACE CHARGE LIMIT ####
+        spaceChargeLimitPS = self.linearIntensityLimit(
+                                        m = self.mass_GeV, 
+                                        gamma = self.gamma_PS_inj,  
+                                        Nb_0 = self.Nb0_PS_extr, 
+                                        charge_0 = self.Q0_PS, # partially stripped charged state 
+                                        m_0 = self.m0_GeV,  
+                                        gamma_0 = self.gamma0_PS_inj,  # use gamma at PS inj
+                                        fully_stripped = self.LEIR_PS_strip # fully stripped if LEIR-PS strip
+                                        )
+
+        ionsPerBunchLHC_PS_lim = spaceChargeLimitPS * self.PS_transmission \
+                                * (self.PS_SPS_transmission_efficiency if self.Z == self.Q or self.LEIR_PS_strip else self.PS_SPS_stripping_efficiency) \
+                                * self.SPS_transmission / self.PS_splitting
+
+
+        #### SPS SPACE CHARGE LIMIT ####
+        spaceChargeLimitSPS = self.linearIntensityLimit(
+                                               m = self.mass_GeV, 
+                                               gamma = self.gamma_SPS_inj,  
+                                               Nb_0 = self.Nb0_SPS_extr, 
+                                               charge_0 = self.Q0_SPS, 
+                                               m_0 = self.m0_GeV,  
+                                               gamma_0 = self.gamma0_SPS_inj, # use gamma at SPS inj
+                                               fully_stripped=True
+                                               )
+        ionsPerBunchLHC_SPS_lim = spaceChargeLimitSPS * self.SPS_transmission * self.SPS_slipstacking_transmission        
+        
+        # Array of Nb injected into LHC considering SC limits in LEIR, PS and SPS
+        Nb_SC_limits = np.array([ionsPerBunchLHC_LEIR_lim, ionsPerBunchLHC_PS_lim, ionsPerBunchLHC_SPS_lim])
+
+        return Nb_SC_limits
+        
+    
     
     
     def format_large_numbers(self, x):
