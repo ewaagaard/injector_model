@@ -201,10 +201,10 @@ def calculate_LHC_intensities_all_scenarios(
     bar_width5 = 0.15
     fig5, ax5 = plt.subplots(1, 1, figsize = (6,5))
     bar51 = ax5.bar(x, ref_Table_SPS['WG5 Intensity']*df['massNumber'], bar_width5, color='red', label='WG5') #
-    bar52 = ax5.bar(x + bar_width5, df['LHC_ionsPerBunch']*df['massNumber'], bar_width5, color='blue', label='Baseline scenario') #
-    bar53 = ax5.bar(x + 2*bar_width5, df2['LHC_ionsPerBunch']*df2['massNumber'], bar_width5, color='gold', label='No PS splitting') #
-    bar54 = ax5.bar(x + 3*bar_width5, df3['LHC_ionsPerBunch']*df3['massNumber'], bar_width5, color='limegreen', label='LEIR-PS stripping') #
-    bar55 = ax5.bar(x + 4*bar_width5, df4['LHC_ionsPerBunch']*df4['massNumber'], bar_width5, color='gray', label='LEIR-PS stripping, \nno PS splitting') #
+    bar52 = ax5.bar(x + bar_width5, df['LHC_ionsPerBunch']*df['massNumber'], bar_width5, color='blue', label='1: Baseline scenario') #
+    bar53 = ax5.bar(x + 2*bar_width5, df2['LHC_ionsPerBunch']*df2['massNumber'], bar_width5, color='gold', label='2: No PS splitting') #
+    bar54 = ax5.bar(x + 3*bar_width5, df3['LHC_ionsPerBunch']*df3['massNumber'], bar_width5, color='limegreen', label='3: LEIR-PS stripping') #
+    bar55 = ax5.bar(x + 4*bar_width5, df4['LHC_ionsPerBunch']*df4['massNumber'], bar_width5, color='gray', label='4: LEIR-PS stripping, \nno PS splitting') #
     ax5.set_xticks(x + 2*bar_width5)
     ax5.set_xticklabels(df.index)
     ax5.set_ylabel("Nucleons per bunch")

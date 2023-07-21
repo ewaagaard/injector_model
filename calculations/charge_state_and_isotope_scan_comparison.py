@@ -84,12 +84,12 @@ def plot_Nb_dataframes(
     # Isotope and charge state check check - NO PS splitting - also include charge state and isotope scan 
     fig7, ax7 = plt.subplots(1, 1, figsize = (6,5))
     ax7.bar(x - bar_width5, ref_Table_SPS['WG5 Intensity'].astype(float)*mass_number, bar_width5, color='red', label='WG5') #
-    ax7.bar(x , df['LHC_ionsPerBunch'].astype(float)*mass_number, bar_width5, color='blue', label='Baseline scenario') #
-    ax7.bar(x + bar_width5, df2['LHC_ionsPerBunch'].astype(float)*mass_number, bar_width5, color='gold', label='No PS splitting') #
-    ax7.bar(x + 2*bar_width5, df3['LHC_ionsPerBunch'].astype(float)*mass_number, bar_width5, color='limegreen', label='LEIR-PS stripping') #
-    ax7.bar(x + 3*bar_width5, df4['LHC_ionsPerBunch'].astype(float)*mass_number, bar_width5, color='gray', label='LEIR-PS stripping, \nno PS splitting') #
-    ax7.bar(x + 4*bar_width5, df_best_charge_state['2_Nb_best']*mass_number, bar_width5, color='green', label='Best LEIR charge state,\nno PS splitting') #
-    ax7.bar(x + 5*bar_width5, df_best_isotope['2_Nb_best']*mass_number, bar_width5, color='cyan', label='Best isotope,\nno PS splitting') #
+    ax7.bar(x , df['LHC_ionsPerBunch'].astype(float)*mass_number, bar_width5, color='blue', label='1: Baseline scenario') #
+    ax7.bar(x + bar_width5, df2['LHC_ionsPerBunch'].astype(float)*mass_number, bar_width5, color='gold', label='2: No PS splitting') #
+    ax7.bar(x + 2*bar_width5, df3['LHC_ionsPerBunch'].astype(float)*mass_number, bar_width5, color='limegreen', label='3: LEIR-PS stripping') #
+    ax7.bar(x + 3*bar_width5, df4['LHC_ionsPerBunch'].astype(float)*mass_number, bar_width5, color='gray', label='4: LEIR-PS stripping, \nno PS splitting') #
+    ax7.bar(x + 4*bar_width5, df_best_charge_state['2_Nb_best']*mass_number, bar_width5, color='green', label='Best LEIR charge state with \n2: no PS splitting') #
+    ax7.bar(x + 5*bar_width5, df_best_isotope['2_Nb_best']*mass_number, bar_width5, color='cyan', label='Best isotope with \n2: PS splitting') #
     ax7.set_xticks(x + 2*bar_width5)
     ax7.set_xticklabels(df.index)
     ax7.set_ylabel("Nucleons per bunch")

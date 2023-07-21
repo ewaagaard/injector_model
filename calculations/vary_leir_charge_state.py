@@ -209,17 +209,17 @@ def vary_charge_state_and_plot(
         
         #### PLOTTING - Make figure for all the charge states ####
         fig, ax = plt.subplots(1, 1, figsize = (6,5))
-        fig.suptitle(ion, fontsize=20)
-        ax.plot(Q_default, Nb0, 'ro', markersize=10.5, alpha=0.8, label='Baseline with default charge state')
-        ax.plot(Q_states, Nb1_array, color='blue', linewidth=3, linestyle='-', label='Baseline')
-        ax.plot(Q_states, Nb2_array, linestyle='--', color='gold', linewidth=3, label='No PS splitting') #
-        ax.plot(Q_states, Nb3_array, linestyle='-.', color='limegreen', linewidth=3, label='LEIR-PS stripping') #
-        ax.plot(Q_states, Nb4_array, linestyle='--', color='gray', linewidth=3, label='LEIR-PS stripping, \nno PS splitting') #
+        #fig.suptitle(ion, fontsize=20)
+        ax.plot(Q_default, Nb0, 'ro', markersize=13, alpha=0.8, label='1: Baseline with default charge state')
+        ax.plot(Q_states, Nb1_array, color='blue', linewidth=3, linestyle='-', label='1: Baseline')
+        ax.plot(Q_states, Nb2_array, linestyle='--', color='gold', linewidth=3, label='2: No PS splitting') #
+        ax.plot(Q_states, Nb3_array, linestyle='-.', color='limegreen', linewidth=3, label='3: LEIR-PS stripping') #
+        ax.plot(Q_states, Nb4_array, linestyle='--', color='gray', linewidth=3, label='4: LEIR-PS stripping, \nno PS splitting') #
         if WG5_intensity[ion] > 0.0:
             ax.axhline(y = WG5_intensity[ion], color='red', label='WG5')
         ax.set_ylabel('LHC bunch intensity')
         ax.set_xlabel('LEIR charge state')
-        ax.legend()
+        ax.legend(fontsize=9)
         fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         if save_fig:
             fig.savefig('../output/figures/charge_state_scan/{}_{}_leir_charge_state_scan{}.png'.format(count, ion, output_name), dpi=250)
@@ -299,13 +299,13 @@ def vary_charge_state_and_plot(
         ax3 = axs[row3, col3]  # Select the current subplot
 
         # Plot the data for the current ion
-        ax3.plot(Q_default, Nb0, 'ro', markersize=9, alpha=0.8, label='Baseline with default charge state')
+        ax3.plot(Q_default, Nb0, 'ro', markersize=9, alpha=0.8, label='1: Baseline with default charge state')
         if WG5_intensity[ion] > 0.0:
             ax3.axhline(y=WG5_intensity[ion], color='red', label='WG5')
-        ax3.plot(Q_states, Nb1_array, color='blue', linewidth=3, linestyle='-', label='Baseline')
-        ax3.plot(Q_states, Nb2_array, linestyle='--', color='gold', linewidth=3, label='No PS splitting')
-        ax3.plot(Q_states, Nb3_array, linestyle='-.', color='limegreen', linewidth=3, label='LEIR-PS stripping')
-        ax3.plot(Q_states, Nb4_array, linestyle='--', color='gray', linewidth=3, label='LEIR-PS stripping, \nno PS splitting')
+        ax3.plot(Q_states, Nb1_array, color='blue', linewidth=3, linestyle='-', label='1: Baseline')
+        ax3.plot(Q_states, Nb2_array, linestyle='--', color='gold', linewidth=3, label='2: No PS splitting')
+        ax3.plot(Q_states, Nb3_array, linestyle='-.', color='limegreen', linewidth=3, label='3: LEIR-PS stripping')
+        ax3.plot(Q_states, Nb4_array, linestyle='--', color='gray', linewidth=3, label='4: LEIR-PS stripping, \nno PS splitting')
         ax3.set_title(ion)  # Set the ion name as the title for the current subplot
         
         # Add legend in oxygen plot
