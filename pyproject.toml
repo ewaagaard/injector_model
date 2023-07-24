@@ -4,14 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "injector_model"
-description = "A small example package"
+description = "Package to calculate ion performance across the CERN Ion Injector Chain"
 version = "0.1.0"
 readme = "README.md"
 authors = [
-    { name = "Firstname Lastname", email = "firstname.lastname@example.org" }
+    { name = "Elias Waagaard", email = "elias.walter.waagaard@cern.ch" }
 ]
 dependencies = [
-    "scipy"
+    "numpy",
+    "matplotlib",
+    "pandas",
+    "scipy",
 ]
 
 [tool.setuptools]

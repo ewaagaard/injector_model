@@ -1,8 +1,8 @@
 Metadata-Version: 2.1
 Name: injector-model
 Version: 0.1.0
-Summary: A small example package
-Author-email: Firstname Lastname <firstname.lastname@example.org>
+Summary: Package to calculate ion performance across the CERN Ion Injector Chain
+Author-email: Elias Waagaard <elias.walter.waagaard@cern.ch>
 Description-Content-Type: text/markdown
 License-File: LICENSE
 
