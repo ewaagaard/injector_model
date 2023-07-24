@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Simulation model of the CERN Injector Chain for different ions
+using simple space charge scaling
 - by Elias Waagaard 
 """
 import pandas as pd
