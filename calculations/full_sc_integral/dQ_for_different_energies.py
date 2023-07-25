@@ -87,6 +87,23 @@ if __name__ == '__main__':
     fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     fig.savefig('output/Pb_tune_shifts_over_gammas.png', dpi=250)
 
+    # Create a dictionary to hold the data
+    data_dict_Pb = {
+        'LEIR_gamma': LEIR_gammas_Pb,
+        'LEIR_dQ_x': Q_array_Pb[:, 0],
+        'LEIR_dQ_y': Q_array_Pb[:, 1],
+        'PS_gamma': PS_gammas_Pb,
+        'PS_dQ_x': Q_array_Pb[:, 2],
+        'PS_dQ_y': Q_array_Pb[:, 3],
+        'SPS_gamma': SPS_gammas_Pb,
+        'SPS_dQ_x': Q_array_Pb[:, 4],
+        'SPS_dQ_y': Q_array_Pb[:, 5],
+    }
+    
+    # Create the DataFrame from the dictionary
+    df_Pb = pd.DataFrame(data_dict_Pb)
+    df_Pb.to_csv('output/Pb_tune_shifts_over_gammas.csv')
+
     #### O ions ####
     Nbs_O = np.array([110e8, 88e8, 50e8])  # same intensities as from Bartosik and John 2021 report: (https://cds.cern.ch/record/2749453)
     
@@ -112,3 +129,20 @@ if __name__ == '__main__':
     #ax33.set_xscale('log')
     fig2.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     fig2.savefig('output/O_tune_shifts_over_gammas.png', dpi=250)
+    
+    # Create a dictionary to hold the data
+    data_dict_O = {
+        'LEIR_gamma': LEIR_gammas_O,
+        'LEIR_dQ_x': Q_array_O[:, 0],
+        'LEIR_dQ_y': Q_array_O[:, 1],
+        'PS_gamma': PS_gammas_O,
+        'PS_dQ_x': Q_array_O[:, 2],
+        'PS_dQ_y': Q_array_O[:, 3],
+        'SPS_gamma': SPS_gammas_O,
+        'SPS_dQ_x': Q_array_O[:, 4],
+        'SPS_dQ_y': Q_array_O[:, 5],
+    }
+    
+    # Create the DataFrame from the dictionary
+    df_O = pd.DataFrame(data_dict_O)
+    df_O.to_csv('output/O_tune_shifts_over_gammas.csv')
