@@ -5,12 +5,17 @@ Simulation model of the CERN Injector Chain for different ions
 solving for full space charge (SC) lattice integral 
 - by Elias Waagaard 
 """
+from pathlib import Path
 import pandas as pd
 import numpy as np
 from scipy import constants
 import xtrack as xt
 import xpart as xp
 from collections import defaultdict
+
+# Calculate the absolute path to the data folder relative to the module's location
+data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
+output_folder = Path(__file__).resolve().parent.joinpath('../output').absolute()
 
 class InjectorChain_full_SC:
     """
@@ -19,16 +24,15 @@ class InjectorChain_full_SC:
     - full space charge integrals in LEIR, PS and SPS 
     """
     def __init__(self, ion_type, 
-                 ion_data, 
                  nPulsesLEIR = 1,
                  LEIR_bunches = 2,
                  PS_splitting = 2,
                  account_for_SPS_transmission=True,
                  LEIR_PS_strip=False,
-                 save_path_csv = '../output/csv_tables'
+                 save_path_csv = '{}/csv_tables'.format(output_folder)
                  ):
         
-        self.full_ion_data = ion_data
+        self.full_ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), sep=';', header=0, index_col=0).T
         self.LEIR_PS_strip = LEIR_PS_strip
         self.account_for_SPS_transmission = account_for_SPS_transmission
 
@@ -158,7 +162,7 @@ class InjectorChain_full_SC:
         ################## Find current tune shifts from xtrack sequences ##################    
         # LEIR 
         self.particle0_LEIR = xp.Particles(mass0 = 1e9 * self.m0_GeV, q0 = self.Q0_LEIR, gamma0 = self.gamma0_LEIR_inj)
-        self.line_LEIR_Pb = xt.Line.from_json('../data/xtrack_sequences/LEIR_2021_Pb_ions_with_RF.json')
+        self.line_LEIR_Pb = xt.Line.from_json('{}/xtrack_sequences/LEIR_2021_Pb_ions_with_RF.json'.format(data_folder))
         self.line_LEIR_Pb.reference_particle = self.particle0_LEIR
         self.line_LEIR_Pb.build_tracker()
         self.twiss0_LEIR = self.line_LEIR_Pb.twiss()
@@ -171,11 +175,10 @@ class InjectorChain_full_SC:
                                                                                                              )
         self.dQx0_LEIR, self.dQy0_LEIR = self.calculate_SC_tuneshift(self.Nb0_LEIR, self.particle0_LEIR, self.sigma_z_LEIR, 
                                                  self.twiss0_LEIR_interpolated, self.sigma_x0_LEIR, self.sigma_y0_LEIR)
-        #print("LEIR Pb: dQx = {}, dQy = {}".format(self.dQx0_LEIR, self.dQy0_LEIR))
         
         # PS 
         self.particle0_PS = xp.Particles(mass0 = 1e9 * self.m0_GeV, q0 = self.Q0_PS, gamma0 = self.gamma0_PS_inj)
-        self.line_PS_Pb = xt.Line.from_json('../data/xtrack_sequences/PS_2022_Pb_ions_matched_with_RF.json')
+        self.line_PS_Pb = xt.Line.from_json('{}/xtrack_sequences/PS_2022_Pb_ions_matched_with_RF.json'.format(data_folder))
         self.line_PS_Pb.reference_particle = self.particle0_PS
         self.line_PS_Pb.build_tracker()
         self.twiss0_PS = self.line_PS_Pb.twiss()
@@ -188,11 +191,10 @@ class InjectorChain_full_SC:
                                                                                                              )
         self.dQx0_PS, self.dQy0_PS = self.calculate_SC_tuneshift(self.Nb0_PS, self.particle0_PS, self.sigma_z_PS, 
                                                  self.twiss0_PS_interpolated, self.sigma_x0_PS, self.sigma_y0_PS)
-        #print("PS Pb: dQx = {}, dQy = {}".format(self.dQx0_PS, self.dQy0_PS))
         
         # SPS 
         self.particle0_SPS = xp.Particles(mass0 = 1e9 * self.m0_GeV, q0 = self.Q0_SPS, gamma0 = self.gamma0_SPS_inj)
-        self.line_SPS_Pb = xt.Line.from_json('../data/xtrack_sequences/SPS_2021_Pb_ions_matched_with_RF.json')
+        self.line_SPS_Pb = xt.Line.from_json('{}/xtrack_sequences/SPS_2021_Pb_ions_matched_with_RF.json'.format(data_folder))
         self.line_SPS_Pb.reference_particle = self.particle0_SPS
         self.line_SPS_Pb.build_tracker()
         self.twiss0_SPS = self.line_SPS_Pb.twiss()
@@ -205,10 +207,8 @@ class InjectorChain_full_SC:
                                                                                                              )
         self.dQx0_SPS, self.dQy0_SPS = self.calculate_SC_tuneshift(self.Nb0_SPS, self.particle0_SPS, self.sigma_z_SPS, 
                                                  self.twiss0_SPS_interpolated, self.sigma_x0_SPS, self.sigma_y0_SPS)
-        #print("SPS Pb: dQx = {}, dQy = {}".format(self.dQx0_SPS, self.dQy0_SPS))
         
     
-
     def beta(self, gamma):
         """
         Relativistic beta factor from gamma factor 
@@ -293,6 +293,81 @@ class InjectorChain_full_SC:
         return dQx, dQy
     
     
+    def calculate_SC_tuneshift_for_LEIR(self, Nb, gamma, sigma_z):
+        """
+        Finds the SC-induced max detuning dQx and dQy for LEIR for given beam parameters 
+        assuming for now that emittances and momentum spread delta are identical
+        Input: arrays with bunch intensities, gammas and bunch length for LEIR
+        """ 
+        #### LEIR ####
+        particle_LEIR = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_LEIR, gamma0 = gamma)
+        line_LEIR = self.line_LEIR_Pb.copy()
+        line_LEIR.reference_particle = particle_LEIR
+        line_LEIR.build_tracker()
+        twiss_LEIR = line_LEIR.twiss()
+        twiss_LEIR_interpolated, sigma_x_LEIR, sigma_y_LEIR = self.interpolate_Twiss_table(twiss_LEIR, 
+                                                                                            line_LEIR, 
+                                                                                            particle_LEIR, 
+                                                                                            self.ex_LEIR, 
+                                                                                            self.ey_LEIR,
+                                                                                            self.delta_LEIR,
+                                                                                            )
+        dQx_LEIR, dQy_LEIR = self.calculate_SC_tuneshift(Nb, particle_LEIR, sigma_z, 
+                         twiss_LEIR_interpolated, sigma_x_LEIR, sigma_y_LEIR)
+        
+        return dQx_LEIR, dQy_LEIR
+
+
+    def calculate_SC_tuneshift_for_PS(self, Nb, gamma, sigma_z):
+        """
+        Finds the SC-induced max detuning dQx and dQy for PS for given beam parameters 
+        assuming for now that emittances and momentum spread delta are identical
+        Input: arrays with bunch intensities, gammas and bunch length for PS
+        """ 
+        #### PS ####
+        particle_PS = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_PS, gamma0 = gamma)
+        line_PS = self.line_PS_Pb.copy()
+        line_PS.reference_particle = particle_PS
+        line_PS.build_tracker()
+        twiss_PS = line_PS.twiss()
+        twiss_PS_interpolated, sigma_x_PS, sigma_y_PS = self.interpolate_Twiss_table(twiss_PS, 
+                                                                                            line_PS, 
+                                                                                            particle_PS, 
+                                                                                            self.ex_PS, 
+                                                                                            self.ey_PS,
+                                                                                            self.delta_PS,
+                                                                                            )
+        dQx_PS, dQy_PS = self.calculate_SC_tuneshift(Nb, particle_PS, sigma_z, 
+                         twiss_PS_interpolated, sigma_x_PS, sigma_y_PS)
+        
+        return dQx_PS, dQy_PS        
+    
+    
+    def calculate_SC_tuneshift_for_SPS(self, Nb, gamma, sigma_z):
+        """
+        Finds the SC-induced max detuning dQx and dQy for SPS for given beam parameters 
+        assuming for now that emittances and momentum spread delta are identical
+        Input: arrays with bunch intensities, gammas and bunch length for SPS 
+        """ 
+        #### SPS ####
+        particle_SPS = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_SPS, gamma0 = gamma)
+        line_SPS = self.line_SPS_Pb.copy()
+        line_SPS.reference_particle = particle_SPS
+        line_SPS.build_tracker()
+        twiss_SPS = line_SPS.twiss()
+        twiss_SPS_interpolated, sigma_x_SPS, sigma_y_SPS = self.interpolate_Twiss_table(twiss_SPS, 
+                                                                                            line_SPS, 
+                                                                                            particle_SPS, 
+                                                                                            self.ex_SPS, 
+                                                                                            self.ey_SPS,
+                                                                                            self.delta_SPS,
+                                                                                            )
+        dQx_SPS, dQy_SPS = self.calculate_SC_tuneshift(Nb, particle_SPS, sigma_z, 
+                         twiss_SPS_interpolated, sigma_x_SPS, sigma_y_SPS)
+        
+        return dQx_SPS, dQy_SPS     
+    
+    
     def maxIntensity_from_SC_integral(self, dQx_max, dQy_max, particle_ref, sigma_z, twiss_xtrack_interpolated, sigma_x, sigma_y):
         """
         For a given max tuneshift, calculate the maximum bunch intensity 
@@ -314,36 +389,13 @@ class InjectorChain_full_SC:
         return Nb_x_max, Nb_y_max
     
     ######################################################################
+     
+    ######################## IBS part ####################################
     
     
-    def linearIntensityLimit(self, m, gamma, Nb_0, charge_0, m_0, gamma_0, fully_stripped=True):
-        """
-        Linear intensity limit for new ion species for given bunch intensity 
-        Nb_0 and parameters gamma_0, charge0, m_0 from reference ion species - assuming
-        that space charge stays constant, and that
-        emittance and bunch length are constant for all ion species
-        """
-        # Specify if fully stripped ion or not
-        if fully_stripped:
-            charge = self.Z
-        else:
-            charge = self.Q
-        beta_0 = self.beta(gamma_0)
-        beta = self.beta(gamma)
-        linearIntensityFactor = (m/m_0)*(charge_0/charge)**2*(beta/beta_0)*(gamma/gamma_0)**2   
-        
-        if self.debug_mode:
-            print(f"SPS intensity limit. Type: {self.ion_type}")
-            print("Fully stripped: {}".format(fully_stripped))
-            print("Q = {}, Z = {}".format(self.Q, self.Z))
-            print("Nb_0 = {:.2e}".format(Nb_0))
-            print("m = {:.2e} GeV, m0 = {:.2e} GeV".format(m, m_0))
-            print("charge = {:.1f}, charge_0 = {:.1f}".format(charge, charge_0))
-            print("beta = {:.5f}, beta_0 = {:.5f}".format(beta, beta_0))
-            print("gamma = {:.3f}, gamma_0 = {:.3f}".format(gamma, gamma_0))
-            print('Linear intensity factor: {:.3f}\n'.format(linearIntensityFactor))
-        return Nb_0*linearIntensityFactor 
     
+    
+    ######################################################################
     
     def LEIR(self):
         """
@@ -354,7 +406,7 @@ class InjectorChain_full_SC:
         # Estimate gamma at extraction
         self.gamma_LEIR_inj = (self.mass_GeV + self.E_kin_per_A_LEIR_inj * self.A)/self.mass_GeV
         self.gamma_LEIR_extr =  np.sqrt(
-                                1 + ((self.Q / 54) / (self.mass_GeV/self.m0_GeV))**2
+                                1 + ((self.Q_LEIR / 54) / (self.mass_GeV/self.m0_GeV))**2
                                 * (self.gamma0_LEIR_extr**2 - 1)
                                 )
                  
@@ -394,7 +446,7 @@ class InjectorChain_full_SC:
         # Estimate gamma at extraction
         self.gamma_PS_inj =  self.gamma_LEIR_extr
         self.gamma_PS_extr =  np.sqrt(
-                                1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
+                                1 + ((self.Q_PS / 54) / (self.mass_GeV/self.m0_GeV))**2
                                 * (self.gamma0_PS_extr**2 - 1)
                                 )
         
@@ -435,7 +487,7 @@ class InjectorChain_full_SC:
         # Calculate gamma at injection, simply scaling with the kinetic energy per nucleon as of today
          # consider same magnetic rigidity at PS extraction for all ion species: Brho = P/Q, P = m*gamma*beta*c
         self.gamma_SPS_inj =  np.sqrt(
-                                1 + (((self.Z if self.LEIR_PS_strip else self.Q) / 54) / (self.mass_GeV/self.m0_GeV))**2
+                                1 + ((self.Q_PS / 54) / (self.mass_GeV/self.m0_GeV))**2
                                 * (self.gamma0_SPS_inj**2 - 1)
                             )
         self.gamma_SPS_extr = (self.mass_GeV + self.E_kin_per_A_SPS_extr * self.A)/self.mass_GeV
@@ -467,4 +519,13 @@ class InjectorChain_full_SC:
         self.Nb_SPS_extr = min(self.Nb_x_max_SPS, self.Nb_y_max_SPS)  # pick the limiting intensity
         self.Nq_SPS_extr = self.Nb_SPS_extr*self.Q_SPS  # number of outgoing charges, before any stripping
         self.limiting_plane_SPS = 'X' if self.Nb_x_max_SPS < self.Nb_y_max_SPS else 'Y' # flag to identify if x or y plane is limiting
+    
+    
+    def simulate_injection(self):
+        """
+        Simulate injection and calculate injection energies for LEIR, PS and SPS 
+        """
+        self.LEIR()
+        self.PS()
+        self.SPS()
     
