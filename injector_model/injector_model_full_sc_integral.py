@@ -33,23 +33,23 @@ class InjectorChain_full_SC:
         self.account_for_SPS_transmission = account_for_SPS_transmission
 
         ###### Load standard beam parameters ##### - used from John and Bartosik, 2021 (https://cds.cern.ch/record/2749453)
-        self.Nb0_leir = 1e9
-        self.ex_leir = 0.4e-6
-        self.ey_leir = 0.4e-6
-        self.sigma_z_leir = 4.256
-        self.delta_leir = 1.18e-3
+        self.Nb0_LEIR = 1e9
+        self.ex_LEIR = 0.4e-6
+        self.ey_LEIR = 0.4e-6
+        self.sigma_z_LEIR = 4.256
+        self.delta_LEIR = 1.18e-3
         
-        self.Nb0_ps = 8.1e8
-        self.ex_ps = 0.8e-6
-        self.ey_ps = 0.5e-6
-        self.sigma_z_ps = 4.74
-        self.delta_ps = 0.63e-3
+        self.Nb0_PS = 8.1e8
+        self.ex_PS = 0.8e-6
+        self.ey_PS = 0.5e-6
+        self.sigma_z_PS = 4.74
+        self.delta_PS = 0.63e-3
         
-        self.Nb0_sps = 3.5e8
-        self.ex_sps = 1.3e-6
-        self.ey_sps = 0.9e-6
-        self.sigma_z_sps = 0.23
-        self.delta_sps = 1e-3
+        self.Nb0_SPS = 3.5e8
+        self.ex_SPS = 1.3e-6
+        self.ey_SPS = 0.9e-6
+        self.sigma_z_SPS = 0.23
+        self.delta_SPS = 1e-3
         
         ####################################
         
@@ -157,55 +157,55 @@ class InjectorChain_full_SC:
     
         ################## Find current tune shifts from xtrack sequences ##################    
         # LEIR 
-        self.particle0_leir = xp.Particles(mass0 = 1e9 * self.m0_GeV, q0 = self.Q0_LEIR, gamma0 = self.gamma0_LEIR_inj)
-        self.line_leir_Pb = xt.Line.from_json('../data/xtrack_sequences/LEIR_2021_Pb_ions_with_RF.json')
-        self.line_leir_Pb.reference_particle = self.particle0_leir
-        self.line_leir_Pb.build_tracker()
-        self.twiss0_leir = self.line_leir_Pb.twiss()
-        self.twiss0_leir_interpolated, self.sigma_x0_leir, self.sigma_y0_leir = self.interpolate_Twiss_table(self.twiss0_leir, 
-                                                                                                             self.line_leir_Pb, 
-                                                                                                             self.particle0_leir, 
-                                                                                                             self.ex_leir, 
-                                                                                                             self.ey_leir,
-                                                                                                             self.delta_leir,
+        self.particle0_LEIR = xp.Particles(mass0 = 1e9 * self.m0_GeV, q0 = self.Q0_LEIR, gamma0 = self.gamma0_LEIR_inj)
+        self.line_LEIR_Pb = xt.Line.from_json('../data/xtrack_sequences/LEIR_2021_Pb_ions_with_RF.json')
+        self.line_LEIR_Pb.reference_particle = self.particle0_LEIR
+        self.line_LEIR_Pb.build_tracker()
+        self.twiss0_LEIR = self.line_LEIR_Pb.twiss()
+        self.twiss0_LEIR_interpolated, self.sigma_x0_LEIR, self.sigma_y0_LEIR = self.interpolate_Twiss_table(self.twiss0_LEIR, 
+                                                                                                             self.line_LEIR_Pb, 
+                                                                                                             self.particle0_LEIR, 
+                                                                                                             self.ex_LEIR, 
+                                                                                                             self.ey_LEIR,
+                                                                                                             self.delta_LEIR,
                                                                                                              )
-        self.dQx0_leir, self.dQy0_leir = self.calculate_SC_tuneshift(self.Nb0_leir, self.particle0_leir, self.sigma_z_leir, 
-                                                 self.twiss0_leir_interpolated, self.sigma_x0_leir, self.sigma_y0_leir)
-        #print("LEIR Pb: dQx = {}, dQy = {}".format(self.dQx0_leir, self.dQy0_leir))
+        self.dQx0_LEIR, self.dQy0_LEIR = self.calculate_SC_tuneshift(self.Nb0_LEIR, self.particle0_LEIR, self.sigma_z_LEIR, 
+                                                 self.twiss0_LEIR_interpolated, self.sigma_x0_LEIR, self.sigma_y0_LEIR)
+        #print("LEIR Pb: dQx = {}, dQy = {}".format(self.dQx0_LEIR, self.dQy0_LEIR))
         
         # PS 
-        self.particle0_ps = xp.Particles(mass0 = 1e9 * self.m0_GeV, q0 = self.Q0_PS, gamma0 = self.gamma0_PS_inj)
-        self.line_ps_Pb = xt.Line.from_json('../data/xtrack_sequences/PS_2022_Pb_ions_matched_with_RF.json')
-        self.line_ps_Pb.reference_particle = self.particle0_ps
-        self.line_ps_Pb.build_tracker()
-        self.twiss0_ps = self.line_ps_Pb.twiss()
-        self.twiss0_ps_interpolated, self.sigma_x0_ps, self.sigma_y0_ps = self.interpolate_Twiss_table(self.twiss0_ps, 
-                                                                                                             self.line_ps_Pb, 
-                                                                                                             self.particle0_ps, 
-                                                                                                             self.ex_ps, 
-                                                                                                             self.ey_ps,
-                                                                                                             self.delta_ps,
+        self.particle0_PS = xp.Particles(mass0 = 1e9 * self.m0_GeV, q0 = self.Q0_PS, gamma0 = self.gamma0_PS_inj)
+        self.line_PS_Pb = xt.Line.from_json('../data/xtrack_sequences/PS_2022_Pb_ions_matched_with_RF.json')
+        self.line_PS_Pb.reference_particle = self.particle0_PS
+        self.line_PS_Pb.build_tracker()
+        self.twiss0_PS = self.line_PS_Pb.twiss()
+        self.twiss0_PS_interpolated, self.sigma_x0_PS, self.sigma_y0_PS = self.interpolate_Twiss_table(self.twiss0_PS, 
+                                                                                                             self.line_PS_Pb, 
+                                                                                                             self.particle0_PS, 
+                                                                                                             self.ex_PS, 
+                                                                                                             self.ey_PS,
+                                                                                                             self.delta_PS,
                                                                                                              )
-        self.dQx0_ps, self.dQy0_ps = self.calculate_SC_tuneshift(self.Nb0_ps, self.particle0_ps, self.sigma_z_ps, 
-                                                 self.twiss0_ps_interpolated, self.sigma_x0_ps, self.sigma_y0_ps)
-        #print("PS Pb: dQx = {}, dQy = {}".format(self.dQx0_ps, self.dQy0_ps))
+        self.dQx0_PS, self.dQy0_PS = self.calculate_SC_tuneshift(self.Nb0_PS, self.particle0_PS, self.sigma_z_PS, 
+                                                 self.twiss0_PS_interpolated, self.sigma_x0_PS, self.sigma_y0_PS)
+        #print("PS Pb: dQx = {}, dQy = {}".format(self.dQx0_PS, self.dQy0_PS))
         
         # SPS 
-        self.particle0_sps = xp.Particles(mass0 = 1e9 * self.m0_GeV, q0 = self.Q0_SPS, gamma0 = self.gamma0_SPS_inj)
-        self.line_sps_Pb = xt.Line.from_json('../data/xtrack_sequences/SPS_2021_Pb_ions_matched_with_RF.json')
-        self.line_sps_Pb.reference_particle = self.particle0_sps
-        self.line_sps_Pb.build_tracker()
-        self.twiss0_sps = self.line_sps_Pb.twiss()
-        self.twiss0_sps_interpolated, self.sigma_x0_sps, self.sigma_y0_sps = self.interpolate_Twiss_table(self.twiss0_sps, 
-                                                                                                             self.line_sps_Pb, 
-                                                                                                             self.particle0_sps, 
-                                                                                                             self.ex_sps, 
-                                                                                                             self.ey_sps,
-                                                                                                             self.delta_sps,
+        self.particle0_SPS = xp.Particles(mass0 = 1e9 * self.m0_GeV, q0 = self.Q0_SPS, gamma0 = self.gamma0_SPS_inj)
+        self.line_SPS_Pb = xt.Line.from_json('../data/xtrack_sequences/SPS_2021_Pb_ions_matched_with_RF.json')
+        self.line_SPS_Pb.reference_particle = self.particle0_SPS
+        self.line_SPS_Pb.build_tracker()
+        self.twiss0_SPS = self.line_SPS_Pb.twiss()
+        self.twiss0_SPS_interpolated, self.sigma_x0_SPS, self.sigma_y0_SPS = self.interpolate_Twiss_table(self.twiss0_SPS, 
+                                                                                                             self.line_SPS_Pb, 
+                                                                                                             self.particle0_SPS, 
+                                                                                                             self.ex_SPS, 
+                                                                                                             self.ey_SPS,
+                                                                                                             self.delta_SPS,
                                                                                                              )
-        self.dQx0_sps, self.dQy0_sps = self.calculate_SC_tuneshift(self.Nb0_sps, self.particle0_sps, self.sigma_z_sps, 
-                                                 self.twiss0_sps_interpolated, self.sigma_x0_sps, self.sigma_y0_sps)
-        #print("SPS Pb: dQx = {}, dQy = {}".format(self.dQx0_sps, self.dQy0_sps))
+        self.dQx0_SPS, self.dQy0_SPS = self.calculate_SC_tuneshift(self.Nb0_SPS, self.particle0_SPS, self.sigma_z_SPS, 
+                                                 self.twiss0_SPS_interpolated, self.sigma_x0_SPS, self.sigma_y0_SPS)
+        #print("SPS Pb: dQx = {}, dQy = {}".format(self.dQx0_SPS, self.dQy0_SPS))
         
     
 
@@ -345,7 +345,7 @@ class InjectorChain_full_SC:
         return Nb_0*linearIntensityFactor 
     
     
-    def leir(self):
+    def LEIR(self):
         """
         Calculate gamma at entrance and exit of the LEIR and transmitted bunch intensity 
         using known Pb ion values from LIU report on 
@@ -359,31 +359,35 @@ class InjectorChain_full_SC:
                                 )
                  
         # Define particle object for LEIR 
-        particle_LEIR = xp.Particles(mass0 = 1e9 * self.mass_GeV, 
-                                     q0 = self.Q_leir, 
+        self.particle_LEIR = xp.Particles(mass0 = 1e9 * self.mass_GeV, 
+                                     q0 = self.Q_LEIR, 
                                      gamma0 = self.gamma_LEIR_inj
                                      )
         
         # Twiss and beam sizes sigma 
-        
+        self.line_LEIR = self.line_LEIR_Pb.copy()
+        self.line_LEIR.reference_particle = self.particle_LEIR
+        self.line_LEIR.build_tracker()
+        self.twiss_LEIR = self.line_LEIR.twiss()
+        self.twiss_LEIR_interpolated, self.sigma_x_LEIR, self.sigma_y_LEIR = self.interpolate_Twiss_table(self.twiss_LEIR, 
+                                                                                                             self.line_LEIR, 
+                                                                                                             self.particle_LEIR, 
+                                                                                                             self.ex_LEIR, 
+                                                                                                             self.ey_LEIR,
+                                                                                                             self.delta_LEIR,
+                                                                                                             )
         # Maximum intensity for space charge limit - keep same tune shift as today
-        self.Nb_x_max_leir, self.Nb_y_max_leir = self.maxIntensity_from_SC_integral(self.dQx0_leir, self.dQy0_leir,
-                                                                                    particle_LEIR, 
-                                                                                    
-                                                                                    
-                                                                         """           
-                                                                         self.particle0_leir, self.sigma_z_leir,
-                                                                         self.twiss0_leir_interpolated, self.sigma_x0_leir, 
-                                                                         self.sigma_y0_leir
-                                                                         ) 
-                                                                            """
-        self.Nb_LEIR_extr = min(self.Nb_x_max_leir, self.Nb_y_max_leir)  # pick the limiting intensity 
+        self.Nb_x_max_LEIR, self.Nb_y_max_LEIR = self.maxIntensity_from_SC_integral(self.dQx0_LEIR, self.dQy0_LEIR,
+                                                                                    self.particle_LEIR, self.sigma_z_LEIR,
+                                                                                    self.twiss_LEIR_interpolated, self.sigma_x_LEIR, 
+                                                                                    self.sigma_y_LEIR)
+
+        self.Nb_LEIR_extr = min(self.Nb_x_max_LEIR, self.Nb_y_max_LEIR)  # pick the limiting intensity
         self.Nq_LEIR_extr = self.Nb_LEIR_extr*self.Q_LEIR  # number of outgoing charges, before any stripping
-        
-        # MAYBE ADD FLAG ON WHICH PLANE IS LIMITING? 
+        self.limiting_plane_LEIR = 'X' if self.Nb_x_max_LEIR < self.Nb_y_max_LEIR else 'Y' # flag to identify if x or y plane is limiting
 
     
-    def ps(self):
+    def PS(self):
         """
         Calculate gamma at entrance and exit of the PS and transmitted bunch intensity 
         """
@@ -394,13 +398,36 @@ class InjectorChain_full_SC:
                                 * (self.gamma0_PS_extr**2 - 1)
                                 )
         
-        Nb_x_max_ps, Nb_y_max_ps = inj.maxIntensity_from_SC_integral(inj.dQx0_ps, inj.dQy0_ps, 
-                                                                         inj.particle0_ps, inj.sigma_z_ps,
-                                                                         inj.twiss0_ps_interpolated, inj.sigma_x0_ps, 
-                                                                         inj.sigma_y0_ps
-                                                                         ) 
+        # Define particle object for PS 
+        self.particle_PS = xp.Particles(mass0 = 1e9 * self.mass_GeV, 
+                                     q0 = self.Q_PS, 
+                                     gamma0 = self.gamma_PS_inj
+                                     )
+        
+        # Twiss and beam sizes sigma 
+        self.line_PS = self.line_PS_Pb.copy()
+        self.line_PS.reference_particle = self.particle_PS
+        self.line_PS.build_tracker()
+        self.twiss_PS = self.line_PS.twiss()
+        self.twiss_PS_interpolated, self.sigma_x_PS, self.sigma_y_PS = self.interpolate_Twiss_table(self.twiss_PS, 
+                                                                                                             self.line_PS, 
+                                                                                                             self.particle_PS, 
+                                                                                                             self.ex_PS, 
+                                                                                                             self.ey_PS,
+                                                                                                             self.delta_PS,
+                                                                                                             )
+        # Maximum intensity for space charge limit - keep same tune shift as today
+        self.Nb_x_max_PS, self.Nb_y_max_PS = self.maxIntensity_from_SC_integral(self.dQx0_PS, self.dQy0_PS,
+                                                                                    self.particle_PS, self.sigma_z_PS,
+                                                                                    self.twiss_PS_interpolated, self.sigma_x_PS, 
+                                                                                    self.sigma_y_PS)
+
+        self.Nb_PS_extr = min(self.Nb_x_max_PS, self.Nb_y_max_PS)  # pick the limiting intensity
+        self.Nq_PS_extr = self.Nb_PS_extr*self.Q_PS  # number of outgoing charges, before any stripping
+        self.limiting_plane_PS = 'X' if self.Nb_x_max_PS < self.Nb_y_max_PS else 'Y' # flag to identify if x or y plane is limiting
+
     
-    def sps(self):
+    def SPS(self):
         """
         Calculate gamma at entrance and exit of the SPS, and transmitted bunch intensity 
         Space charge limit comes from gamma at injection
@@ -413,19 +440,31 @@ class InjectorChain_full_SC:
                             )
         self.gamma_SPS_extr = (self.mass_GeV + self.E_kin_per_A_SPS_extr * self.A)/self.mass_GeV
         
+        # Define particle object for SPS 
+        self.particle_SPS = xp.Particles(mass0 = 1e9 * self.mass_GeV, 
+                                     q0 = self.Q_SPS, 
+                                     gamma0 = self.gamma_SPS_inj
+                                     )
         
-        """
-        # Calculate outgoing intensity from linear scaling 
-        self.Nb_SPS_extr = self.linearIntensityLimit(
-                                               m = self.mass_GeV, 
-                                               gamma = self.gamma_SPS_inj,  
-                                               Nb_0 = self.Nb0_SPS_extr, # what we can successfully accelerate today
-                                               charge_0 = self.Q0_SPS, 
-                                               m_0 = self.m0_GeV,  
-                                               gamma_0 = self.gamma0_SPS_inj,  # use gamma at extraction
-                                               fully_stripped=True
-                                               )
-    
-        self.Nq_SPS_extr = self.Nb_SPS_extr*self.Z  # number of outgoing charges
-        """
+        # Twiss and beam sizes sigma 
+        self.line_SPS = self.line_SPS_Pb.copy()
+        self.line_SPS.reference_particle = self.particle_SPS
+        self.line_SPS.build_tracker()
+        self.twiss_SPS = self.line_SPS.twiss()
+        self.twiss_SPS_interpolated, self.sigma_x_SPS, self.sigma_y_SPS = self.interpolate_Twiss_table(self.twiss_SPS, 
+                                                                                                             self.line_SPS, 
+                                                                                                             self.particle_SPS, 
+                                                                                                             self.ex_SPS, 
+                                                                                                             self.ey_SPS,
+                                                                                                             self.delta_SPS,
+                                                                                                             )
+        # Maximum intensity for space charge limit - keep same tune shift as today
+        self.Nb_x_max_SPS, self.Nb_y_max_SPS = self.maxIntensity_from_SC_integral(self.dQx0_SPS, self.dQy0_SPS,
+                                                                                    self.particle_SPS, self.sigma_z_SPS,
+                                                                                    self.twiss_SPS_interpolated, self.sigma_x_SPS, 
+                                                                                    self.sigma_y_SPS)
+
+        self.Nb_SPS_extr = min(self.Nb_x_max_SPS, self.Nb_y_max_SPS)  # pick the limiting intensity
+        self.Nq_SPS_extr = self.Nb_SPS_extr*self.Q_SPS  # number of outgoing charges, before any stripping
+        self.limiting_plane_SPS = 'X' if self.Nb_x_max_SPS < self.Nb_y_max_SPS else 'Y' # flag to identify if x or y plane is limiting
     
