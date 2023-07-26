@@ -19,6 +19,11 @@ python -m pip install -e injector_model
 ```
 Then the different scripts in the folder `calculations` can be executed. 
 
+In order to use the IBS module functions from M. Zampetakis on this [GitHub repository](https://github.com/MichZampetakis/IBS_for_Xsuite), which is a submodule in this repository, install the package in the Python virtual environment.
+```
+python -m pip install -e IBS_for_Xsuite/
+```
+
 ### Usage 
 
 - The Python class `CERN_Injector_Chain()` contained in `Injector_Chain.py` aims at modelling different ion species throughout the CERN accelerators. 
