@@ -81,4 +81,4 @@ class TestClass_injectorModel_linearSpaceCharge:
         df_no_ps_splitting_and_ps_leir_strip = injector_chain4.calculate_LHC_bunch_intensity_all_ion_species()
         assert np.all(np.isclose(ref_val['No_PS_split_and_LEIR_PS_strip'].values, 
                           df_no_ps_splitting_and_ps_leir_strip['LHC_chargesPerBunch'].values, rtol=1e-2))   
-                        
+
