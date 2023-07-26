@@ -28,7 +28,7 @@ class InjectionEnergies:
         self.LEIR_PS_strip = LEIR_PS_strip  # if stripping occurs between LEIR-PS or PS-SPS (as today)
 
         # Magnetic rigidity of different accelerators 
-        self.Linac3_E_per_u = 4200000.0 # [eV/nucleon] at extraction
+        self.Linac3_E_per_u = 4.2e6  # [eV/nucleon] at extraction
         self.LEIR_Brho  = 4.8 # [Tm] @extraction
         self.PS_B       = 1.2368 # [T] - magnetic field in PS, from Heiko Damerau
         self.PS_MinB    = 383 * 1e-4 # [T] - minimum magnetic field in PS, (Gauss to Tesla) from Heiko Damerau
@@ -69,6 +69,18 @@ class InjectionEnergies:
         p = Brho * q * constants.c  # in eV/c
         return p
     
+    
+    def calcMomentum_from_gamma(self, gamma, q):
+        """
+        Calculates mometum from relativistic gamma and charge (number of elementary charges) 
+        considering the electrons that have been stripped 
+        """
+        mass_in_u_stripped = self.m_ion_in_u - (self.Z - q) * constants.physical_constants['electron mass in u'][0] # subtract electrons
+        mass_in_eV_stripped =  mass_in_u_stripped * constants.physical_constants['atomic mass unit-electron volt relationship'][0]
+        beta = np.sqrt(1 - 1/gamma**2)
+        p = gamma * mass_in_eV_stripped * beta # in eV/c, so as mass is already in eV/c^2 then a factor c is not needed 
+        return p
+    
 
     def calcBrho(self, p, q):
         """
@@ -95,21 +107,29 @@ class InjectionEnergies:
         """
         ############ LEIR - still not stripped ############
         # LEIR injection
+        q_LEIR = self.Q_low
         self.E_kin_per_u_LEIR_inj = self.Linac3_E_per_u
-        self.gamma_LEIR_inj, self.beta_LEIR_inj = self.calculate_gamma_and_beta(self.Q_low, self.Linac3_E_per_u) # injection, same E_kin for all ions
+        self.gamma_LEIR_inj, self.beta_LEIR_inj = self.calculate_gamma_and_beta(q_LEIR, self.Linac3_E_per_u) # injection, same E_kin for all ions
+        self.p_LEIR_inj = self.calcMomentum_from_gamma(self.gamma_LEIR_inj, q_LEIR)
         
-        # LEIR extraction
-        self.p_LEIR_extr = self.calcMomentum(self.LEIR_Brho, self.Q_low)
-        self.p_LEIR_extr_proton_equiv = self.p_LEIR_extr / self.Q_low
-        self.E_kin_per_u_LEIR_extr = self.calcKineticEnergyPerNucleon(self.p_LEIR_extr, self.Q_low)
-        self.gamma_LEIR_extr, self.beta_LEIR_extr = self.calculate_gamma_and_beta(self.Q_low, self.E_kin_per_u_LEIR_extr)
+        # LEIR extraction        
+        self.p_LEIR_extr = self.calcMomentum(self.LEIR_Brho, q_LEIR)
+        self.p_LEIR_extr_proton_equiv = self.p_LEIR_extr / q_LEIR
+        self.E_kin_per_u_LEIR_extr = self.calcKineticEnergyPerNucleon(self.p_LEIR_extr, q_LEIR)
+        self.gamma_LEIR_extr, self.beta_LEIR_extr = self.calculate_gamma_and_beta(q_LEIR, self.E_kin_per_u_LEIR_extr)
 
         ############ PS - check if stripped ############
         # PS injection - p_PS_inj same as incoming momentum from LEIR extraction, but Brho might change if we have stripping  
         q_PS = self.Q_high if self.LEIR_PS_strip else self.Q_low
-        self.p_PS_inj = self.p_LEIR_extr
+        
+        # Assume that gamma remains identical from LEIR extraction to PS injection 
+        self.gamma_PS_inj = self.gamma_LEIR_extr
+        self.beta_PS_inj = self.beta_LEIR_extr
+        self.p_PS_inj = self.calcMomentum_from_gamma(self.gamma_PS_inj, q_PS)
+        self.E_kin_per_u_PS_inj = self.calcKineticEnergyPerNucleon(self.p_PS_inj, q_PS)
         self.p_PS_inj_proton_equiv = self.p_PS_inj / q_PS
         self.Brho_PS_inj = self.calcBrho(self.p_PS_inj, q_PS) # same as LEIR extraction if no stripping, else will be different  
+        
         B_PS_inj = self.Brho_PS_inj / self.PS_rho
 
         # Check if Brho in PS is too low or too high 
@@ -120,12 +140,9 @@ class InjectionEnergies:
         elif B_PS_inj > self.PS_MaxB:
             print("\nA = {}, Q_low = {}, m_ion = {:.2f} u, Z = {}".format(self.A, self.Q_low, self.m_ion_in_u, self.Z))
             print('B = {:.4f} in PS at injection is too HIGH!'.format(B_PS_inj))
+            raise ValueError("B field in PS is too high!")
         else:
             self.PS_B_field_is_too_low = False
-
-        # PS injection
-        self.E_kin_per_u_PS_inj = self.calcKineticEnergyPerNucleon(self.p_PS_inj, q_PS)
-        self.gamma_PS_inj, self.beta_PS_inj = self.calculate_gamma_and_beta(q_PS, self.E_kin_per_u_PS_inj) 
 
         # PS extraction
         self.Brho_PS_extr = self.PS_B * self.PS_rho  # magnetic rigidity when magnets have ramped 
@@ -137,12 +154,17 @@ class InjectionEnergies:
         ########### SPS - ions are fully stripped ###########
         # SPS injection 
         q_SPS = self.Q_high  # ions are fully stripped
-        self.p_SPS_inj = self.p_PS_extr
+        
+        self.gamma_SPS_inj = self.gamma_PS_extr
+        self.beta_SPS_inj = self.beta_PS_extr
+        self.p_SPS_inj = self.calcMomentum_from_gamma(self.gamma_SPS_inj, q_SPS)
+        #self.p_SPS_inj = self.p_PS_extr - momentum not conserved if we strip electrons
+        #self.gamma_SPS_inj, self.beta_SPS_inj = self.calculate_gamma_and_beta(q_SPS, self.E_kin_per_u_SPS_inj) 
+        
         self.p_SPS_inj_proton_equiv = self.p_SPS_inj / q_SPS
         self.Brho_SPS_inj = self.calcBrho(self.p_SPS_inj, q_SPS) # same as PS extraction if no PS-SPS stripping, else will be different
         self.E_kin_per_u_SPS_inj = self.calcKineticEnergyPerNucleon(self.p_SPS_inj, q_SPS)
-        self.gamma_SPS_inj, self.beta_SPS_inj = self.calculate_gamma_and_beta(q_SPS, self.E_kin_per_u_SPS_inj) 
-
+        
         # SPS extraction
         self.Brho_SPS_extr = self.SPS_Brho
         self.p_SPS_extr = self.calcMomentum(self.Brho_SPS_extr, q_SPS)
@@ -166,6 +188,13 @@ class InjectionEnergies:
         print("gamma PS extr = {:.3f}".format(self.gamma_PS_extr))
         print("gamma SPS inj = {:.3f}".format(self.gamma_SPS_inj))
         print("gamma SPS extr = {:.3f}".format(self.gamma_SPS_extr))
+        
+        print("\np LEIR inj = {:.3} GeV/c".format(1e-9 * self.p_LEIR_inj))
+        print("p LEIR extr = {:.3f} GeV/c".format(1e-9 * self.p_LEIR_extr))
+        print("p PS inj = {:.3f} GeV/c".format(1e-9 * self.p_PS_inj))
+        print("p PS extr = {:.3f} GeV/c".format(1e-9 * self.p_PS_extr))
+        print("p SPS inj = {:.3f} GeV/c".format(1e-9 * self.p_SPS_inj))
+        print("p SPS extr = {:.3f} GeV/c".format(1e-9 * self.p_SPS_extr))
         
         print("\nEkin_per_u LEIR inj = {:.3} GeV/u".format(1e-9 * self.E_kin_per_u_LEIR_inj))
         print("Ekin_per_u LEIR extr = {:.3f} GeV/u".format(1e-9 * self.E_kin_per_u_LEIR_extr))
