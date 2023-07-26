@@ -1,0 +1,3 @@
+[submodule "IBS_for_Xsuite"]
+	path = IBS_for_Xsuite
+	url = https://github.com/MichZampetakis/IBS_for_Xsuite.git

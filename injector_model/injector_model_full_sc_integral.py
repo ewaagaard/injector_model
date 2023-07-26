@@ -6,6 +6,7 @@ solving for full space charge (SC) lattice integral
 - by Elias Waagaard 
 """
 from pathlib import Path
+import sys 
 import pandas as pd
 import numpy as np
 from scipy import constants
@@ -16,6 +17,13 @@ from collections import defaultdict
 # Calculate the absolute path to the data folder relative to the module's location
 data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
 output_folder = Path(__file__).resolve().parent.joinpath('../output').absolute()
+ibs_folder = Path(__file__).resolve().parent.joinpath('../IBS_for_Xsuite').absolute()
+
+# Import IBS module 
+#sys.path.append(str(Path(ibs_folder).parent)) #.parent.parent))
+sys.path.append(ibs_folder)
+import lib
+#import IBS_for_xsuite
 
 class InjectorChain_full_SC:
     """
