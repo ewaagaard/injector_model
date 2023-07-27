@@ -13,3 +13,4 @@ xsuite_lines
 *.txt
 *.pyc
 __pycache__
+*egg-info
