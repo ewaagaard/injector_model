@@ -229,6 +229,15 @@ if __name__ == '__main__':
         'SPS_gamma': SPS_gammas_O,
         'SPS_dQ_x': Q_array_O[:, 4],
         'SPS_dQ_y': Q_array_O[:, 5],
+        'IBS_LEIR_X': IBS_array_O[:, 0],
+        'IBS_PS_X': IBS_array_O[:, 3],
+        'IBS_SPS_X': IBS_array_O[:, 6],
+        'IBS_LEIR_Y': IBS_array_O[:, 1],
+        'IBS_PS_Y': IBS_array_O[:, 4],
+        'IBS_SPS_Y': IBS_array_O[:, 7],
+        'IBS_LEIR_Z': IBS_array_O[:, 2],
+        'IBS_PS_Z': IBS_array_O[:, 5],
+        'IBS_SPS_Z': IBS_array_O[:, 8],
     }
     
     # Create the DataFrame from the dictionary
