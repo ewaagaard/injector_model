@@ -411,7 +411,7 @@ class InjectorChain_full_SC:
                                          sigma_z,
                                          ex,
                                          ey,
-                                         delta, 
+                                         sig_delta, 
                                          n_part=5000
                                          ):
         """
@@ -420,32 +420,34 @@ class InjectorChain_full_SC:
         """
 
         # Create Gaussian bunch of particle object
-        particles = xp.generate_matched_gaussian_bunch(
-                                                        num_particles = n_part, total_intensity_particles = bunch_intensity,
-                                                        nemitt_x = ex, nemitt_y = ey, sigma_z = sigma_z,
-                                                        particle_ref = particle_ref, line = line
-                                                        )
+        #particles = xp.generate_matched_gaussian_bunch(
+        #                                                num_particles = n_part, total_intensity_particles = bunch_intensity,
+        #                                                nemitt_x = ex, nemitt_y = ey, sigma_z = sigma_z,
+        #                                                particle_ref = particle_ref, line = line
+        #                                                )
     
         # ----- Initialize IBS object -----
+        print('Beta: {}'.format(particle_ref.beta0[0]))
         IBS = NagaitsevIBS()
-        IBS.set_beam_parameters(particles)
+        IBS.set_beam_parameters(particle_ref)
+        #IBS.betar = particle_ref.beta0[0]
         IBS.set_optic_functions(twiss)
         #print("\n\nIBS enTOT: {}\n\n".format(IBS.EnTot))       
         
         # --- Initialize first turn-by-turn data for all modes 
-        sig_x = np.std(particles.x[particles.state > 0])
-        sig_y = np.std(particles.y[particles.state > 0])
-        sig_delta = np.std(particles.delta[particles.state > 0])
-        bl = np.std(particles.zeta[particles.state > 0])
-        eps_x = (sig_x**2 - (twiss['dx'][0] * sig_delta)**2) / twiss['betx'][0]
-        eps_y = sig_y**2 / twiss['bety'][0] 
+        #sig_x = np.std(particles.x[particles.state > 0])
+        #sig_y = np.std(particles.y[particles.state > 0])
+        #sig_delta = np.std(particles.delta[particles.state > 0])
+        #bl = np.std(particles.zeta[particles.state > 0])
+        #eps_x = (sig_x**2 - (twiss['dx'][0] * sig_delta)**2) / twiss['betx'][0]
+        #eps_y = sig_y**2 / twiss['bety'][0] 
         
         # Calculate the analytical growth rates 
         IBS.calculate_integrals(
-            eps_x,
-            eps_y,
+            ex,
+            ey,
             sig_delta,
-            bl
+            sigma_z
             )
         
         return IBS.Ixx, IBS.Iyy, IBS.Ipp
