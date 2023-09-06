@@ -417,35 +417,32 @@ class InjectorChain_full_SC:
         """
         For given beam parameters, calculate analytical (and kinetic?) growth rates for a given bunch intensity
         and other initial conditions at first turn 
+        
+        Remember that the IBS module (as of now) takes the geometric emittance as input,
+        whereas this class works with normalized emittance 
         """
 
         # Create Gaussian bunch of particle object
-        #particles = xp.generate_matched_gaussian_bunch(
-        #                                                num_particles = n_part, total_intensity_particles = bunch_intensity,
-        #                                                nemitt_x = ex, nemitt_y = ey, sigma_z = sigma_z,
-        #                                                particle_ref = particle_ref, line = line
-        #                                                )
+        particles = xp.generate_matched_gaussian_bunch(
+                                                        num_particles = n_part, total_intensity_particles = bunch_intensity,
+                                                        nemitt_x = ex, nemitt_y = ey, sigma_z = sigma_z,
+                                                        particle_ref = particle_ref, line = line
+                                                        )
     
         # ----- Initialize IBS object -----
-        print('Beta: {}'.format(particle_ref.beta0[0]))
         IBS = NagaitsevIBS()
-        IBS.set_beam_parameters(particle_ref)
-        #IBS.betar = particle_ref.beta0[0]
+        IBS.set_beam_parameters(particles)   # to be updated such that we don't need a whole distribution for this 
         IBS.set_optic_functions(twiss)
-        #print("\n\nIBS enTOT: {}\n\n".format(IBS.EnTot))       
+        #print("\n\nIBS enTOT: {}\n\n".format(IBS.EnTot))      
         
-        # --- Initialize first turn-by-turn data for all modes 
-        #sig_x = np.std(particles.x[particles.state > 0])
-        #sig_y = np.std(particles.y[particles.state > 0])
-        #sig_delta = np.std(particles.delta[particles.state > 0])
-        #bl = np.std(particles.zeta[particles.state > 0])
-        #eps_x = (sig_x**2 - (twiss['dx'][0] * sig_delta)**2) / twiss['betx'][0]
-        #eps_y = sig_y**2 / twiss['bety'][0] 
+        # Calculate geometric emittances from normalized emittance
+        eps_x = ex / (IBS.gammar * IBS.betar)
+        eps_y = ey / (IBS.gammar * IBS.betar)
         
         # Calculate the analytical growth rates 
         IBS.calculate_integrals(
-            ex,
-            ey,
+            eps_x,
+            eps_y,
             sig_delta,
             sigma_z
             )

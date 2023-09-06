@@ -43,30 +43,8 @@ def test_energy_for_IBS(gamma):
     IBS.set_optic_functions(twiss_SPS)
     print("IBS enTOT: {}".format(IBS.EnTot))       
     
-    # --- Initialize first turn-by-turn data for all modes 
-    sig_x = np.std(particles.x[particles.state > 0])
-    sig_y = np.std(particles.y[particles.state > 0])
-    sig_delta = np.std(particles.delta[particles.state > 0])
-    bl = np.std(particles.zeta[particles.state > 0])
-    eps_x = (sig_x**2 - (twiss_SPS['dx'][0] * sig_delta)**2) / twiss_SPS['betx'][0]
-    eps_y = sig_y**2 / twiss_SPS['bety'][0] 
-    
-    # Calculate the analytical growth rates using the particle distribution
-    IBS.calculate_integrals(
-        eps_x,
-        eps_y,
-        sig_delta,
-        bl
-        )
-    
     Ixx_SPS, Iyy_SPS, Ipp_SPS = injectors.calculate_IBS_growth_rate_for_SPS(Nb, gamma, sigma_z = sigma_z)
-    print('\nParticles object parameters: eps_x: {}, eps_y: {}, sig_delta: {}, bl: {}'.format(eps_x, eps_y, sig_delta, bl))
-    print('Input parameters:              eps_x: {}, eps_y: {}, sig_delta: {}, bl: {}'.format(ex, ey, injectors.delta_SPS, sigma_z))
-    
-    # Then check internal method from class 
-    print("\n\nSPS gamma = {}".format(gamma))
-    print("IBS integrals with analytical input:     {}, {}, {}\n\n".format(Ixx_SPS, Iyy_SPS, Ipp_SPS))
-    print("IBS integrals with input from particles: {}, {}, {}\n\n".format(IBS.Ixx, IBS.Iyy, IBS.Ipp))
+    return Ixx_SPS, Iyy_SPS, Ipp_SPS
  
 
 if __name__ == '__main__':
@@ -78,4 +56,4 @@ if __name__ == '__main__':
     # loop over different energies 
     for i, gamma in enumerate(gamma_range):
         IBS_vals[i, :] = test_energy_for_IBS(gamma)
-    #print("\n\nFinal IBS values: {}".format(IBS_vals))
+    print("\n\nFinal IBS values: {}".format(IBS_vals))
