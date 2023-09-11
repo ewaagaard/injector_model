@@ -462,13 +462,19 @@ class InjectorChain_full_SC:
         line_LEIR.reference_particle = particle_LEIR
         line_LEIR.build_tracker()
         twiss_LEIR = line_LEIR.twiss()
+        
+        # Calculate geometric emittances from normalized emittance
+        beta = self.beta(gamma)
+        eps_x = self.ex_LEIR / (gamma * beta)
+        eps_y = self.ey_LEIR / (gamma * beta)
+        
         Ixx_LEIR, Iyy_LEIR, Ipp_LEIR = self.find_analytical_IBS_growth_rates(particle_LEIR,
                                                                             twiss_LEIR, 
                                                                             line_LEIR,
                                                                             Nb,
                                                                             sigma_z,
-                                                                            self.ex_LEIR, 
-                                                                            self.ey_LEIR,
+                                                                            eps_x, 
+                                                                            eps_y,
                                                                             self.delta_LEIR,
                                                                              )
         return Ixx_LEIR, Iyy_LEIR, Ipp_LEIR
@@ -486,13 +492,19 @@ class InjectorChain_full_SC:
         line_PS.reference_particle = particle_PS
         line_PS.build_tracker()
         twiss_PS = line_PS.twiss()
+        
+        # Calculate geometric emittances from normalized emittance
+        beta = self.beta(gamma)
+        eps_x = self.ex_PS / (gamma * beta)
+        eps_y = self.ey_PS / (gamma * beta)
+        
         Ixx_PS, Iyy_PS, Ipp_PS = self.find_analytical_IBS_growth_rates(particle_PS,
                                                                         twiss_PS, 
                                                                         line_PS,
                                                                         Nb,
                                                                         sigma_z,
-                                                                        self.ex_PS, 
-                                                                        self.ey_PS,
+                                                                        eps_x, 
+                                                                        eps_y,
                                                                         self.delta_PS,
                                                                          )
         return Ixx_PS, Iyy_PS, Ipp_PS
@@ -510,13 +522,19 @@ class InjectorChain_full_SC:
         line_SPS.reference_particle = particle_SPS
         line_SPS.build_tracker()
         twiss_SPS = line_SPS.twiss()
+        
+        # Calculate geometric emittances from normalized emittance
+        beta = self.beta(gamma)
+        eps_x = self.ex_SPS / (gamma * beta)
+        eps_y = self.ey_SPS / (gamma * beta)
+        
         Ixx_SPS, Iyy_SPS, Ipp_SPS = self.find_analytical_IBS_growth_rates(particle_SPS,
                                                                         twiss_SPS, 
                                                                         line_SPS,
                                                                         Nb,
                                                                         sigma_z,
-                                                                        self.ex_SPS, 
-                                                                        self.ey_SPS,
+                                                                        eps_x, 
+                                                                        eps_y,
                                                                         self.delta_SPS,
                                                                          )
         return Ixx_SPS, Iyy_SPS, Ipp_SPS
