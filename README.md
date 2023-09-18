@@ -4,13 +4,16 @@
 
 As of today, the LHC ion physics programme is mostly based on Pb ion collisions. Lighter ions species have the potential to yield higher nucleon-nucleon luminosities, as requested from the ALICE3 detector proposal. This proposal was recently discussed in the [2022 Letter of Intent](https://arxiv.org/abs/2211.02491). To achieve the requested luminosity increase, the CERN Ion Injector chain (consisting of Linac3, LEIR, PS and SPS) will need to provide significantly higher beam intensities with light ion beams as compared to the Pb ion beams. So far the operational experience with light ion beams inthe injectors is very limited and the beam dynamics limitations for these beams are not well known. 
 
-In this repository, we develop a simulation tool for different ions based on the Mathematica notebook presented by [Bruce (2021)](https://indico.cern.ch/event/1085343/contributions/4563386/attachments/2326159/3964426/2021.10.12--LIU_ions--Run4_light_ion_scenarios.pdf). The tool is contained in a class to represent the Injector Chain, taking an ion species as input and returning the calculated bunch intensity into the LHC. We compare the output to estimates from the [Working Group 5 (WG5) report](https://cds.cern.ch/record/2650176). 
+In this repository, we develop a simulation tool for different ions based on the Mathematica notebook presented by [Bruce (2021)](https://indico.cern.ch/event/1085343/contributions/4563386/attachments/2326159/3964426/2021.10.12--LIU_ions--Run4_light_ion_scenarios.pdf). The tool is contained in a class to represent the Injector Chain, taking an ion species as input and returning the calculated bunch intensity into the LHC. We compare the output to estimates from the [Working Group 5 (WG5) report](https://cds.cern.ch/record/2650176). The Injector Model class calculates the propagated beam parameters and intensitities from LINAC3 through LEIR, PS and SPS into the LHC. The present Pb ion configuration is shown below. In this class, we explore different options with stripper foil locations and bunch splitting in the PS. 
+
+![CERN_ion_injector_chain](https://github.com/ewaagaard/injector_model/assets/68541324/43abd382-aa74-4439-b864-bcf02f925fe5)
+
 
 ### Set-up
 
 When using Python for scientific computing, it is important to be aware of dependencies and compatibility of different packages. This guide gives a good explanation: [Python dependency manager guide](https://aaltoscicomp.github.io/python-for-scicomp/dependencies/#dependency-management). An isolated environment allows installing packages without affecting the rest of your operating system or any other projects. A useful resource to handle virtual environments is [Anaconda](https://www.anaconda.com/) (or its lighter version Miniconda), when once installed has many useful commands of which many can be found in the [Conda cheat sheet](https://docs.conda.io/projects/conda/en/4.6.0/_downloads/52a95608c49671267e40c689e0bc00ca/conda-cheatsheet.pdf) 
 
-To directly start calculating different ion performances with the `injector_model`, create an isolated virtual environment and (for now) perform a local install to use the `injector_model` in other modules. In the terminal, run:
+To directly start calculating different ion performances with the `injector_model`, create an isolated virtual environment and (for now) perform a local install to use the `injector_model` in other modules. In the terminal inside the `injector_model` repository, run:
 
 ```
 conda create --name test_venv python=3.11 numpy pandas scipy matplotlib
