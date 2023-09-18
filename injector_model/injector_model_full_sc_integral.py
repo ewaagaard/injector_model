@@ -11,11 +11,30 @@ import numpy as np
 from scipy import constants
 import xtrack as xt
 import xpart as xp
-from collections import defaultdict
+import matplotlib.pyplot as plt
+#from collections import defaultdict
+
+#### PLOT SETTINGS #######
+SMALL_SIZE = 18
+MEDIUM_SIZE = 21
+BIGGER_SIZE = 26
+plt.rcParams["font.family"] = "serif"
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=BIGGER_SIZE)    # fontsize of the axes title
+plt.rc('axes', labelsize=BIGGER_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=MEDIUM_SIZE)   # fontsize of the tick labels
+plt.rc('ytick', labelsize=MEDIUM_SIZE)   # fontsize of the tick labels
+plt.rc('legend', fontsize=MEDIUM_SIZE)   # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+colors = ['green', 'blue', 'purple', 'brown', 'teal', 'coral', 'cyan', 'darkred']   
 
 # Calculate the absolute path to the data folder relative to the module's location
 data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
 output_folder = Path(__file__).resolve().parent.joinpath('../output').absolute()
+ibs_folder = Path(__file__).resolve().parent.joinpath('../IBS_for_Xsuite').absolute()
+
+# Import IBS module after "pip install -e IBS_for_Xsuite" has been executed 
+from lib.IBSfunctions import NagaitsevIBS
 
 class InjectorChain_full_SC:
     """
@@ -37,6 +56,7 @@ class InjectorChain_full_SC:
         self.account_for_SPS_transmission = account_for_SPS_transmission
 
         ###### Load standard beam parameters ##### - used from John and Bartosik, 2021 (https://cds.cern.ch/record/2749453)
+        # emittances are normalized! 
         self.Nb0_LEIR = 1e9
         self.ex_LEIR = 0.4e-6
         self.ey_LEIR = 0.4e-6
@@ -273,17 +293,29 @@ class InjectorChain_full_SC:
     
     
 
-    def calculate_SC_tuneshift(self, Nb, particle_ref, sigma_z, twiss_xtrack_interpolated, sigma_x, sigma_y):
+    def calculate_SC_tuneshift(self, 
+                               Nb, 
+                               particle_ref, 
+                               sigma_z, 
+                               twiss_xtrack_interpolated, 
+                               sigma_x, sigma_y, 
+                               bF = 0.,
+                               C = None,
+                               h = None):
         """
         Finds the SC-induced max detuning dQx and dQy for given Twiss and beam parameters
+        with possibility to use bunching factor bF, circumference C and harmonic h if non-Gaussian beams 
         """  
         gamma = particle_ref.gamma0[0]
         beta = self.beta(gamma)
         r0 = particle_ref.get_classical_particle_radius0()
         
-        # Space charge perveance 
-        K_sc = (2 * r0 * Nb) / (beta**2 * gamma**3 * np.sqrt(2*np.pi) * sigma_z)
-        
+        # Space charge perveance
+        if bF == 0.0:
+            K_sc = (2 * r0 * Nb) / (np.sqrt(2*np.pi) * sigma_z * beta**2 * gamma**3)
+        else:
+            K_sc = (2 * r0 * Nb) * (h / bF) / (C * beta**2 * gamma**3)
+
         integrand_x = twiss_xtrack_interpolated['betx'] / (sigma_x * (sigma_x + sigma_y))  
         integrand_y = twiss_xtrack_interpolated['bety'] / (sigma_y * (sigma_x + sigma_y)) 
         
@@ -293,11 +325,12 @@ class InjectorChain_full_SC:
         return dQx, dQy
     
     
-    def calculate_SC_tuneshift_for_LEIR(self, Nb, gamma, sigma_z):
+    def calculate_SC_tuneshift_for_LEIR(self, Nb, gamma, sigma_z, bF=0.0, h=2.):
         """
         Finds the SC-induced max detuning dQx and dQy for LEIR for given beam parameters 
         assuming for now that emittances and momentum spread delta are identical
         Input: arrays with bunch intensities, gammas and bunch length for LEIR
+        Assume harmonic h = 2, have to provide bunching factor as beams are non-Gaussian
         """ 
         #### LEIR ####
         particle_LEIR = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_LEIR, gamma0 = gamma)
@@ -312,8 +345,16 @@ class InjectorChain_full_SC:
                                                                                             self.ey_LEIR,
                                                                                             self.delta_LEIR,
                                                                                             )
-        dQx_LEIR, dQy_LEIR = self.calculate_SC_tuneshift(Nb, particle_LEIR, sigma_z, 
-                         twiss_LEIR_interpolated, sigma_x_LEIR, sigma_y_LEIR)
+        dQx_LEIR, dQy_LEIR = self.calculate_SC_tuneshift(Nb, 
+                                                         particle_LEIR, 
+                                                         sigma_z, 
+                                                         twiss_LEIR_interpolated, 
+                                                         sigma_x_LEIR, 
+                                                         sigma_y_LEIR,
+                                                         bF,
+                                                         self.line_LEIR_Pb.get_length(),
+                                                         h
+                                                         )
         
         return dQx_LEIR, dQy_LEIR
 
@@ -368,7 +409,15 @@ class InjectorChain_full_SC:
         return dQx_SPS, dQy_SPS     
     
     
-    def maxIntensity_from_SC_integral(self, dQx_max, dQy_max, particle_ref, sigma_z, twiss_xtrack_interpolated, sigma_x, sigma_y):
+    def maxIntensity_from_SC_integral(self, 
+                                      dQx_max, 
+                                      dQy_max, 
+                                      particle_ref, 
+                                      sigma_z, 
+                                      twiss_xtrack_interpolated, 
+                                      sigma_x, 
+                                      sigma_y
+                                      ):
         """
         For a given max tuneshift, calculate the maximum bunch intensity 
         """
@@ -391,10 +440,155 @@ class InjectorChain_full_SC:
     ######################################################################
      
     ######################## IBS part ####################################
+    def find_analytical_IBS_growth_rates(self,
+                                         particle_ref,
+                                         twiss,
+                                         line,
+                                         bunch_intensity, 
+                                         sigma_z,
+                                         exn,
+                                         eyn,
+                                         sig_delta, 
+                                         calculate_kinetic_coefficients=False
+                                         ):
+        """
+        For given beam parameters, calculate analytical (and kinetic?) growth rates for a given bunch intensity
+        and other initial conditions at first turn 
+        
+        Remember that the IBS module (as of now) takes the geometric emittance as input,
+        whereas this class works with normalized emittance 
+        
+        Input here is normalized emittance exn and eyn
+        """
+
+        # Create Gaussian bunch of particle object
+        #particles = xp.generate_matched_gaussian_bunch(
+        #                                                num_particles = n_part, total_intensity_particles = bunch_intensity,
+        #                                               nemitt_x = ex, nemitt_y = ey, sigma_z = sigma_z,
+        #                                                particle_ref = particle_ref, line = line
+        #                                                )
+        #IBS.set_beam_parameters(particles)   # to be updated such that we don't need a whole distribution for this 
+    
+        # ----- Initialize IBS object -----
+        IBS = NagaitsevIBS()
+    
+        # Set parameters of IBS object
+        IBS.Npart  = bunch_intensity
+        IBS.Ncharg = particle_ref.q0
+        IBS.E_rest = particle_ref.mass0 * 1e-9
+        IBS.EnTot  = np.sqrt(particle_ref.p0c[0]**2 + particle_ref.mass0**2) * 1e-9  # in GeV
+        IBS.gammar = particle_ref.gamma0[0]
+        IBS.betar  = particle_ref.beta0[0]
+        E0p = constants.physical_constants["proton mass energy equivalent in MeV"][0]*1e-3
+        particle_mass_GEV = particle_ref.mass0 * 1e-9 
+        mi  = (particle_mass_GEV * constants.m_p) / E0p
+        IBS.c_rad = (particle_ref.q0 * constants.e)**2 / (4 * np.pi * constants.epsilon_0 * constants.c**2 * mi)
+        
+        IBS.set_optic_functions(twiss)
+        
+        # Calculate geometric emittances from normalized emittance
+        eps_x = exn / (IBS.gammar * IBS.betar)
+        eps_y = eyn / (IBS.gammar * IBS.betar)
+        
+        # Calculate the analytical growth rates 
+        IBS.calculate_integrals(
+            eps_x,
+            eps_y,
+            sig_delta,
+            sigma_z
+            )
+    
+        # Also add the option to calculate kinetic coefficients - stored as IBS.kinTx
+        if calculate_kinetic_coefficients:
+            IBS.Kinetic_Coefficients(
+                eps_x,
+                eps_y,
+                sig_delta,
+                sigma_z
+                )
+            return IBS.Ixx, IBS.Iyy, IBS.Ipp, IBS.kinTx, IBS.kinTy, IBS.kinTz
+        else:
+            return IBS.Ixx, IBS.Iyy, IBS.Ipp
     
     
-    
-    
+    def calculate_IBS_growth_rate_for_LEIR(self, Nb, gamma, sigma_z):
+        """
+        Finds the initial IBS growth rates for LEIR 
+        assuming for now that emittances and momentum spread delta are identical
+        Input: arrays with bunch intensities, gammas and bunch length for LEIR
+        """ 
+        #### LEIR ####
+        particle_LEIR = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_LEIR, gamma0 = gamma)
+        line_LEIR = self.line_LEIR_Pb.copy()
+        line_LEIR.reference_particle = particle_LEIR
+        line_LEIR.build_tracker()
+        twiss_LEIR = line_LEIR.twiss()
+        
+        # Calculate growth rates
+        Tx_LEIR, Ty_LEIR, Tz_LEIR = self.find_analytical_IBS_growth_rates(particle_LEIR,
+                                                                            twiss_LEIR, 
+                                                                            line_LEIR,
+                                                                            Nb,
+                                                                            sigma_z,
+                                                                            self.ex_LEIR, 
+                                                                            self.ey_LEIR,
+                                                                            self.delta_LEIR,
+                                                                             )
+        return Tx_LEIR, Ty_LEIR, Tz_LEIR
+
+
+    def calculate_IBS_growth_rate_for_PS(self, Nb, gamma, sigma_z):
+        """
+        Finds the initial IBS growth rates for PS 
+        assuming for now that emittances and momentum spread delta are identical
+        Input: arrays with bunch intensities, gammas and bunch length for PS
+        """ 
+        #### PS ####
+        particle_PS = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_PS, gamma0 = gamma)
+        line_PS = self.line_PS_Pb.copy()
+        line_PS.reference_particle = particle_PS
+        line_PS.build_tracker()
+        twiss_PS = line_PS.twiss()
+        
+        # Calculate growth rates
+        Tx_PS, Ty_PS, Tz_PS = self.find_analytical_IBS_growth_rates(particle_PS,
+                                                                        twiss_PS, 
+                                                                        line_PS,
+                                                                        Nb,
+                                                                        sigma_z,
+                                                                        self.ex_PS, 
+                                                                        self.ey_PS,
+                                                                        self.delta_PS,
+                                                                         )
+        return Tx_PS, Ty_PS, Tz_PS
+
+
+    def calculate_IBS_growth_rate_for_SPS(self, Nb, gamma, sigma_z):
+        """
+        Finds the initial IBS growth rates for SPS 
+        assuming for now that emittances and momentum spread delta are identical
+        Input: arrays with bunch intensities, gammas and bunch length for SPS
+        """ 
+        #### SPS ####
+        particle_SPS = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_SPS, gamma0 = gamma)
+        line_SPS = self.line_SPS_Pb.copy()
+        line_SPS.reference_particle = particle_SPS
+        line_SPS.build_tracker()
+        twiss_SPS = line_SPS.twiss()
+        
+        # Calculate growth rates
+        Tx_SPS, Ty_SPS, Tz_SPS = self.find_analytical_IBS_growth_rates(particle_SPS,
+                                                                        twiss_SPS, 
+                                                                        line_SPS,
+                                                                        Nb,
+                                                                        sigma_z,
+                                                                        self.ex_SPS, 
+                                                                        self.ey_SPS,
+                                                                        self.delta_SPS,
+                                                                         )
+        return Tx_SPS, Ty_SPS, Tz_SPS
+
+ 
     ######################################################################
     
     def LEIR(self):
@@ -438,6 +632,16 @@ class InjectorChain_full_SC:
         self.Nq_LEIR_extr = self.Nb_LEIR_extr*self.Q_LEIR  # number of outgoing charges, before any stripping
         self.limiting_plane_LEIR = 'X' if self.Nb_x_max_LEIR < self.Nb_y_max_LEIR else 'Y' # flag to identify if x or y plane is limiting
 
+        # Also find IBS growth rates after first turn
+        self.Ixx_LEIR, self.Iyy_LEIR, self.Ipp_LEIR = self.find_analytical_IBS_growth_rates(self.particle_LEIR,
+                                                                                            self.twiss_LEIR, 
+                                                                                            self.line_LEIR,
+                                                                                            self.Nb_LEIR_extr, 
+                                                                                            self.sigma_z_LEIR,
+                                                                                            self.ex_LEIR, 
+                                                                                            self.ey_LEIR,
+                                                                                            self.delta_LEIR)
+
     
     def PS(self):
         """
@@ -478,6 +682,15 @@ class InjectorChain_full_SC:
         self.Nq_PS_extr = self.Nb_PS_extr*self.Q_PS  # number of outgoing charges, before any stripping
         self.limiting_plane_PS = 'X' if self.Nb_x_max_PS < self.Nb_y_max_PS else 'Y' # flag to identify if x or y plane is limiting
 
+        # Also find IBS growth rates after first turn
+        self.Ixx_PS, self.Iyy_PS, self.Ipp_PS = self.find_analytical_IBS_growth_rates(self.particle_PS,
+                                                                                            self.twiss_PS,
+                                                                                            self.line_PS,
+                                                                                            self.Nb_PS_extr, 
+                                                                                            self.sigma_z_PS,
+                                                                                            self.ex_PS, 
+                                                                                            self.ey_PS,
+                                                                                            self.delta_PS)
     
     def SPS(self):
         """
@@ -519,7 +732,16 @@ class InjectorChain_full_SC:
         self.Nb_SPS_extr = min(self.Nb_x_max_SPS, self.Nb_y_max_SPS)  # pick the limiting intensity
         self.Nq_SPS_extr = self.Nb_SPS_extr*self.Q_SPS  # number of outgoing charges, before any stripping
         self.limiting_plane_SPS = 'X' if self.Nb_x_max_SPS < self.Nb_y_max_SPS else 'Y' # flag to identify if x or y plane is limiting
-    
+
+        # Also find IBS growth rates after first turn
+        self.Ixx_SPS, self.Iyy_SPS, self.Ipp_SPS = self.find_analytical_IBS_growth_rates(self.particle_SPS,
+                                                                                            self.twiss_SPS,
+                                                                                            self.line_SPS,
+                                                                                            self.Nb_SPS_extr, 
+                                                                                            self.sigma_z_SPS,
+                                                                                            self.ex_SPS, 
+                                                                                            self.ey_SPS,
+                                                                                            self.delta_SPS)    
     
     def simulate_injection(self):
         """
