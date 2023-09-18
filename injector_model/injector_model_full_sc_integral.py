@@ -56,6 +56,7 @@ class InjectorChain_full_SC:
         self.account_for_SPS_transmission = account_for_SPS_transmission
 
         ###### Load standard beam parameters ##### - used from John and Bartosik, 2021 (https://cds.cern.ch/record/2749453)
+        # emittances are normalized! 
         self.Nb0_LEIR = 1e9
         self.ex_LEIR = 0.4e-6
         self.ey_LEIR = 0.4e-6
@@ -445,8 +446,8 @@ class InjectorChain_full_SC:
                                          line,
                                          bunch_intensity, 
                                          sigma_z,
-                                         ex,
-                                         ey,
+                                         exn,
+                                         eyn,
                                          sig_delta, 
                                          calculate_kinetic_coefficients=False
                                          ):
@@ -456,6 +457,8 @@ class InjectorChain_full_SC:
         
         Remember that the IBS module (as of now) takes the geometric emittance as input,
         whereas this class works with normalized emittance 
+        
+        Input here is normalized emittance exn and eyn
         """
 
         # Create Gaussian bunch of particle object
@@ -484,8 +487,8 @@ class InjectorChain_full_SC:
         IBS.set_optic_functions(twiss)
         
         # Calculate geometric emittances from normalized emittance
-        eps_x = ex / (IBS.gammar * IBS.betar)
-        eps_y = ey / (IBS.gammar * IBS.betar)
+        eps_x = exn / (IBS.gammar * IBS.betar)
+        eps_y = eyn / (IBS.gammar * IBS.betar)
         
         # Calculate the analytical growth rates 
         IBS.calculate_integrals(
@@ -521,21 +524,17 @@ class InjectorChain_full_SC:
         line_LEIR.build_tracker()
         twiss_LEIR = line_LEIR.twiss()
         
-        # Calculate geometric emittances from normalized emittance
-        beta = self.beta(gamma)
-        eps_x = self.ex_LEIR / (gamma * beta)
-        eps_y = self.ey_LEIR / (gamma * beta)
-        
-        Ixx_LEIR, Iyy_LEIR, Ipp_LEIR = self.find_analytical_IBS_growth_rates(particle_LEIR,
+        # Calculate growth rates
+        Tx_LEIR, Ty_LEIR, Tz_LEIR = self.find_analytical_IBS_growth_rates(particle_LEIR,
                                                                             twiss_LEIR, 
                                                                             line_LEIR,
                                                                             Nb,
                                                                             sigma_z,
-                                                                            eps_x, 
-                                                                            eps_y,
+                                                                            self.ex_LEIR, 
+                                                                            self.ey_LEIR,
                                                                             self.delta_LEIR,
                                                                              )
-        return Ixx_LEIR, Iyy_LEIR, Ipp_LEIR
+        return Tx_LEIR, Ty_LEIR, Tz_LEIR
 
 
     def calculate_IBS_growth_rate_for_PS(self, Nb, gamma, sigma_z):
@@ -551,21 +550,17 @@ class InjectorChain_full_SC:
         line_PS.build_tracker()
         twiss_PS = line_PS.twiss()
         
-        # Calculate geometric emittances from normalized emittance
-        beta = self.beta(gamma)
-        eps_x = self.ex_PS / (gamma * beta)
-        eps_y = self.ey_PS / (gamma * beta)
-        
-        Ixx_PS, Iyy_PS, Ipp_PS = self.find_analytical_IBS_growth_rates(particle_PS,
+        # Calculate growth rates
+        Tx_PS, Ty_PS, Tz_PS = self.find_analytical_IBS_growth_rates(particle_PS,
                                                                         twiss_PS, 
                                                                         line_PS,
                                                                         Nb,
                                                                         sigma_z,
-                                                                        eps_x, 
-                                                                        eps_y,
+                                                                        self.ex_PS, 
+                                                                        self.ey_PS,
                                                                         self.delta_PS,
                                                                          )
-        return Ixx_PS, Iyy_PS, Ipp_PS
+        return Tx_PS, Ty_PS, Tz_PS
 
 
     def calculate_IBS_growth_rate_for_SPS(self, Nb, gamma, sigma_z):
@@ -581,21 +576,17 @@ class InjectorChain_full_SC:
         line_SPS.build_tracker()
         twiss_SPS = line_SPS.twiss()
         
-        # Calculate geometric emittances from normalized emittance
-        beta = self.beta(gamma)
-        eps_x = self.ex_SPS / (gamma * beta)
-        eps_y = self.ey_SPS / (gamma * beta)
-        
-        Ixx_SPS, Iyy_SPS, Ipp_SPS = self.find_analytical_IBS_growth_rates(particle_SPS,
+        # Calculate growth rates
+        Tx_SPS, Ty_SPS, Tz_SPS = self.find_analytical_IBS_growth_rates(particle_SPS,
                                                                         twiss_SPS, 
                                                                         line_SPS,
                                                                         Nb,
                                                                         sigma_z,
-                                                                        eps_x, 
-                                                                        eps_y,
+                                                                        self.ex_SPS, 
+                                                                        self.ey_SPS,
                                                                         self.delta_SPS,
                                                                          )
-        return Ixx_SPS, Iyy_SPS, Ipp_SPS
+        return Tx_SPS, Ty_SPS, Tz_SPS
 
  
     ######################################################################
