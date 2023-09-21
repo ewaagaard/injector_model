@@ -38,7 +38,7 @@ python -m pip install -e IBS_for_Xsuite/
   
   injector_chain = CERN_Injector_Chain(ion_type, 
                         ion_data, 
-                        nPulsesLEIR = 0, # 0 = maximum number of pulses is calculated automatically
+                        nPulsesLEIR = 0, # 0 = automatic maximum number of pulses
                         LEIR_bunches = 2,
                         PS_splitting = 1,
                         account_for_SPS_transmission=True,
