@@ -110,14 +110,14 @@ for i, row in df.iterrows():
 
 # Convert all the data to a big dataframe
 df = pd.DataFrame(all_data)
-df.to_csv('../data/injection_energies/ion_injection_energies_PS_SPS_strip.csv', index=False)
+df.to_csv('injection_energy_output/ion_injection_energies_PS_SPS_strip.csv', index=False)
 
 df_LEIR_PS = pd.DataFrame(all_data_LEIR_PS)
-df_LEIR_PS.to_csv('../data/injection_energies/ion_injection_energies_LEIR_PS_strip.csv', index=False)
+df_LEIR_PS.to_csv('injection_energy_output/ion_injection_energies_LEIR_PS_strip.csv', index=False)
 
 df_Brho = pd.DataFrame(all_data_Brho)
-df_Brho.to_csv('../data/injection_energies/ion_injection_energies_PS_SPS_strip_higher_brho_LEIR.csv', index=False)
+df_Brho.to_csv('injection_energy_output/ion_injection_energies_PS_SPS_strip_higher_brho_LEIR.csv', index=False)
 
 df_LEIR_PS_Brho = pd.DataFrame(all_data_LEIR_PS_Brho)
-df_LEIR_PS_Brho.to_csv('../data/injection_energies/ion_injection_energies_LEIR_PS_strip_higher_brho_LEIR.csv', index=False)
+df_LEIR_PS_Brho.to_csv('injection_energy_output/ion_injection_energies_LEIR_PS_strip_higher_brho_LEIR.csv', index=False)
 

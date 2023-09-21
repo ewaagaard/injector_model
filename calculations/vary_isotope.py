@@ -24,7 +24,7 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 colors = ['green', 'blue', 'purple', 'brown', 'teal', 'coral', 'cyan', 'darkred']
 
 # Load ion data and initialize for test for bunch intensities 
-ion_data = pd.read_csv("../data/Ion_species.csv", sep=';', header=0, index_col=0).T
+ion_data = pd.read_csv("../data/Ion_species.csv", header=0, index_col=0).T
 full_isotope_data = pd.read_csv('../data/Full_isotope_data.csv', index_col=0)
 
 # Stable isotope data
@@ -209,7 +209,7 @@ def vary_isotope_and_plot(
         df = pd.DataFrame(dict_ion)
         df = df.set_index(['A_state'])
         if save_fig:
-            df.to_csv('../output/csv_tables/isotope_scan/isotope_scan_{}_{}.csv'.format(ion, output_name))
+            df.to_csv('output/csv_tables/isotope_scan/isotope_scan_{}_{}.csv'.format(ion, output_name))
         ion_dataframes.append(df)
         
         #### PLOTTING - Make figure for all the isotopes ####
@@ -227,7 +227,7 @@ def vary_isotope_and_plot(
         ax.legend(fontsize=9)
         fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         if save_fig:
-            fig.savefig('../output/figures/isotope_scan/isotope_scan_{}_{}_{}.png'.format(count, ion, output_name), dpi=250)
+            fig.savefig('output/figures/isotope_scan/isotope_scan_{}_{}_{}.png'.format(count, ion, output_name), dpi=250)
         plt.close()
         
         #### PLOTTING - Make figure for the LEIR and SPS space charge limits ####
@@ -249,7 +249,7 @@ def vary_isotope_and_plot(
         ax2.legend()
         fig2.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         if save_fig:
-            fig2.savefig('../output/figures/isotope_scan/isotope_scan_LEIR_SPS_SC_limit_{}_{}.png'.format(ion, output_name), dpi=250)
+            fig2.savefig('output/figures/isotope_scan/isotope_scan_LEIR_SPS_SC_limit_{}_{}.png'.format(ion, output_name), dpi=250)
         plt.close()
         
         # Also fill in the big combined subplot
@@ -285,7 +285,7 @@ def vary_isotope_and_plot(
     fig0.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)    
     # Save the combined figure
     if save_fig:
-        fig0.savefig('../output/figures/isotope_scan/combined_isotope_scan{}.png'.format(output_name), dpi=250)
+        fig0.savefig('output/figures/isotope_scan/combined_isotope_scan{}.png'.format(output_name), dpi=250)
     plt.close()    
     
     return ion_dataframes
@@ -375,7 +375,7 @@ if __name__ == '__main__':
                       }
     df_best_ions = pd.DataFrame(dict_best_ions)
     df_best_ions = df_best_ions.set_index(ion_data.T.index)
-    df_best_ions.to_csv('../output/csv_tables/isotope_scan/best_isotope/best_Nb_isotope_scan.csv', float_format='%e')
+    df_best_ions.to_csv('output/csv_tables/isotope_scan/best_isotope/best_Nb_isotope_scan.csv', float_format='%e')
     
     dict_best_ions_ps_sc = {'1_A_best': A_best_1_array_ps_sc,
                       '1_Nb_best': Nb_best_1_array_ps_sc,
@@ -388,4 +388,4 @@ if __name__ == '__main__':
                       }
     df_best_ions_ps_sc = pd.DataFrame(dict_best_ions_ps_sc)
     df_best_ions_ps_sc = df_best_ions_ps_sc.set_index(ion_data.T.index)
-    df_best_ions_ps_sc.to_csv('../output/csv_tables/isotope_scan/best_isotope/best_Nb_isotope_scan_with_PC_SC_limit.csv', float_format='%e')
+    df_best_ions_ps_sc.to_csv('output/csv_tables/isotope_scan/best_isotope/best_Nb_isotope_scan_with_PC_SC_limit.csv', float_format='%e')

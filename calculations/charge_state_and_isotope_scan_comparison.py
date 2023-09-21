@@ -9,7 +9,7 @@ import numpy as np
 
 # Load ion data and initialize for test for bunch intensities 
 savefig = True
-ion_data = pd.read_csv("../data/Ion_species.csv", sep=';', header=0, index_col=0).T
+ion_data = pd.read_csv("../data/Ion_species.csv", header=0, index_col=0).T
 mass_number = ion_data.loc['A']
 ion_type = 'Pb'
 
@@ -60,7 +60,7 @@ def plot_Nb_dataframes(
     ax5.legend()
     fig5.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     if savefig:
-        fig5.savefig('../output/figures/combined_isotope_and_charge_state_scan/best_charge_states{}.png'.format(output_extra_str), dpi=250)
+        fig5.savefig('output/figures/combined_isotope_and_charge_state_scan/best_charge_states{}.png'.format(output_extra_str), dpi=250)
     plt.close()
 
     # Isotope check - All scenarios, including LEIR-PS stripping and NO PS splitting - also include charge state and isotope scan 
@@ -78,7 +78,7 @@ def plot_Nb_dataframes(
     ax6.legend()
     fig6.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     if savefig:
-        fig6.savefig('../output/figures/combined_isotope_and_charge_state_scan/best_isotopes{}.png'.format(output_extra_str), dpi=250)
+        fig6.savefig('output/figures/combined_isotope_and_charge_state_scan/best_isotopes{}.png'.format(output_extra_str), dpi=250)
     plt.close()
     
     # Isotope and charge state check check - NO PS splitting - also include charge state and isotope scan 
@@ -96,7 +96,7 @@ def plot_Nb_dataframes(
     ax7.legend()
     fig7.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     if savefig:
-        fig7.savefig('../output/figures/combined_isotope_and_charge_state_scan/best_charge_states_and_isotopes{}.png'.format(output_extra_str), dpi=250)
+        fig7.savefig('output/figures/combined_isotope_and_charge_state_scan/best_charge_states_and_isotopes{}.png'.format(output_extra_str), dpi=250)
     plt.close()
     
     # Find relative increase of best charge state and isotope
@@ -108,23 +108,23 @@ def plot_Nb_dataframes(
 
 if __name__ == '__main__': 
     # Load data from previous runs, with and without space charge
-    df1 = pd.read_csv('../output/csv_tables/1_baseline.csv', index_col=0).T
-    df2 = pd.read_csv('../output/csv_tables/2_no_PS_splitting.csv', index_col=0).T
-    df3 = pd.read_csv('../output/csv_tables/3_LEIR_PS_stripping.csv', index_col=0).T
-    df4 = pd.read_csv('../output/csv_tables/4_no_PS_splitting_and_LEIR_PS_stripping.csv', index_col=0).T
+    df1 = pd.read_csv('output/csv_tables/1_baseline.csv', index_col=0).T
+    df2 = pd.read_csv('output/csv_tables/2_no_PS_splitting.csv', index_col=0).T
+    df3 = pd.read_csv('output/csv_tables/3_LEIR_PS_stripping.csv', index_col=0).T
+    df4 = pd.read_csv('output/csv_tables/4_no_PS_splitting_and_LEIR_PS_stripping.csv', index_col=0).T
     
-    df1_ps_sc = pd.read_csv('../output/csv_tables/1_baseline_with_PS_space_charge_limit.csv', index_col=0).T
-    df2_ps_sc = pd.read_csv('../output/csv_tables/2_no_PS_splitting_with_PS_space_charge_limit.csv', index_col=0).T
-    df3_ps_sc = pd.read_csv('../output/csv_tables/3_LEIR_PS_stripping_with_PS_space_charge_limit.csv', index_col=0).T
-    df4_ps_sc = pd.read_csv('../output/csv_tables/4_no_PS_splitting_and_LEIR_PS_stripping_with_PS_space_charge_limit.csv', index_col=0).T
+    df1_ps_sc = pd.read_csv('output/csv_tables/1_baseline_with_PS_space_charge_limit.csv', index_col=0).T
+    df2_ps_sc = pd.read_csv('output/csv_tables/2_no_PS_splitting_with_PS_space_charge_limit.csv', index_col=0).T
+    df3_ps_sc = pd.read_csv('output/csv_tables/3_LEIR_PS_stripping_with_PS_space_charge_limit.csv', index_col=0).T
+    df4_ps_sc = pd.read_csv('output/csv_tables/4_no_PS_splitting_and_LEIR_PS_stripping_with_PS_space_charge_limit.csv', index_col=0).T
     
     # Data from charge state scan 
-    df_best_charge_state = pd.read_csv('../output/csv_tables/charge_state_scan/best_charge_state/best_Nb_leir_charge_state_scan.csv', index_col=0)
-    df_best_charge_state_ps_sc = pd.read_csv('../output/csv_tables/charge_state_scan/best_charge_state/best_Nb_leir_charge_state_scan_with_PC_SC_limit.csv', index_col=0)
+    df_best_charge_state = pd.read_csv('output/csv_tables/charge_state_scan/best_charge_state/best_Nb_leir_charge_state_scan.csv', index_col=0)
+    df_best_charge_state_ps_sc = pd.read_csv('output/csv_tables/charge_state_scan/best_charge_state/best_Nb_leir_charge_state_scan_with_PC_SC_limit.csv', index_col=0)
     
     # Data from isotope scan
-    df_best_isotope = pd.read_csv('../output/csv_tables/isotope_scan/best_isotope/best_Nb_isotope_scan.csv', index_col=0)
-    df_best_isotope_ps_sc = pd.read_csv('../output/csv_tables/isotope_scan/best_isotope/best_Nb_isotope_scan_with_PC_SC_limit.csv', index_col=0)
+    df_best_isotope = pd.read_csv('output/csv_tables/isotope_scan/best_isotope/best_Nb_isotope_scan.csv', index_col=0)
+    df_best_isotope_ps_sc = pd.read_csv('output/csv_tables/isotope_scan/best_isotope/best_Nb_isotope_scan_with_PC_SC_limit.csv', index_col=0)
     
     # First check case without PS space charge 
     df_ratio_best_case_charge_state, df_ratio_best_case_isotope = plot_Nb_dataframes(
@@ -153,4 +153,4 @@ if __name__ == '__main__':
     df_best['Nb_Q_boost'] = df_ratio_best_case_charge_state_ps_sc
     df_best['A_boost'] = df_best_isotope_ps_sc['2_A_best']
     df_best['Nb_A_boost'] = df_ratio_best_case_isotope_ps_sc
-    df_best.to_csv('../output/csv_tables/best_combined_from_scan/best_A_and_Q_ratios_to_baseline.csv')
+    df_best.to_csv('output/csv_tables/best_combined_from_scan/best_A_and_Q_ratios_to_baseline.csv')

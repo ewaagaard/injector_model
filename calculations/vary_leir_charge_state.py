@@ -23,7 +23,10 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 colors = ['green', 'blue', 'purple', 'brown', 'teal', 'coral', 'cyan', 'darkred']
 
 # Load ion data and initialize for test for bunch intensities 
-ion_data = pd.read_csv("../data/Ion_species.csv", sep=';', header=0, index_col=0).T
+ion_data = pd.read_csv("../data/Ion_species.csv", header=0, index_col=0).T
+
+# Set upper limit to Q / A for LINAC3 - LEIR transfer line
+LinacLEIRlim = 0.25
 
 # Compare to reference intensities - WG5 and Roderik
 ref_Table_SPS = pd.read_csv('../data/test_and_benchmark_data/SPS_final_intensities_WG5_and_Hannes.csv', delimiter=';', index_col=0)
@@ -204,7 +207,7 @@ def vary_charge_state_and_plot(
         df = pd.DataFrame(dict_ion)
         df = df.set_index(['Q_state'])
         if save_fig:
-            df.to_csv('../output/csv_tables/charge_state_scan/{}_leir_charge_state_scan{}.csv'.format(ion, output_name))
+            df.to_csv('output/csv_tables/charge_state_scan/{}_leir_charge_state_scan{}.csv'.format(ion, output_name))
         ion_dataframes.append(df)
         
         #### PLOTTING - Make figure for all the charge states ####
@@ -222,7 +225,7 @@ def vary_charge_state_and_plot(
         ax.legend(fontsize=9)
         fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         if save_fig:
-            fig.savefig('../output/figures/charge_state_scan/{}_{}_leir_charge_state_scan{}.png'.format(count, ion, output_name), dpi=250)
+            fig.savefig('output/figures/charge_state_scan/{}_{}_leir_charge_state_scan{}.png'.format(count, ion, output_name), dpi=250)
         plt.close()
         
         #### PLOTTING SC limits ##### - Make figure for the LEIR and SPS space charge limits 
@@ -230,65 +233,70 @@ def vary_charge_state_and_plot(
         ## 1) baseline case ####
         fig2, ax2 = plt.subplots(1, 1, figsize = (6,5))
         #fig2.suptitle(ion, fontsize=20)
-        ax2.plot(Q_default, Nb0, 'ro', markersize=12, alpha=0.8, label='Baseline with default charge state')
+        if row['Z'] > 2.0:
+            ax2.axvspan(0.0, np.max(Q_states[Q_states / row['A'] < LinacLEIRlim]), alpha=0.25, color='coral', label='Not accessible LINAC3-LEIR')
         ax2.plot(Q_states, SC_LEIR1_array, color='brown', linewidth=4, linestyle='-', label='LEIR SC limit: Baseline')
         ax2.plot(Q_states, SC_PS1_array, color='slategrey', linewidth=4, linestyle=':', label='PS SC limit: Baseline')
         ax2.plot(Q_states, SC_SPS1_array, color='royalblue', linewidth=4, linestyle='--', label='SPS SC limit: Baseline')
+        ax2.plot(Q_default, Nb0, 'ro', markersize=12, alpha=0.8, label='Baseline with default charge state')
         ax2.set_ylabel('LHC bunch intensity')
         ax2.set_xlabel('LEIR charge state')
         ax2.legend()
         ax2.set_ylim(0, 2 * np.max(SC_SPS1_array))
         fig2.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         if save_fig:
-            fig2.savefig('../output/figures/charge_state_scan/SC_limit/1_baseline_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
+            fig2.savefig('output/figures/charge_state_scan/SC_limit/1_baseline_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
         plt.close()
         
         ## 2) NO PS split ####
         fig3, ax3 = plt.subplots(1, 1, figsize = (6,5))
-        #fig3.suptitle(ion, fontsize=20)
-        ax3.plot(Q_default, Nb0, 'ro', markersize=12, alpha=0.8, label='Baseline with default charge state')
+        if row['Z'] > 2.0:
+            ax3.axvspan(0.0, np.max(Q_states[Q_states / row['A'] < LinacLEIRlim]), alpha=0.25, color='coral', label='Not accessible LINAC3-LEIR')
         ax3.plot(Q_states, SC_LEIR2_array, color='brown', linewidth=4, linestyle='-', label='LEIR SC limit: No PS split')
         ax3.plot(Q_states, SC_PS2_array, color='slategrey', linewidth=4, linestyle=':', label='PS SC limit: No PS split')
         ax3.plot(Q_states, SC_SPS2_array, color='royalblue', linewidth=4, linestyle='--', label='SPS SC limit: No PS split')
+        ax3.plot(Q_default, Nb0, 'ro', markersize=12, alpha=0.8, label='Baseline with default charge state')
         ax3.set_ylabel('LHC bunch intensity')
         ax3.set_xlabel('LEIR charge state')
         ax3.legend()
         ax3.set_ylim(0, 2 * np.max(SC_SPS2_array))
         fig3.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         if save_fig:
-            fig3.savefig('../output/figures/charge_state_scan/SC_limit/2_NO_PS_split_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
+            fig3.savefig('output/figures/charge_state_scan/SC_limit/2_NO_PS_split_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
         plt.close()
         
         ## 3) LEIR-PS strip ####
         fig4, ax4 = plt.subplots(1, 1, figsize = (6,5))
-        #fig4.suptitle(ion, fontsize=20)
-        ax4.plot(Q_default, Nb0, 'ro', markersize=12, alpha=0.8, label='Baseline with default charge state')
+        if row['Z'] > 2.0:
+            ax4.axvspan(0.0, np.max(Q_states[Q_states / row['A'] < LinacLEIRlim]), alpha=0.25, color='coral', label='Not accessible LINAC3-LEIR')
         ax4.plot(Q_states, SC_LEIR3_array, color='brown', linewidth=4, linestyle='-', label='LEIR SC limit: LEIR-PS strip')
         ax4.plot(Q_states, SC_PS3_array, color='slategrey', linewidth=4, linestyle=':', label='PS SC limit: LEIR-PS strip')
         ax4.plot(Q_states, SC_SPS3_array, color='royalblue', linewidth=4, linestyle='--', label='SPS SC limit: LEIR-PS strip')
+        ax4.plot(Q_default, Nb0, 'ro', markersize=12, alpha=0.8, label='Baseline with default charge state')
         ax4.set_ylabel('LHC bunch intensity')
         ax4.set_xlabel('LEIR charge state')
         ax4.legend()
         ax4.set_ylim(0, 2 * np.max(SC_SPS3_array))
         fig4.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         if save_fig:
-            fig4.savefig('../output/figures/charge_state_scan/SC_limit/3_LEIR_PS_strip_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
+            fig4.savefig('output/figures/charge_state_scan/SC_limit/3_LEIR_PS_strip_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
         plt.close()
         
         ## 4) LEIR-PS strip ####
         fig5, ax5 = plt.subplots(1, 1, figsize = (6,5))
-        #fig5.suptitle(ion, fontsize=20)
-        ax5.plot(Q_default, Nb0, 'ro', markersize=12, alpha=0.8, label='Baseline with default charge state')
+        if row['Z'] > 2.0:
+            ax5.axvspan(0.0, np.max(Q_states[Q_states / row['A'] < LinacLEIRlim]), alpha=0.25, color='coral', label='Not accessible LINAC3-LEIR')
         ax5.plot(Q_states, SC_LEIR4_array, color='brown', linewidth=4, linestyle='-', label='LEIR SC limit: LEIR-PS strip\nand no PS split')
         ax5.plot(Q_states, SC_PS4_array, color='slategrey', linewidth=4, linestyle=':', label='PS SC limit: LEIR-PS strip\nand no PS split')
         ax5.plot(Q_states, SC_SPS4_array, color='royalblue', linewidth=4, linestyle='--', label='SPS SC limit: LEIR-PS strip\nand no PS split')
+        ax5.plot(Q_default, Nb0, 'ro', markersize=12, alpha=0.8, label='Baseline with default charge state')
         ax5.set_ylabel('LHC bunch intensity')
         ax5.set_xlabel('LEIR charge state')
         ax5.legend()
         ax5.set_ylim(0, 2 * np.max(SC_SPS4_array))
         fig5.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         if save_fig:
-            fig5.savefig('../output/figures/charge_state_scan/SC_limit/4_LEIR_PS_strip_and_NO_PS_Split_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
+            fig5.savefig('output/figures/charge_state_scan/SC_limit/4_LEIR_PS_strip_and_NO_PS_Split_SC_limit_{}_leir_charge_state_scan{}.png'.format(ion, output_name), dpi=250)
         plt.close()
         
         #########
@@ -330,7 +338,7 @@ def vary_charge_state_and_plot(
     fig0.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)    
     # Save the combined figure
     if save_fig:
-        fig0.savefig('../output/figures/charge_state_scan/combined_leir_charge_state_scan{}.png'.format(output_name), dpi=250)
+        fig0.savefig('output/figures/charge_state_scan/combined_leir_charge_state_scan{}.png'.format(output_name), dpi=250)
     plt.close()
     
     return ion_dataframes
@@ -420,7 +428,7 @@ if __name__ == '__main__':
                       }
     df_best_ions = pd.DataFrame(dict_best_ions)
     df_best_ions = df_best_ions.set_index(ion_data.T.index)
-    df_best_ions.to_csv('../output/csv_tables/charge_state_scan/best_charge_state/best_Nb_leir_charge_state_scan.csv', float_format='%e')
+    df_best_ions.to_csv('output/csv_tables/charge_state_scan/best_charge_state/best_Nb_leir_charge_state_scan.csv', float_format='%e')
     
     dict_best_ions_ps_sc = {'1_Q_best': Q_best_1_array_ps_sc,
                       '1_Nb_best': Nb_best_1_array_ps_sc,
@@ -433,4 +441,4 @@ if __name__ == '__main__':
                       }
     df_best_ions_ps_sc = pd.DataFrame(dict_best_ions_ps_sc)
     df_best_ions_ps_sc = df_best_ions_ps_sc.set_index(ion_data.T.index)
-    df_best_ions_ps_sc.to_csv('../output/csv_tables/charge_state_scan/best_charge_state/best_Nb_leir_charge_state_scan_with_PC_SC_limit.csv', float_format='%e')
+    df_best_ions_ps_sc.to_csv('output/csv_tables/charge_state_scan/best_charge_state/best_Nb_leir_charge_state_scan_with_PC_SC_limit.csv', float_format='%e')

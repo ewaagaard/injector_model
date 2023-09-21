@@ -28,23 +28,17 @@ class InjectorChain:
                  consider_PS_space_charge_limit=True,
                  use_gammas_ref=False,
                  higher_brho_LEIR=False,
-                 save_path_csv = '../output/csv_tables'
+                 save_path_csv = 'output/csv_tables'
                  ):
         
         self.full_ion_data = ion_data
         self.LEIR_PS_strip = LEIR_PS_strip
         self.higher_brho_LEIR = higher_brho_LEIR
-        brho_string = '_higher_brho_LEIR' if self.higher_brho_LEIR else ''
+        self.brho_string = '_higher_brho_LEIR' if self.higher_brho_LEIR else ''
 
         # Check whether to load relativistic gamma data from injection_energies
         self.use_gammas_ref = use_gammas_ref
         
-        # Load ion energy data depending on where stripping is made 
-        if self.LEIR_PS_strip:
-            self.ion_energy_data = pd.read_csv('../data/injection_energies/ion_injection_energies_LEIR_PS_strip{}.csv'.format(brho_string), index_col=0)
-        else:
-            self.ion_energy_data = pd.read_csv('../data/injection_energies/ion_injection_energies_PS_SPS_strip{}.csv'.format(brho_string), index_col=0)
-
         self.init_ion(ion_type)
         self.debug_mode = False
         self.account_for_SPS_transmission = account_for_SPS_transmission
@@ -108,6 +102,12 @@ class InjectorChain:
         """
         Loads calculated ion energies for each ion type from the ion_injection_energies module
         """
+        # Load ion energy data depending on where stripping is made 
+        if self.LEIR_PS_strip:
+            self.ion_energy_data = pd.read_csv('../data/injection_energies/ion_injection_energies_LEIR_PS_strip{}.csv'.format(self.brho_string), index_col=0)
+        else:
+            self.ion_energy_data = pd.read_csv('../data/injection_energies/ion_injection_energies_PS_SPS_strip{}.csv'.format(self.brho_string), index_col=0)
+        
         key = str(int(self.Q)) + self.ion_type + str(int(self.A))
         ion_energy = self.ion_energy_data.loc[key]
         

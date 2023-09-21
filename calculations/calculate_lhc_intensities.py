@@ -10,7 +10,7 @@ from injector_model import InjectorChain
 import numpy as np
 
 # Load ion data and initialize for test for bunch intensities 
-ion_data = pd.read_csv("../data/Ion_species.csv", sep=';', header=0, index_col=0).T
+ion_data = pd.read_csv("../data/Ion_species.csv", header=0, index_col=0).T
 ion_type = 'Pb'
 
 # Compare to reference intensities - WG5 and Roderik
@@ -50,7 +50,7 @@ def calculate_LHC_intensities_all_scenarios(
         			'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
         for col in df_SC_and_max_intensity.columns:
             df_SC_and_max_intensity[col] = df_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
-        df_SC_and_max_intensity.to_csv('../output/output_for_paper/{}_for_paper.csv'.format(output_1), index=True)
+        df_SC_and_max_intensity.to_csv('output/output_for_paper/{}_for_paper.csv'.format(output_1), index=True)
     
     
     
@@ -71,7 +71,7 @@ def calculate_LHC_intensities_all_scenarios(
         			'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
         for col in df2_SC_and_max_intensity.columns:
             df2_SC_and_max_intensity[col] = df2_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
-        df2_SC_and_max_intensity.to_csv('../output/output_for_paper/{}_for_paper.csv'.format(output_2), index=True)
+        df2_SC_and_max_intensity.to_csv('output/output_for_paper/{}_for_paper.csv'.format(output_2), index=True)
     
     
     ## 3: WITH PS SPLITTING AND LEIR-PS STRIPPING
@@ -95,7 +95,7 @@ def calculate_LHC_intensities_all_scenarios(
         			'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
         for col in df3_SC_and_max_intensity.columns:
             df3_SC_and_max_intensity[col] = df3_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
-        df3_SC_and_max_intensity.to_csv('../output/output_for_paper/{}_for_paper.csv'.format(output_3), index=True)
+        df3_SC_and_max_intensity.to_csv('output/output_for_paper/{}_for_paper.csv'.format(output_3), index=True)
     
     
     ## 4: WITH NO SPLITTING AND LEIR-PS STRIPPING
@@ -117,7 +117,7 @@ def calculate_LHC_intensities_all_scenarios(
         			'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
         for col in df4_SC_and_max_intensity.columns:
             df4_SC_and_max_intensity[col] = df4_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
-        df4_SC_and_max_intensity.to_csv('../output/output_for_paper/{}_for_paper.csv'.format(output_4), index=True)
+        df4_SC_and_max_intensity.to_csv('output/output_for_paper/{}_for_paper.csv'.format(output_4), index=True)
     
     #### PLOT THE DATA #######
     SMALL_SIZE = 12
@@ -147,7 +147,7 @@ def calculate_LHC_intensities_all_scenarios(
     ax.legend()
     fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     if savefig:
-        fig.savefig('../output/figures/{}_ChargesPerBunch.png'.format(output_1), dpi=250)
+        fig.savefig('output/figures/{}_ChargesPerBunch.png'.format(output_1), dpi=250)
     plt.close()
     
     # Baseline scenario
@@ -160,7 +160,7 @@ def calculate_LHC_intensities_all_scenarios(
     ax2.legend()
     fig2.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     if savefig:
-        fig2.savefig('../output/figures/{}_NucleonsPerBunch.png'.format(output_1), dpi=250)
+        fig2.savefig('output/figures/{}_NucleonsPerBunch.png'.format(output_1), dpi=250)
     plt.close()
     
     # No PS splitting 
@@ -175,7 +175,7 @@ def calculate_LHC_intensities_all_scenarios(
     ax3.legend()
     fig3.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     if savefig:
-        fig3.savefig('../output/figures/{}.png'.format(output_2), dpi=250)
+        fig3.savefig('output/figures/{}.png'.format(output_2), dpi=250)
     plt.close()
     
     # Interpretation - Ca and Xe higher intensity due to higher LEIR charge state 
@@ -194,7 +194,7 @@ def calculate_LHC_intensities_all_scenarios(
     ax4.legend()
     fig4.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     if savefig:
-        fig4.savefig('../output/figures/{}.png'.format(output_3), dpi=250)
+        fig4.savefig('output/figures/{}.png'.format(output_3), dpi=250)
     plt.close()
     
     # LEIR-PS stripping and NO PS splitting
@@ -211,7 +211,7 @@ def calculate_LHC_intensities_all_scenarios(
     ax5.legend()
     fig5.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     if savefig:
-        fig5.savefig('../output/figures/{}.png'.format(output_4), dpi=250)
+        fig5.savefig('output/figures/{}.png'.format(output_4), dpi=250)
     plt.close()
     print("Succesfully made all plots!")
     
@@ -246,24 +246,3 @@ if __name__ == '__main__':
                                             generate_tables_for_paper = True,
                                             use_gammas_ref=False
                                             )
-    
-    # 3rd case: considereference energies 
-    df_new_energy, df2_new_energy, df3_new_energy, df4_new_energy = calculate_LHC_intensities_all_scenarios(
-                                            output_extra_str = '_with_correct_gammas', 
-                                            consider_PS_space_charge_limit=False,
-                                            use_gammas_ref=True,
-                                            return_dataframes=True
-                                            )
-    
-    
-    #df = df[~df.applymap(lambda x: isinstance(x, bool)).any(axis=0)]
-    #df_ratio, df2_ratio, df3_ratio, df4_ratio = df.div(df_new_energy), df2.div(df2_new_energy), df3.div(df3_new_energy), df4.div(df4_new_energy)
-    
-    # 4th case: consider PS space charge limit and use reference energies 
-    calculate_LHC_intensities_all_scenarios(
-                                            output_extra_str = '_with_correct_gammas_and_PS_space_charge_limit', 
-                                            consider_PS_space_charge_limit=True,
-                                            use_gammas_ref=True,
-                                            return_dataframes=True
-                                            )
-    

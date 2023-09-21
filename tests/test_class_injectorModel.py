@@ -8,8 +8,8 @@ from injector_model import InjectorChain
 import pandas as pd
 import numpy as np
 
-# Import data 
-ion_data = pd.read_csv("../data/Ion_species.csv", sep=';', header=0, index_col=0).T
+# Import data - old version that Roderik used with wrong Kr22+ charge state
+ion_data = pd.read_csv("../data/Ion_species_old_currents.csv", header=0, index_col=0).T
 ion_type = 'Pb'
 
 # Load reference values from Roderik Bruce's Mathematica notebook output (2021)
@@ -63,7 +63,7 @@ class TestClass_injectorModel_linearSpaceCharge:
                                         LEIR_PS_strip=True,
                                         consider_PS_space_charge_limit=False
                                         )
-        df_ps_leir_strip = injector_chain3.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name='output')
+        df_ps_leir_strip = injector_chain3.calculate_LHC_bunch_intensity_all_ion_species()
         assert np.all(np.isclose(ref_val['LEIR_PS_strip'].values, df_ps_leir_strip['LHC_chargesPerBunch'].values, rtol=1e-2))   
         
         

@@ -51,7 +51,7 @@ class InjectorChain_full_SC:
                  save_path_csv = '{}/csv_tables'.format(output_folder)
                  ):
         
-        self.full_ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), sep=';', header=0, index_col=0).T
+        self.full_ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), header=0, index_col=0).T
         self.LEIR_PS_strip = LEIR_PS_strip
         self.account_for_SPS_transmission = account_for_SPS_transmission
 
