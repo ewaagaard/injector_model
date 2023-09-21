@@ -13,7 +13,7 @@ In this repository, we develop a simulation tool for different ions based on the
 
 When using Python for scientific computing, it is important to be aware of dependencies and compatibility of different packages. This guide gives a good explanation: [Python dependency manager guide](https://aaltoscicomp.github.io/python-for-scicomp/dependencies/#dependency-management). An isolated environment allows installing packages without affecting the rest of your operating system or any other projects. A useful resource to handle virtual environments is [Anaconda](https://www.anaconda.com/) (or its lighter version Miniconda), when once installed has many useful commands of which many can be found in the [Conda cheat sheet](https://docs.conda.io/projects/conda/en/4.6.0/_downloads/52a95608c49671267e40c689e0bc00ca/conda-cheatsheet.pdf) 
 
-To directly start calculating different ion performances with the `injector_model`, create an isolated virtual environment and (for now) perform a local install to use the `injector_model` in other modules. In the terminal inside the `injector_model` repository, run:
+To directly start calculating different ion performances with the `injector_model`, create an isolated virtual environment and perform a local install to use the `injector_model` freely. Once the repository is cloned and from inside the `injector_model` repository, run in the terminal:
 
 ```
 conda create --name test_venv python=3.11 numpy pandas scipy matplotlib
