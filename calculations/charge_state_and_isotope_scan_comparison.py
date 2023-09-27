@@ -17,7 +17,7 @@ ion_type = 'Pb'
 ref_Table_SPS = pd.read_csv('../data/test_and_benchmark_data/SPS_final_intensities_WG5_and_Hannes.csv', delimiter=';', index_col=0)
 
 #### PLOT SETTINGS #######
-SMALL_SIZE = 8
+SMALL_SIZE = 10
 MEDIUM_SIZE = 15
 BIGGER_SIZE = 20
 plt.rcParams["font.family"] = "serif"

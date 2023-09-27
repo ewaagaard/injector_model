@@ -10,9 +10,9 @@ from injector_model import InjectorChain
 import numpy as np
 
 #### PLOTTING PARAMETERS #######
-SMALL_SIZE = 10
-MEDIUM_SIZE = 15
-BIGGER_SIZE = 20
+SMALL_SIZE = 12
+MEDIUM_SIZE = 17
+BIGGER_SIZE = 22
 plt.rcParams["font.family"] = "serif"
 plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
 plt.rc('axes', titlesize=BIGGER_SIZE)    # fontsize of the axes title
@@ -217,14 +217,14 @@ def vary_isotope_and_plot(
         #fig.suptitle(ion, fontsize=20)
         if WG5_intensity[ion] > 0.0:
             ax.axhline(y = WG5_intensity[ion], color='red', label='WG5')
-        ax.plot(A_default, Nb0, 'ro', markersize=14.5, alpha=0.8, label='1: Baseline with default isotope')
         ax.plot(A_states, Nb1_array, color='blue', marker='o', linewidth=3, linestyle='-', label='1: Baseline')
         ax.plot(A_states, Nb2_array, linestyle='--', marker='o', color='gold', linewidth=3, label='2: No PS splitting') #
         ax.plot(A_states, Nb3_array, linestyle='-.', marker='o', color='limegreen', linewidth=3, label='3: LEIR-PS stripping') #
         ax.plot(A_states, Nb4_array, linestyle='--', marker='o', color='gray', linewidth=3, label='4: LEIR-PS stripping, \nno PS splitting') #
+        ax.plot(A_default, Nb0, 'ro', markersize=14.5, alpha=0.8, label='1: Baseline with default isotope')
         ax.set_ylabel('LHC bunch intensity')
         ax.set_xlabel('Mass number A')
-        ax.legend(fontsize=9)
+        ax.legend(  )
         fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         if save_fig:
             fig.savefig('output/figures/isotope_scan/isotope_scan_{}_{}_{}.png'.format(count, ion, output_name), dpi=250)

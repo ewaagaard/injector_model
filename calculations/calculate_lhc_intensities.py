@@ -120,9 +120,9 @@ def calculate_LHC_intensities_all_scenarios(
         df4_SC_and_max_intensity.to_csv('output/output_for_paper/{}_for_paper.csv'.format(output_4), index=True)
     
     #### PLOT THE DATA #######
-    SMALL_SIZE = 12
-    MEDIUM_SIZE = 15
-    BIGGER_SIZE = 20
+    SMALL_SIZE = 13.5
+    MEDIUM_SIZE = 17
+    BIGGER_SIZE = 23
     plt.rcParams["font.family"] = "serif"
     plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
     plt.rc('axes', titlesize=BIGGER_SIZE)    # fontsize of the axes title
