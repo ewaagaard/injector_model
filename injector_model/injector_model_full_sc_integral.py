@@ -511,11 +511,15 @@ class InjectorChain_full_SC:
             return IBS.Ixx, IBS.Iyy, IBS.Ipp
     
     
-    def calculate_IBS_growth_rate_for_LEIR(self, Nb, gamma, sigma_z):
+    def calculate_IBS_growth_rate_for_LEIR(self, Nb, gamma, sigma_z, update_delta=False, sigma_z0=None):
         """
         Finds the initial IBS growth rates for LEIR 
         assuming for now that emittances and momentum spread delta are identical
         Input: arrays with bunch intensities, gammas and bunch length for LEIR
+        
+        Can choose to update momentum spread delta assuming constant longitudinal emittance,
+        i.e. delta_f = (beta * gamma * sigma_z)_i / (beta * gamma * sigma_z)_f * delta_i
+        if so, need to provide sigma_z0 to know where to start from 
         """ 
         #### LEIR ####
         particle_LEIR = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_LEIR, gamma0 = gamma)
@@ -523,6 +527,14 @@ class InjectorChain_full_SC:
         line_LEIR.reference_particle = particle_LEIR
         line_LEIR.build_tracker()
         twiss_LEIR = line_LEIR.twiss()
+        
+        # Update momentum spread delta if desired
+        if update_delta:
+            delta_LEIR = (self.beta(self.gamma0_LEIR_inj) * self.gamma0_LEIR_inj * sigma_z0) \
+                        / (self.beta(gamma) * gamma * sigma_z) * self.delta_LEIR
+        else:
+            delta_LEIR = self.delta_LEIR
+        print('Delta LEIR: {:.3e}'.format(delta_LEIR))
         
         # Calculate growth rates
         Tx_LEIR, Ty_LEIR, Tz_LEIR = self.find_analytical_IBS_growth_rates(particle_LEIR,
@@ -532,16 +544,20 @@ class InjectorChain_full_SC:
                                                                             sigma_z,
                                                                             self.ex_LEIR, 
                                                                             self.ey_LEIR,
-                                                                            self.delta_LEIR,
+                                                                            delta_LEIR,
                                                                              )
         return Tx_LEIR, Ty_LEIR, Tz_LEIR
 
 
-    def calculate_IBS_growth_rate_for_PS(self, Nb, gamma, sigma_z):
+    def calculate_IBS_growth_rate_for_PS(self, Nb, gamma, sigma_z, update_delta=False, sigma_z0=None):
         """
         Finds the initial IBS growth rates for PS 
         assuming for now that emittances and momentum spread delta are identical
         Input: arrays with bunch intensities, gammas and bunch length for PS
+        
+        Can choose to update momentum spread delta assuming constant longitudinal emittance,
+        i.e. delta_f = (beta * gamma * sigma_z)_i / (beta * gamma * sigma_z)_f * delta_i
+        if so, need to provide sigma_z0 to know where to start from 
         """ 
         #### PS ####
         particle_PS = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_PS, gamma0 = gamma)
@@ -549,6 +565,14 @@ class InjectorChain_full_SC:
         line_PS.reference_particle = particle_PS
         line_PS.build_tracker()
         twiss_PS = line_PS.twiss()
+        
+        # Update momentum spread delta if desired
+        if update_delta:
+            delta_PS = (self.beta(self.gamma0_PS_inj) * self.gamma0_PS_inj * sigma_z0) \
+                        / (self.beta(gamma) * gamma * sigma_z) * self.delta_PS
+        else:
+            delta_PS = self.delta_PS
+        print('Delta PS: {:.3e}'.format(delta_PS))
         
         # Calculate growth rates
         Tx_PS, Ty_PS, Tz_PS = self.find_analytical_IBS_growth_rates(particle_PS,
@@ -558,16 +582,23 @@ class InjectorChain_full_SC:
                                                                         sigma_z,
                                                                         self.ex_PS, 
                                                                         self.ey_PS,
-                                                                        self.delta_PS,
+                                                                        delta_PS
                                                                          )
         return Tx_PS, Ty_PS, Tz_PS
 
 
-    def calculate_IBS_growth_rate_for_SPS(self, Nb, gamma, sigma_z):
+    def calculate_IBS_growth_rate_for_SPS(self, Nb, gamma, sigma_z, 
+                                          update_delta=False, sigma_z0=None, emittances = None):
         """
         Finds the initial IBS growth rates for SPS 
         assuming for now that emittances and momentum spread delta are identical
         Input: arrays with bunch intensities, gammas and bunch length for SPS
+        
+        Can choose to update momentum spread delta assuming constant longitudinal emittance,
+        i.e. delta_f = (beta * gamma * sigma_z)_i / (beta * gamma * sigma_z)_f * delta_i
+        if so, need to provide sigma_z0 to know where to start from 
+
+        If emittances not provided, take default values
         """ 
         #### SPS ####
         particle_SPS = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_SPS, gamma0 = gamma)
@@ -576,15 +607,30 @@ class InjectorChain_full_SC:
         line_SPS.build_tracker()
         twiss_SPS = line_SPS.twiss()
         
+        # Update momentum spread delta if desired
+        if update_delta:
+            delta_SPS = (self.beta(self.gamma0_SPS_inj) * self.gamma0_SPS_inj * sigma_z0) \
+                        / (self.beta(gamma) * gamma * sigma_z) * self.delta_SPS
+        else:
+            delta_SPS = self.delta_SPS
+        print('Delta SPS: {:.3e}'.format(delta_SPS))
+        
+        if emittances is None:
+            ex_SPS, ey_SPS = self.ex_SPS, self.ey_SPS
+            print('Setting default emittance values for SPS...')
+        else:
+            ex_SPS, ey_SPS = emittances[0], emittances[1]
+            print('Setting custom emittance values for SPS...')
+
         # Calculate growth rates
         Tx_SPS, Ty_SPS, Tz_SPS = self.find_analytical_IBS_growth_rates(particle_SPS,
                                                                         twiss_SPS, 
                                                                         line_SPS,
                                                                         Nb,
                                                                         sigma_z,
-                                                                        self.ex_SPS, 
-                                                                        self.ey_SPS,
-                                                                        self.delta_SPS,
+                                                                        ex_SPS, 
+                                                                        ey_SPS,
+                                                                        delta_SPS,
                                                                          )
         return Tx_SPS, Ty_SPS, Tz_SPS
 
