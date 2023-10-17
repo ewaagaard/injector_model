@@ -1,0 +1,42 @@
+appdirs==1.4.4
+Bottleneck @ file:///work/ci_py311/bottleneck_1676827011612/work
+brotlipy==0.7.0
+certifi @ file:///croot/certifi_1683875369620/work/certifi
+cffi @ file:///work/ci_py311/cffi_1676822533496/work
+charset-normalizer @ file:///tmp/build/80754af9/charset-normalizer_1630003229654/work
+contourpy @ file:///work/ci_py311/contourpy_1676827066340/work
+cryptography @ file:///croot/cryptography_1686613057838/work
+cycler @ file:///tmp/build/80754af9/cycler_1637851556182/work
+fonttools==4.25.0
+idna @ file:///work/ci_py311/idna_1676822698822/work
+iniconfig==2.0.0
+-e git+ssh://git@github.com/ewaagaard/InjectorModel.git@b99eba115c1d83afe8fc46730fcfa9e0328c52a0#egg=injector_model
+kiwisolver @ file:///work/ci_py311/kiwisolver_1676827230232/work
+matplotlib @ file:///croot/matplotlib-suite_1679593461707/work
+mkl-fft==1.3.6
+mkl-random @ file:///work/mkl/mkl_random_1682950433854/work
+mkl-service==2.4.0
+munkres==1.1.4
+numexpr @ file:///croot/numexpr_1683221822650/work
+numpy @ file:///croot/numpy_and_numpy_base_1687466208449/work
+packaging @ file:///croot/packaging_1678965309396/work
+pandas==1.5.3
+Pillow==9.4.0
+pluggy==1.2.0
+ply==3.11
+pooch @ file:///tmp/build/80754af9/pooch_1623324770023/work
+pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
+pyOpenSSL @ file:///croot/pyopenssl_1678965284384/work
+pyparsing @ file:///work/ci_py311/pyparsing_1677811559502/work
+PyQt5-sip==12.11.0
+PySocks @ file:///work/ci_py311/pysocks_1676822712504/work
+pytest==7.4.0
+python-dateutil @ file:///tmp/build/80754af9/python-dateutil_1626374649649/work
+pytz @ file:///work/ci_py311/pytz_1676825004346/work
+requests @ file:///croot/requests_1682607517574/work
+scipy==1.10.1
+sip @ file:///work/ci_py311/sip_1676825117084/work
+six @ file:///tmp/build/80754af9/six_1644875935023/work
+toml @ file:///tmp/build/80754af9/toml_1616166611790/work
+tornado @ file:///work/ci_py311/tornado_1676823418767/work
+urllib3 @ file:///croot/urllib3_1686163155763/work
