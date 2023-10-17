@@ -20,7 +20,11 @@ conda create --name test_venv python=3.11 numpy pandas scipy matplotlib
 conda activate test_venv
 python -m pip install -e injector_model
 ```
-Then the different scripts in the folder `calculations` can be executed. 
+Then the different scripts in the folder `calculations` can be executed. The virtual environment can also be installed directly from the `requirements.txt`:
+
+```
+python -m pip install -r requirements.txt
+```
 
 In order to use the IBS module functions from M. Zampetakis on this [GitHub repository](https://github.com/MichZampetakis/IBS_for_Xsuite), which is a submodule in this repository, install the package in the Python virtual environment.
 ```
