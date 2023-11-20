@@ -264,7 +264,7 @@ class InjectorChain_full_SC:
                                 ex,
                                 ey,
                                 delta, 
-                                interpolation_resolution = 100000
+                                interpolation_resolution = 1000000
                                 ):
         """
         Interpolate Xtrack twiss table and beam sizes sigma_x and sigma_y

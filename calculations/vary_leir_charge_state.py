@@ -224,7 +224,7 @@ def vary_charge_state_and_plot(
             ax.axhline(y = WG5_intensity[ion], color='red', label='WG5')
         ax.set_ylabel('LHC bunch intensity')
         ax.set_xlabel('LEIR charge state')
-        ax.legend()
+        ax.legend(fontsize=9)
         fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         if save_fig:
             fig.savefig('output/figures/charge_state_scan/{}_{}_leir_charge_state_scan{}.png'.format(count, ion, output_name), dpi=250)
