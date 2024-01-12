@@ -18,6 +18,7 @@ To directly start calculating different ion performances with the `injector_mode
 ```
 conda create --name test_venv python=3.11 numpy pandas scipy matplotlib
 conda activate test_venv
+cd ..
 python -m pip install -e injector_model
 ```
 Then the different scripts in the folder `calculations` can be executed. The virtual environment can also be installed directly from the `requirements.txt`:
