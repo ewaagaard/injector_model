@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Main script to calculate final nucleon intensity into the LHC considering linear space charge limit in LEIR and SPS,
-but not yet in PS 
+and also PS
 """
 import matplotlib.pyplot as plt
 import pandas as pd 
