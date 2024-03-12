@@ -10,6 +10,7 @@ import math
 #from scipy.constants import e
 from scipy import constants
 from collections import defaultdict
+import os
 
 class InjectorChain:
     """
@@ -540,6 +541,9 @@ class InjectorChain:
         Estimate LHC bunch intensity for all ion species provided in table
         through Linac3, LEIR, PS and SPS considering all the limits of the injectors
         """
+        # Check that output directory exists
+        os.makedirs(self.save_path, exist_ok=True)
+        
         # Initialize full dicionary
         full_result = defaultdict(list)
         
