@@ -12,5 +12,6 @@ xsuite_lines
 *.parquet
 *.txt
 *.pyc
+*.pdf
 __pycache__
 *egg-info
