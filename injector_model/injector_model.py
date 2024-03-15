@@ -6,11 +6,15 @@ Simulation model of the CERN Injector Chain for different ions
 """
 import pandas as pd
 import numpy as np
+from pathlib import Path
 import math
 #from scipy.constants import e
 from scipy import constants
 from collections import defaultdict
 import os
+
+# Calculate the absolute path to the data folder relative to the module's location
+data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
 
 class InjectorChain:
     """
@@ -73,6 +77,7 @@ class InjectorChain:
         Initialize ion species for a given type 
         """
         self.ion_type = ion_type
+        self.ion_str = ''.join(filter(str.isalpha, ion_type))
         self.ion_data = self.full_ion_data[ion_type]
         self.mass_GeV = self.ion_data['mass [GeV]']
         self.Z = self.ion_data['Z']
@@ -105,11 +110,11 @@ class InjectorChain:
         """
         # Load ion energy data depending on where stripping is made 
         if self.LEIR_PS_strip:
-            self.ion_energy_data = pd.read_csv('../data/injection_energies/ion_injection_energies_LEIR_PS_strip{}.csv'.format(self.brho_string), index_col=0)
+            self.ion_energy_data = pd.read_csv('{}/injection_energies/ion_injection_energies_LEIR_PS_strip{}.csv'.format(data_folder, self.brho_string), index_col=0)
         else:
-            self.ion_energy_data = pd.read_csv('../data/injection_energies/ion_injection_energies_PS_SPS_strip{}.csv'.format(self.brho_string), index_col=0)
+            self.ion_energy_data = pd.read_csv('{}/injection_energies/ion_injection_energies_PS_SPS_strip{}.csv'.format(data_folder, self.brho_string), index_col=0)
         
-        key = str(int(self.Q)) + self.ion_type + str(int(self.A))
+        key = str(int(self.Q)) + self.ion_str + str(int(self.A))
         ion_energy = self.ion_energy_data.loc[key]
         
         # Load reference injection energies
@@ -119,6 +124,7 @@ class InjectorChain:
         self.PS_gamma_extr_ref = ion_energy['PS_gamma_extr']
         self.SPS_gamma_inj_ref = ion_energy['SPS_gamma_inj']
         self.SPS_gamma_extr_ref = ion_energy['SPS_gamma_extr']
+        print('Ion type: {} and PS gamma: {}'.format(self.ion_type, self.PS_gamma_extr_ref))
 
     def beta(self, gamma):
         """
@@ -341,6 +347,7 @@ class InjectorChain:
                                 )
             self.gamma_SPS_extr = (self.mass_GeV + self.E_kin_per_A_SPS_extr * self.A)/self.mass_GeV
         
+        print(f'SPS gamma: {self.gamma_SPS_inj}')
         # Calculate outgoing intensity from linear scaling 
         self.Nb_SPS_extr = self.linearIntensityLimit(
                                                m = self.mass_GeV, 
@@ -527,7 +534,6 @@ class InjectorChain:
             "PS_ratio_SC_limit_maxIntensity": spaceChargeLimitPS / ionsPerBunchInjectedPS,
             "SPS_ratio_SC_limit_maxIntensity": spaceChargeLimitSPS / ionsPerBunchSPSinj
         }
-        
 
         # Add key of LEIR-PS stripping efficiency if this is done 
         if self.LEIR_PS_strip:
@@ -552,7 +558,7 @@ class InjectorChain:
             # Initiate the correct ion
             self.init_ion(ion_type)
             result = self.calculate_LHC_bunch_intensity()
-         
+
             # Append the values to the corresponding key 
             for key, value in result.items():
                 full_result[key].append(value)

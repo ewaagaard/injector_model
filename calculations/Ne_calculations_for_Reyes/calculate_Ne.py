@@ -34,6 +34,7 @@ del ion_data['He'], ion_data['Ar'], ion_data['Ca'], ion_data['Kr'], ion_data['In
 # Update other parameters - also find Magnesium mass in atomic units
 ion_data['Ne'].Z = 10.0
 ion_data['Ne'].A = 20.0
+ion_data['Ne']['str'] = 'Ne'
 ion_data['Ne']['Q before stripping'] = 5.0 # 
 ion_data['Ne']['mass [GeV]'] = 30.024990 * scipy.constants.physical_constants['atomic mass unit-electron volt relationship'][0] * 1e-9
 ion_type = 'Ne'
@@ -72,3 +73,34 @@ result2 = injector_chain2.calculate_LHC_bunch_intensity()
     
 # Calculate LHC bunch intensity for all ions
 df2 = injector_chain2.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name = '2_no_PS_splitting_with_Ne')
+
+
+######### USE REFERENCE ENERGIES without simplified gamma formula #########
+
+## CASE 3: BASELINE (like default Pb production) with reference energy
+injector_chain3 = InjectorChain(ion_type, 
+                                ion_data, 
+                                nPulsesLEIR = 1,
+                                LEIR_bunches = 1,
+                                PS_splitting = 2,
+                                consider_PS_space_charge_limit = True,
+                                use_gammas_ref=True
+                                )
+result3 = injector_chain3.calculate_LHC_bunch_intensity()
+    
+# Calculate LHC bunch intensity for all ions
+df3 = injector_chain3.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name = '3_baseline_with_Ne_gamma_ref')
+
+## CASE 4: NO PS BUNCH SPLITTING with reference energy
+injector_chain4 = InjectorChain(ion_type, 
+                                ion_data, 
+                                nPulsesLEIR = 1,
+                                LEIR_bunches = 1,
+                                PS_splitting = 1,
+                                consider_PS_space_charge_limit = True,
+                                use_gammas_ref=True
+                                )
+result4 = injector_chain4.calculate_LHC_bunch_intensity()
+    
+# Calculate LHC bunch intensity for all ions
+df4 = injector_chain4.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name = '4_no_PS_splitting_with_Ne_gamma_ref')

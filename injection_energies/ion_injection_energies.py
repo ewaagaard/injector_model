@@ -2,13 +2,19 @@
 Module to calculate and store injection energies for all ions
 """
 import pandas as pd
+import os
+from pathlib import Path
 from injector_model import InjectionEnergies
+
+# Calculate the absolute path to the data folder relative to the module's location
+data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
+os.makedirs('{}/injection_energies'.format(data_folder), exist_ok=True)
 
 # New LEIR Brho
 LEIR_brho_new = 6.7
 
 # Load all the ion isotope data
-df = pd.read_csv('../data/Full_isotope_data.csv', index_col=0)
+df = pd.read_csv('{}/Full_isotope_data.csv'.format(data_folder), index_col=0)
 
 ##### Test Pb injection energies ####
 Pb_data = df.loc['54Pb208']
@@ -110,14 +116,14 @@ for i, row in df.iterrows():
 
 # Convert all the data to a big dataframe
 df = pd.DataFrame(all_data)
-df.to_csv('injection_energy_output/ion_injection_energies_PS_SPS_strip.csv', index=False)
+df.to_csv('{}/injection_energy_output/ion_injection_energies_PS_SPS_strip.csv'.format(data_folder), index=False)
 
 df_LEIR_PS = pd.DataFrame(all_data_LEIR_PS)
-df_LEIR_PS.to_csv('injection_energy_output/ion_injection_energies_LEIR_PS_strip.csv', index=False)
+df_LEIR_PS.to_csv('{}/injection_energy_output/ion_injection_energies_LEIR_PS_strip.csv'.format(data_folder), index=False)
 
 df_Brho = pd.DataFrame(all_data_Brho)
-df_Brho.to_csv('injection_energy_output/ion_injection_energies_PS_SPS_strip_higher_brho_LEIR.csv', index=False)
+df_Brho.to_csv('{}/injection_energy_output/ion_injection_energies_PS_SPS_strip_higher_brho_LEIR.csv'.format(data_folder), index=False)
 
 df_LEIR_PS_Brho = pd.DataFrame(all_data_LEIR_PS_Brho)
-df_LEIR_PS_Brho.to_csv('injection_energy_output/ion_injection_energies_LEIR_PS_strip_higher_brho_LEIR.csv', index=False)
+df_LEIR_PS_Brho.to_csv('{}/injection_energy_output/ion_injection_energies_LEIR_PS_strip_higher_brho_LEIR.csv'.format(data_folder), index=False)
 

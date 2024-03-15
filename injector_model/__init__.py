@@ -1,3 +1,3 @@
 from .injector_model import InjectorChain
-from .injector_model_full_sc_integral import InjectorChain_full_SC
+#from .injector_model_full_sc_integral import InjectorChain_full_SC
 from .injection_energies import InjectionEnergies
