@@ -36,7 +36,7 @@ ion_data['Ne'].Z = 10.0
 ion_data['Ne'].A = 20.0
 ion_data['Ne']['str'] = 'Ne'
 ion_data['Ne']['Q before stripping'] = 5.0 # 
-ion_data['Ne']['mass [GeV]'] = 30.024990 * scipy.constants.physical_constants['atomic mass unit-electron volt relationship'][0] * 1e-9
+ion_data['Ne']['mass [GeV]'] = 19.992440 * scipy.constants.physical_constants['atomic mass unit-electron volt relationship'][0] * 1e-9
 ion_type = 'Ne'
 
 # Make new entries with different LINAC currents
