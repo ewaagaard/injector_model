@@ -52,7 +52,7 @@ class InjectorChain:
         # Initiate values for PS B-field
         self.PS_MinB    = 383 * 1e-4 # [T] - minimum magnetic field in PS, (Gauss to Tesla) from Heiko Damerau
         self.PS_MaxB    = 1.26 # [T] - minimum magnetic field in PS, from reyes Alemany Fernandez
-        self.PS_rho     = 70.1206 # [m] - PS bending radius 
+        self.PS_rho     = 70.079 # [m] - PS bending radius 
         
         # Rules for splitting and bunches 
         self.nPulsesLEIR = nPulsesLEIR
