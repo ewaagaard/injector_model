@@ -25,7 +25,6 @@ class SC_Tune_Shifts:
         return np.sqrt(1 - 1/gamma**2)
 
     def interpolate_Twiss_table(self, 
-                                twissTableXsuite : xt.TwissTable,
                                 line : xt.Line,
                                 beamParams : dataclass,
                                 interpolation_resolution = 1000000
@@ -35,14 +34,19 @@ class SC_Tune_Shifts:
         
         Parameters:
         -----------
-        twissTableXsuite : xt.TwissTable
-            Twiss table from xt.Line.twiss()
+        line : xt.Line
+            xtrack line object to use
         beamParams : dataclass
             dataclass containing exn, eyn, Nb, delta, sigma_delta
 
-        
-        Xtrack twiss table and beam sizes sigma_x and sigma_y
+        Returns:
+        --------
+        twissTableXsuite : xt.TwissTable
+            interpolated twiss table with interpolation_resolution
+        sigma_x : np.ndarray and sigma_y : np.ndarray
+            array of horizontal and vertical beam sizes around lattice
         """
+        twissTableXsuite = line.twiss()
         gamma = line.particle_ref.gamma0[0]
         beta = self.beta(gamma)
         ss = np.linspace(0, line.get_length(), interpolation_resolution)
@@ -67,27 +71,45 @@ class SC_Tune_Shifts:
     
 
     def calculate_SC_tuneshift(self, 
-                               Nb, 
-                               particle_ref, 
-                               sigma_z, 
-                               twiss_xtrack_interpolated, 
-                               sigma_x, sigma_y, 
+                               line : xt.Line,
+                               beamParams : dataclass,
                                bF = 0.,
                                C = None,
                                h = None):
         """
         Finds the SC-induced max detuning dQx and dQy for given Twiss and beam parameters
         with possibility to use bunching factor bF, circumference C and harmonic h if non-Gaussian beams 
+
+        Parameters:
+        -----------
+        line : xt.Line
+            xtrack line object to use
+        beamParams : dataclass
+            dataclass containing exn, eyn, Nb, delta, sigma_delta
+        bF : float
+            bunching factor - if zero, assume Gaussian shape
+        C : float
+            circumference of accelerator
+        h : int
+            harmonic of accelerator
+
+        Returns:
+        --------
+        dQx, dQy : float
+            Calculated analytical tune shift
         """  
-        gamma = particle_ref.gamma0[0]
+        gamma = line.particle_ref.gamma0[0]
         beta = self.beta(gamma)
-        r0 = particle_ref.get_classical_particle_radius0()
+        r0 = line.particle_ref.get_classical_particle_radius0()
         
+        # Calculated interpolated twiss table
+        twiss_xtrack_interpolated, sigma_x, sigma_y = self.interpolate_Twiss_table(line=line, beamParams=beamParams)
+
         # Space charge perveance
         if bF == 0.0:
-            K_sc = (2 * r0 * Nb) / (np.sqrt(2*np.pi) * sigma_z * beta**2 * gamma**3)
+            K_sc = (2 * r0 * beamParams.Nb) / (np.sqrt(2*np.pi) * beamParams.sigma_z * beta**2 * gamma**3)
         else:
-            K_sc = (2 * r0 * Nb) * (h / bF) / (C * beta**2 * gamma**3)
+            K_sc = (2 * r0 * beamParams.Nb) * (h / bF) / (C * beta**2 * gamma**3)
 
         integrand_x = twiss_xtrack_interpolated['betx'] / (sigma_x * (sigma_x + sigma_y))  
         integrand_y = twiss_xtrack_interpolated['bety'] / (sigma_y * (sigma_x + sigma_y)) 
@@ -97,6 +119,50 @@ class SC_Tune_Shifts:
         
         return dQx, dQy
 
+
+    def maxIntensity_from_SC_integral(self, 
+                                      dQx_max, 
+                                      dQy_max, 
+                                      line : xt.Line, 
+                                      beamParams : dataclass
+                                      ):
+        """
+        For a given max tuneshift, calculate the maximum bunch intensity 
+
+        Parameters:
+        -----------
+        dQx, dQy : float
+            Calculated analytical tune shifts in X and Y
+        line : xt.Line
+            xtrack line object to use
+        beamParams : dataclass
+            dataclass containing exn, eyn, Nb, delta, sigma_delta
+
+        Returns:
+        --------
+        Nb_max : float
+            maximum intensity for a given tune shift, min(Nb_x_max, Nb_y_max)         
+        """
+        gamma = line.particle_ref.gamma0[0]
+        beta = self.beta(gamma)
+        r0 = line.particle_ref.get_classical_particle_radius0()
+        
+        # Calculated interpolated twiss table
+        twiss_xtrack_interpolated, sigma_x, sigma_y = self.interpolate_Twiss_table(line=line, beamParams=beamParams)
+
+        # Load interpolated beam sizes and Twiss parameters, then define SC integrands 
+        integrand_x = twiss_xtrack_interpolated['betx'] / (sigma_x * (sigma_x + sigma_y))  
+        integrand_y = twiss_xtrack_interpolated['bety'] / (sigma_y * (sigma_x + sigma_y)) 
+
+        # Calculate maximum bunch intensity for given max tune shift in x and in y
+        Nb_x_max = -dQx_max / ( (2 * r0) / (4 * np.pi * beta**2 * gamma**3 * np.sqrt(2*np.pi) * beamParams.igma_z) \
+                             * np.trapz(integrand_x, x = twiss_xtrack_interpolated['s']))
+        Nb_y_max = -dQy_max / ( (2 * r0) / (4 * np.pi * beta**2 * gamma**3 * np.sqrt(2*np.pi) * beamParams.sigma_z) \
+                             * np.trapz(integrand_y, x = twiss_xtrack_interpolated['s']))
+        Nb_max = min(Nb_x_max, Nb_y_max)
+        print('\nNb_max = {:.3e}, between Nb_max_X: {:.3e} and Nb_max_Y: {:.3e}'.format(Nb_max, Nb_x_max, Nb_y_max))
+        
+        return Nb_max
 
 
 class IBS_Growth_Rates:

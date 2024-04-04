@@ -100,17 +100,9 @@ class InjectorChain_full_SC:
         # Values from first tables in Roderik's notebook
         self.linac3_current = self.ion_data['Linac3 current [uA]'] * 1e-6
         self.linac3_pulseLength = self.ion_data['Linac3 pulse length [us]'] * 1e-6
-
-        # General rules - stripping and transmission
-        self.LEIR_injection_efficiency = 0.5
-        self.LEIR_transmission = 0.8
         self.LEIR_PS_stripping_efficiency = self.ion_data['LEIR-PS Stripping Efficiency']
-        self.PS_transmission = 0.9
-        self.PS_SPS_transmission_efficiency = 1.0 # 0.9 is what we see today, but Roderik uses 1.0
-        self.PS_SPS_strip = not self.LEIR_PS_strip  # if we have LEIR-PS stripping, no stripping PS-SPS
-        self.PS_SPS_stripping_efficiency = 0.9  # default value until we have other value
-        self.SPS_transmission = 0.62
-        self.SPS_slipstacking_transmission = 1.0
+
+
         
     def ion0_referenceValues(self):
         """
@@ -119,45 +111,7 @@ class InjectorChain_full_SC:
         For injection and extraction energy, use known Pb ion values from LIU report on 
         https://edms.cern.ch/ui/file/1420286/2/LIU-Ions_beam_parameter_table.pdf
         """
-        # LEIR
-        self.E_kin_per_A_LEIR_inj = 4.2e-3 # kinetic energy per nucleon in LEIR before RF capture, same for all species
-        self.E_kin_per_A_LEIR_extr = 7.22e-2 # kinetic energy per nucleon in LEIR at exit, same for all species
-        
-        # PS
-        self.E_kin_per_A_PS_inj = 7.22e-2 # GeV/nucleon according to LIU design report 
-        self.E_kin_per_A_PS_extr = 5.9 # GeV/nucleon according to LIU design report 
-        
-        # SPS
-        self.E_kin_per_A_SPS_inj = 5.9 # GeV/nucleon according to LIU design report 
-        self.E_kin_per_A_SPS_extr = 176.4 # GeV/nucleon according to LIU design report 
-        
-        ################## Pb energies ##################
-        # Use reference data from current Pb ions in the CERN accelerator complex 
-        self.m0_GeV = 193.687 # rest mass in GeV for Pb reference case 
-        self.Z0 = 82.0
-        
-        ###### LEIR ##### - reference case for Pb54+ --> BEFORE stripping
-        self.Nq0_LEIR_extr = 10e10  # number of observed charges extracted at LEIR
-        self.Q0_LEIR = 54.0
-        self.Nb0_LEIR_extr = self.Nq0_LEIR_extr/self.Q0_LEIR
-        self.gamma0_LEIR_inj = (self.m0_GeV + self.E_kin_per_A_LEIR_inj * 208)/self.m0_GeV
-        self.gamma0_LEIR_extr = (self.m0_GeV + self.E_kin_per_A_LEIR_extr * 208)/self.m0_GeV
-        
-        ##### PS ##### - reference case for Pb54+ --> BEFORE stripping
-        self.Nq0_PS_extr =  6e10 # from November 2022 ionlifetime MD, previously 8e10  # number of observed charges extracted at PS for nominal beam
-        self.Q0_PS = 54.0
-        self.Nb0_PS_extr = self.Nq0_PS_extr/self.Q0_PS
-        self.gamma0_PS_inj = (self.m0_GeV + self.E_kin_per_A_PS_inj * 208)/self.m0_GeV
-        self.gamma0_PS_extr = (self.m0_GeV + self.E_kin_per_A_PS_extr * 208)/self.m0_GeV
-        
-        ##### SPS ##### - reference case for Pb82+ --> AFTER stripping
-        if not self.account_for_SPS_transmission:
-            self.SPS_transmission = 1.0
-        self.Nb0_SPS_extr = 2.21e8/self.SPS_transmission # outgoing ions per bunch from SPS (2015 values), adjusted for 62% transmission
-        self.Q0_SPS = 82.0
-        self.Nq0_SPS_extr = self.Nb0_SPS_extr*self.Q0_SPS
-        self.gamma0_SPS_inj = (self.m0_GeV + self.E_kin_per_A_SPS_inj * 208)/self.m0_GeV
-        self.gamma0_SPS_extr = (self.m0_GeV + self.E_kin_per_A_SPS_extr * 208)/self.m0_GeV
+
     
         ################## Find current tune shifts from xtrack sequences ##################    
         # LEIR 
@@ -235,123 +189,6 @@ class InjectorChain_full_SC:
         Brho = p / (q * constants.c) # in Tm
         return Brho    
        
-    
-    def calculate_SC_tuneshift_for_LEIR(self, Nb, gamma, sigma_z, bF=0.0, h=2.):
-        """
-        Finds the SC-induced max detuning dQx and dQy for LEIR for given beam parameters 
-        assuming for now that emittances and momentum spread delta are identical
-        Input: arrays with bunch intensities, gammas and bunch length for LEIR
-        Assume harmonic h = 2, have to provide bunching factor as beams are non-Gaussian
-        """ 
-        #### LEIR ####
-        particle_LEIR = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_LEIR, gamma0 = gamma)
-        line_LEIR = self.line_LEIR_Pb.copy()
-        line_LEIR.reference_particle = particle_LEIR
-        line_LEIR.build_tracker()
-        twiss_LEIR = line_LEIR.twiss()
-        twiss_LEIR_interpolated, sigma_x_LEIR, sigma_y_LEIR = self.interpolate_Twiss_table(twiss_LEIR, 
-                                                                                            line_LEIR, 
-                                                                                            particle_LEIR, 
-                                                                                            self.ex_LEIR, 
-                                                                                            self.ey_LEIR,
-                                                                                            self.delta_LEIR,
-                                                                                            )
-        dQx_LEIR, dQy_LEIR = self.calculate_SC_tuneshift(Nb, 
-                                                         particle_LEIR, 
-                                                         sigma_z, 
-                                                         twiss_LEIR_interpolated, 
-                                                         sigma_x_LEIR, 
-                                                         sigma_y_LEIR,
-                                                         bF,
-                                                         self.line_LEIR_Pb.get_length(),
-                                                         h
-                                                         )
-        
-        return dQx_LEIR, dQy_LEIR
-
-
-    def calculate_SC_tuneshift_for_PS(self, Nb, gamma, sigma_z):
-        """
-        Finds the SC-induced max detuning dQx and dQy for PS for given beam parameters 
-        assuming for now that emittances and momentum spread delta are identical
-        Input: arrays with bunch intensities, gammas and bunch length for PS
-        """ 
-        #### PS ####
-        particle_PS = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_PS, gamma0 = gamma)
-        line_PS = self.line_PS_Pb.copy()
-        line_PS.reference_particle = particle_PS
-        line_PS.build_tracker()
-        twiss_PS = line_PS.twiss()
-        twiss_PS_interpolated, sigma_x_PS, sigma_y_PS = self.interpolate_Twiss_table(twiss_PS, 
-                                                                                            line_PS, 
-                                                                                            particle_PS, 
-                                                                                            self.ex_PS, 
-                                                                                            self.ey_PS,
-                                                                                            self.delta_PS,
-                                                                                            )
-        dQx_PS, dQy_PS = self.calculate_SC_tuneshift(Nb, particle_PS, sigma_z, 
-                         twiss_PS_interpolated, sigma_x_PS, sigma_y_PS)
-        
-        return dQx_PS, dQy_PS        
-    
-    
-    def calculate_SC_tuneshift_for_SPS(self, Nb, gamma, sigma_z):
-        """
-        Finds the SC-induced max detuning dQx and dQy for SPS for given beam parameters 
-        assuming for now that emittances and momentum spread delta are identical
-        Input: arrays with bunch intensities, gammas and bunch length for SPS 
-        """ 
-        #### SPS ####
-        particle_SPS = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_SPS, gamma0 = gamma)
-        line_SPS = self.line_SPS_Pb.copy()
-        line_SPS.reference_particle = particle_SPS
-        line_SPS.build_tracker()
-        twiss_SPS = line_SPS.twiss()
-        twiss_SPS_interpolated, sigma_x_SPS, sigma_y_SPS = self.interpolate_Twiss_table(twiss_SPS, 
-                                                                                            line_SPS, 
-                                                                                            particle_SPS, 
-                                                                                            self.ex_SPS, 
-                                                                                            self.ey_SPS,
-                                                                                            self.delta_SPS,
-                                                                                            )
-        dQx_SPS, dQy_SPS = self.calculate_SC_tuneshift(Nb, particle_SPS, sigma_z, 
-                         twiss_SPS_interpolated, sigma_x_SPS, sigma_y_SPS)
-        
-        return dQx_SPS, dQy_SPS     
-    
-    
-    def maxIntensity_from_SC_integral(self, 
-                                      dQx_max, 
-                                      dQy_max, 
-                                      particle_ref, 
-                                      sigma_z, 
-                                      twiss_xtrack_interpolated, 
-                                      sigma_x, 
-                                      sigma_y
-                                      ):
-        """
-        For a given max tuneshift, calculate the maximum bunch intensity 
-        """
-        gamma = particle_ref.gamma0[0]
-        beta = self.beta(gamma)
-        r0 = particle_ref.get_classical_particle_radius0()
-        
-        # Load interpolated beam sizes and Twiss parameters, then define SC integrands 
-        integrand_x = twiss_xtrack_interpolated['betx'] / (sigma_x * (sigma_x + sigma_y))  
-        integrand_y = twiss_xtrack_interpolated['bety'] / (sigma_y * (sigma_x + sigma_y)) 
-
-        # Calculate maximum bunch intensity for given max tune shift in x and in y
-        Nb_x_max = -dQx_max / ( (2 * r0) / (4 * np.pi * beta**2 * gamma**3 * np.sqrt(2*np.pi) * sigma_z) \
-                             * np.trapz(integrand_x, x = twiss_xtrack_interpolated['s']))
-        Nb_y_max = -dQy_max / ( (2 * r0) / (4 * np.pi * beta**2 * gamma**3 * np.sqrt(2*np.pi) * sigma_z) \
-                             * np.trapz(integrand_y, x = twiss_xtrack_interpolated['s']))
-        
-        return Nb_x_max, Nb_y_max
-    
-    ######################################################################
-
- 
-    ######################################################################
     
     def LEIR(self):
         """
