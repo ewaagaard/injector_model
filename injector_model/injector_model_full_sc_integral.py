@@ -8,34 +8,39 @@ solving for full space charge (SC) lattice integral
 from pathlib import Path
 import pandas as pd
 import numpy as np
+import math
 from scipy import constants
 import xtrack as xt
 import xpart as xp
 import matplotlib.pyplot as plt
-#from collections import defaultdict
+from dataclasses import dataclass
+
+from .parameters_and_helpers import Inj_Parameters, IBS_Growth_Rates
 
 #### PLOT SETTINGS #######
-SMALL_SIZE = 18
-MEDIUM_SIZE = 21
-BIGGER_SIZE = 26
-plt.rcParams["font.family"] = "serif"
-plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=BIGGER_SIZE)    # fontsize of the axes title
-plt.rc('axes', labelsize=BIGGER_SIZE)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=MEDIUM_SIZE)   # fontsize of the tick labels
-plt.rc('ytick', labelsize=MEDIUM_SIZE)   # fontsize of the tick labels
-plt.rc('legend', fontsize=MEDIUM_SIZE)   # legend fontsize
-plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
-colors = ['green', 'blue', 'purple', 'brown', 'teal', 'coral', 'cyan', 'darkred']   
+plt.rcParams.update(
+    {
+        "font.family": "serif",
+        "font.size": 20,
+        "axes.titlesize": 20,
+        "axes.labelsize": 18,
+        "xtick.labelsize": 18,
+        "ytick.labelsize": 18,
+        "legend.fontsize": 15,
+        "figure.titlesize": 20,
+    }
+)
 
 # Calculate the absolute path to the data folder relative to the module's location
 data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
 output_folder = Path(__file__).resolve().parent.joinpath('../output').absolute()
-ibs_folder = Path(__file__).resolve().parent.joinpath('../IBS_for_Xsuite').absolute()
 
+
+ #ibs_folder = Path(__file__).resolve().parent.joinpath('../IBS_for_Xsuite').absolute()
 # Import IBS module after "pip install -e IBS_for_Xsuite" has been executed 
-from lib.IBSfunctions import NagaitsevIBS
+# from lib.IBSfunctions import NagaitsevIBS
 
+@dataclass
 class InjectorChain_full_SC:
     """
     Representation of the CERN Injector Chain for different ions with full space charge lattice integral. 
@@ -54,26 +59,6 @@ class InjectorChain_full_SC:
         self.full_ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), header=0, index_col=0).T
         self.LEIR_PS_strip = LEIR_PS_strip
         self.account_for_SPS_transmission = account_for_SPS_transmission
-
-        ###### Load standard beam parameters ##### - used from John and Bartosik, 2021 (https://cds.cern.ch/record/2749453)
-        # emittances are normalized! 
-        self.Nb0_LEIR = 1e9
-        self.ex_LEIR = 0.4e-6
-        self.ey_LEIR = 0.4e-6
-        self.sigma_z_LEIR = 4.256
-        self.delta_LEIR = 1.18e-3
-        
-        self.Nb0_PS = 8.1e8
-        self.ex_PS = 0.8e-6
-        self.ey_PS = 0.5e-6
-        self.sigma_z_PS = 4.74
-        self.delta_PS = 0.63e-3
-        
-        self.Nb0_SPS = 3.5e8
-        self.ex_SPS = 1.3e-6
-        self.ey_SPS = 0.9e-6
-        self.sigma_z_SPS = 0.23
-        self.delta_SPS = 1e-3
         
         ####################################
         
@@ -82,12 +67,7 @@ class InjectorChain_full_SC:
         self.ion0_referenceValues() 
         
         self.debug_mode = False
-        
-        # Initiate values for PS B-field
-        self.PS_MinB    = 383 * 1e-4 # [T] - minimum magnetic field in PS, (Gauss to Tesla) from Heiko Damerau
-        self.PS_MaxB    = 1.26 # [T] - minimum magnetic field in PS, from reyes Alemany Fernandez
-        self.PS_rho     = 70.1206 # [m] - PS bending radius 
-        
+                
         # Rules for splitting and bunches 
         self.nPulsesLEIR = nPulsesLEIR
         self.LEIR_bunches = LEIR_bunches
@@ -254,76 +234,7 @@ class InjectorChain_full_SC:
         """
         Brho = p / (q * constants.c) # in Tm
         return Brho    
-    
-    
-    ##### Methods for full space charge integral calculations #####
-    def interpolate_Twiss_table(self, 
-                                twissTableXsuite,
-                                line,
-                                particle_ref,
-                                ex,
-                                ey,
-                                delta, 
-                                interpolation_resolution = 1000000
-                                ):
-        """
-        Interpolate Xtrack twiss table and beam sizes sigma_x and sigma_y
-        """
-        gamma = particle_ref.gamma0[0]
-        beta = self.beta(gamma)
-        ss = np.linspace(0, line.get_length(), interpolation_resolution)
-        data2=np.zeros((interpolation_resolution, 8))
-        data2[:,1] = np.square(np.interp(ss, twissTableXsuite['s'], np.sqrt(twissTableXsuite['betx'])))
-        data2[:,2] = np.square(np.interp(ss, twissTableXsuite['s'], np.sqrt(twissTableXsuite['bety'])))
-        data2[:,3] = np.interp(ss, twissTableXsuite['s'], beta * twissTableXsuite['dx'])
-        data2[:,4] = np.interp(ss, twissTableXsuite['s'], beta * twissTableXsuite['dy'])
-        data2[:,5] = np.interp(ss, twissTableXsuite['s'], twissTableXsuite['mux'])
-        data2[:,6] = np.interp(ss, twissTableXsuite['s'], twissTableXsuite['muy'])
-        data2[:,7] += line.get_length()/len(ss)
-        data2[:,0] = ss    
-        data = data2
-        columns = ['s', 'betx', 'bety', 'dx', 'dy', 'mux', 'muy', 'l']
-        
-        # Interpolate Twiss tables and beam sizes 
-        twiss_xtrack_interpolated = pd.DataFrame(data, columns = columns)
-        sigma_x = np.sqrt(ex * twiss_xtrack_interpolated['betx'] / (beta * gamma) + (delta * twiss_xtrack_interpolated['dx'])**2)
-        sigma_y = np.sqrt(ey * twiss_xtrack_interpolated['bety'] / (beta * gamma) + (delta * twiss_xtrack_interpolated['dy'])**2)
-        
-        return twiss_xtrack_interpolated, sigma_x, sigma_y
-    
-    
-
-    def calculate_SC_tuneshift(self, 
-                               Nb, 
-                               particle_ref, 
-                               sigma_z, 
-                               twiss_xtrack_interpolated, 
-                               sigma_x, sigma_y, 
-                               bF = 0.,
-                               C = None,
-                               h = None):
-        """
-        Finds the SC-induced max detuning dQx and dQy for given Twiss and beam parameters
-        with possibility to use bunching factor bF, circumference C and harmonic h if non-Gaussian beams 
-        """  
-        gamma = particle_ref.gamma0[0]
-        beta = self.beta(gamma)
-        r0 = particle_ref.get_classical_particle_radius0()
-        
-        # Space charge perveance
-        if bF == 0.0:
-            K_sc = (2 * r0 * Nb) / (np.sqrt(2*np.pi) * sigma_z * beta**2 * gamma**3)
-        else:
-            K_sc = (2 * r0 * Nb) * (h / bF) / (C * beta**2 * gamma**3)
-
-        integrand_x = twiss_xtrack_interpolated['betx'] / (sigma_x * (sigma_x + sigma_y))  
-        integrand_y = twiss_xtrack_interpolated['bety'] / (sigma_y * (sigma_x + sigma_y)) 
-        
-        dQx = - K_sc / (4 * np.pi) * np.trapz(integrand_x, x = twiss_xtrack_interpolated['s'])
-        dQy = - K_sc / (4 * np.pi) * np.trapz(integrand_y, x = twiss_xtrack_interpolated['s'])
-        
-        return dQx, dQy
-    
+       
     
     def calculate_SC_tuneshift_for_LEIR(self, Nb, gamma, sigma_z, bF=0.0, h=2.):
         """
@@ -438,201 +349,6 @@ class InjectorChain_full_SC:
         return Nb_x_max, Nb_y_max
     
     ######################################################################
-     
-    ######################## IBS part ####################################
-    def find_analytical_IBS_growth_rates(self,
-                                         particle_ref,
-                                         twiss,
-                                         line,
-                                         bunch_intensity, 
-                                         sigma_z,
-                                         exn,
-                                         eyn,
-                                         sig_delta, 
-                                         calculate_kinetic_coefficients=False
-                                         ):
-        """
-        For given beam parameters, calculate analytical (and kinetic?) growth rates for a given bunch intensity
-        and other initial conditions at first turn 
-        
-        Remember that the IBS module (as of now) takes the geometric emittance as input,
-        whereas this class works with normalized emittance 
-        
-        Input here is normalized emittance exn and eyn
-        """
-
-        # Create Gaussian bunch of particle object
-        #particles = xp.generate_matched_gaussian_bunch(
-        #                                                num_particles = n_part, total_intensity_particles = bunch_intensity,
-        #                                               nemitt_x = ex, nemitt_y = ey, sigma_z = sigma_z,
-        #                                                particle_ref = particle_ref, line = line
-        #                                                )
-        #IBS.set_beam_parameters(particles)   # to be updated such that we don't need a whole distribution for this 
-    
-        # ----- Initialize IBS object -----
-        IBS = NagaitsevIBS()
-    
-        # Set parameters of IBS object
-        IBS.Npart  = bunch_intensity
-        IBS.Ncharg = particle_ref.q0
-        IBS.E_rest = particle_ref.mass0 * 1e-9
-        IBS.EnTot  = np.sqrt(particle_ref.p0c[0]**2 + particle_ref.mass0**2) * 1e-9  # in GeV
-        IBS.gammar = particle_ref.gamma0[0]
-        IBS.betar  = particle_ref.beta0[0]
-        E0p = constants.physical_constants["proton mass energy equivalent in MeV"][0]*1e-3
-        particle_mass_GEV = particle_ref.mass0 * 1e-9 
-        mi  = (particle_mass_GEV * constants.m_p) / E0p
-        IBS.c_rad = (particle_ref.q0 * constants.e)**2 / (4 * np.pi * constants.epsilon_0 * constants.c**2 * mi)
-        
-        IBS.set_optic_functions(twiss)
-        
-        # Calculate geometric emittances from normalized emittance
-        eps_x = exn / (IBS.gammar * IBS.betar)
-        eps_y = eyn / (IBS.gammar * IBS.betar)
-        
-        # Calculate the analytical growth rates 
-        IBS.calculate_integrals(
-            eps_x,
-            eps_y,
-            sig_delta,
-            sigma_z
-            )
-    
-        # Also add the option to calculate kinetic coefficients - stored as IBS.kinTx
-        if calculate_kinetic_coefficients:
-            IBS.Kinetic_Coefficients(
-                eps_x,
-                eps_y,
-                sig_delta,
-                sigma_z
-                )
-            return IBS.Ixx, IBS.Iyy, IBS.Ipp, IBS.kinTx, IBS.kinTy, IBS.kinTz
-        else:
-            return IBS.Ixx, IBS.Iyy, IBS.Ipp
-    
-    
-    def calculate_IBS_growth_rate_for_LEIR(self, Nb, gamma, sigma_z, update_delta=False, sigma_z0=None):
-        """
-        Finds the initial IBS growth rates for LEIR 
-        assuming for now that emittances and momentum spread delta are identical
-        Input: arrays with bunch intensities, gammas and bunch length for LEIR
-        
-        Can choose to update momentum spread delta assuming constant longitudinal emittance,
-        i.e. delta_f = (beta * gamma * sigma_z)_i / (beta * gamma * sigma_z)_f * delta_i
-        if so, need to provide sigma_z0 to know where to start from 
-        """ 
-        #### LEIR ####
-        particle_LEIR = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_LEIR, gamma0 = gamma)
-        line_LEIR = self.line_LEIR_Pb.copy()
-        line_LEIR.reference_particle = particle_LEIR
-        line_LEIR.build_tracker()
-        twiss_LEIR = line_LEIR.twiss()
-        
-        # Update momentum spread delta if desired
-        if update_delta:
-            delta_LEIR = (self.beta(self.gamma0_LEIR_inj) * self.gamma0_LEIR_inj * sigma_z0) \
-                        / (self.beta(gamma) * gamma * sigma_z) * self.delta_LEIR
-        else:
-            delta_LEIR = self.delta_LEIR
-        print('Delta LEIR: {:.3e}'.format(delta_LEIR))
-        
-        # Calculate growth rates
-        Tx_LEIR, Ty_LEIR, Tz_LEIR = self.find_analytical_IBS_growth_rates(particle_LEIR,
-                                                                            twiss_LEIR, 
-                                                                            line_LEIR,
-                                                                            Nb,
-                                                                            sigma_z,
-                                                                            self.ex_LEIR, 
-                                                                            self.ey_LEIR,
-                                                                            delta_LEIR,
-                                                                             )
-        return Tx_LEIR, Ty_LEIR, Tz_LEIR
-
-
-    def calculate_IBS_growth_rate_for_PS(self, Nb, gamma, sigma_z, update_delta=False, sigma_z0=None):
-        """
-        Finds the initial IBS growth rates for PS 
-        assuming for now that emittances and momentum spread delta are identical
-        Input: arrays with bunch intensities, gammas and bunch length for PS
-        
-        Can choose to update momentum spread delta assuming constant longitudinal emittance,
-        i.e. delta_f = (beta * gamma * sigma_z)_i / (beta * gamma * sigma_z)_f * delta_i
-        if so, need to provide sigma_z0 to know where to start from 
-        """ 
-        #### PS ####
-        particle_PS = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_PS, gamma0 = gamma)
-        line_PS = self.line_PS_Pb.copy()
-        line_PS.reference_particle = particle_PS
-        line_PS.build_tracker()
-        twiss_PS = line_PS.twiss()
-        
-        # Update momentum spread delta if desired
-        if update_delta:
-            delta_PS = (self.beta(self.gamma0_PS_inj) * self.gamma0_PS_inj * sigma_z0) \
-                        / (self.beta(gamma) * gamma * sigma_z) * self.delta_PS
-        else:
-            delta_PS = self.delta_PS
-        print('Delta PS: {:.3e}'.format(delta_PS))
-        
-        # Calculate growth rates
-        Tx_PS, Ty_PS, Tz_PS = self.find_analytical_IBS_growth_rates(particle_PS,
-                                                                        twiss_PS, 
-                                                                        line_PS,
-                                                                        Nb,
-                                                                        sigma_z,
-                                                                        self.ex_PS, 
-                                                                        self.ey_PS,
-                                                                        delta_PS
-                                                                         )
-        return Tx_PS, Ty_PS, Tz_PS
-
-
-    def calculate_IBS_growth_rate_for_SPS(self, Nb, gamma, sigma_z, 
-                                          update_delta=False, sigma_z0=None, emittances = None):
-        """
-        Finds the initial IBS growth rates for SPS 
-        assuming for now that emittances and momentum spread delta are identical
-        Input: arrays with bunch intensities, gammas and bunch length for SPS
-        
-        Can choose to update momentum spread delta assuming constant longitudinal emittance,
-        i.e. delta_f = (beta * gamma * sigma_z)_i / (beta * gamma * sigma_z)_f * delta_i
-        if so, need to provide sigma_z0 to know where to start from 
-
-        If emittances not provided, take default values
-        """ 
-        #### SPS ####
-        particle_SPS = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_SPS, gamma0 = gamma)
-        line_SPS = self.line_SPS_Pb.copy()
-        line_SPS.reference_particle = particle_SPS
-        line_SPS.build_tracker()
-        twiss_SPS = line_SPS.twiss()
-        
-        # Update momentum spread delta if desired
-        if update_delta:
-            delta_SPS = (self.beta(self.gamma0_SPS_inj) * self.gamma0_SPS_inj * sigma_z0) \
-                        / (self.beta(gamma) * gamma * sigma_z) * self.delta_SPS
-        else:
-            delta_SPS = self.delta_SPS
-        print('Delta SPS: {:.3e}'.format(delta_SPS))
-        
-        if emittances is None:
-            ex_SPS, ey_SPS = self.ex_SPS, self.ey_SPS
-            print('Setting default emittance values for SPS...')
-        else:
-            ex_SPS, ey_SPS = emittances[0], emittances[1]
-            print('Setting custom emittance values for SPS...')
-
-        # Calculate growth rates
-        Tx_SPS, Ty_SPS, Tz_SPS = self.find_analytical_IBS_growth_rates(particle_SPS,
-                                                                        twiss_SPS, 
-                                                                        line_SPS,
-                                                                        Nb,
-                                                                        sigma_z,
-                                                                        ex_SPS, 
-                                                                        ey_SPS,
-                                                                        delta_SPS,
-                                                                         )
-        return Tx_SPS, Ty_SPS, Tz_SPS
 
  
     ######################################################################
@@ -797,3 +513,166 @@ class InjectorChain_full_SC:
         self.PS()
         self.SPS()
     
+
+    def calculate_LHC_bunch_intensity(self):
+        """
+        Estimate LHC bunch intensity for a given ion species
+        through Linac3, LEIR, PS and SPS considering all the limits of the injectors
+        """
+        self.simulate_injection()
+        
+        ### LINAC3 ### 
+        ionsPerPulseLinac3 = (self.linac3_current * self.linac3_pulseLength) / (self.Q * constants.e)
+        
+        ### LEIR ###
+        spaceChargeLimitLEIR = self.linearIntensityLimit(
+                                               m = self.mass_GeV, 
+                                               gamma = self.gamma_LEIR_inj,  
+                                               Nb_0 = self.Nb0_LEIR_extr, 
+                                               charge_0 = self.Q0_LEIR, # partially stripped charged state 
+                                               m_0 = self.m0_GeV,  
+                                               gamma_0 = self.gamma0_LEIR_inj,  # use gamma at LEIR extraction
+                                               fully_stripped=False
+                                               )
+        
+        nPulsesLEIR = (min(7, math.ceil(spaceChargeLimitLEIR / (ionsPerPulseLinac3 * self.LEIR_injection_efficiency))) if self.nPulsesLEIR == 0 else self.nPulsesLEIR)
+        totalIntLEIR = ionsPerPulseLinac3 * nPulsesLEIR * self.LEIR_injection_efficiency
+        ionsPerBunchExtractedLEIR = self.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
+        LEIR_space_charge_limit_hit = True if totalIntLEIR > spaceChargeLimitLEIR else False 
+        
+        #### PS ####
+        ionsPerBunchInjectedPS = ionsPerBunchExtractedLEIR * (self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else 1)
+        spaceChargeLimitPS = self.linearIntensityLimit(
+                                        m = self.mass_GeV, 
+                                        gamma = self.gamma_PS_inj,  
+                                        Nb_0 = self.Nb0_PS_extr, 
+                                        charge_0 = self.Q0_PS, # partially stripped charged state 
+                                        m_0 = self.m0_GeV,  
+                                        gamma_0 = self.gamma0_PS_inj,  # use gamma at PS inj
+                                        fully_stripped = self.LEIR_PS_strip # fully stripped if LEIR-PS strip
+                                        )
+        
+        # Check that injected momentum is not too low for the PS B-field
+        q_PS = self.Z if self.LEIR_PS_strip else self.Q
+        self.p_PS_inj = self.calcMomentum_from_gamma(self.gamma_PS_inj, q_PS)
+        self.Brho_PS_inj = self.calcBrho(self.p_PS_inj, q_PS) # same as LEIR extraction if no stripping, else will be different 
+        B_PS_inj = self.Brho_PS_inj / self.PS_rho
+        if B_PS_inj < self.PS_MinB:
+            self.PS_B_field_is_too_low = True
+        elif B_PS_inj > self.PS_MaxB:
+            print("\nA = {}, Q_low = {}, m_ion = {:.2f} u, Z = {}".format(self.A, self.Q_low, self.m_ion_in_u, self.Z))
+            print('B = {:.4f} in PS at injection is too HIGH!'.format(B_PS_inj))
+            raise ValueError("B field in PS is too high!")
+        else:
+            self.PS_B_field_is_too_low = False
+        
+        # If space charge limit in PS is considered, choose the minimum between the SC limit and the extracted ionsPerBunchPS
+        if self.consider_PS_space_charge_limit:
+            ionsPerBunchPS = min(spaceChargeLimitPS, ionsPerBunchInjectedPS)
+            #if spaceChargeLimitPS < ionsPerBunchInjectedPS:
+            #    print("\nIon type: {}".format(self.ion_type))
+            #    print("Space charge limit PS: {:.3e} vs max injected ions per bunch PS: {:.3e}".format(spaceChargeLimitPS, ionsPerBunchInjectedPS))
+        else:
+            ionsPerBunchPS = ionsPerBunchInjectedPS 
+        PS_space_charge_limit_hit = True if ionsPerBunchInjectedPS > spaceChargeLimitPS else False 
+        ionsPerBunchExtracted_PS = ionsPerBunchPS * self.PS_transmission / self.PS_splitting # maximum intensity without SC
+        
+        # Calculate ion transmission for SPS 
+        ionsPerBunchSPSinj = ionsPerBunchExtracted_PS * (self.PS_SPS_transmission_efficiency if self.Z == self.Q or self.LEIR_PS_strip else self.PS_SPS_stripping_efficiency)
+        spaceChargeLimitSPS = self.linearIntensityLimit(
+                                               m = self.mass_GeV, 
+                                               gamma = self.gamma_SPS_inj,  
+                                               Nb_0 = self.Nb0_SPS_extr, 
+                                               charge_0 = self.Q0_SPS, 
+                                               m_0 = self.m0_GeV,  
+                                               gamma_0 = self.gamma0_SPS_inj, # use gamma at SPS inj
+                                               fully_stripped=True
+                                               )
+        SPS_space_charge_limit_hit = True if ionsPerBunchSPSinj > spaceChargeLimitSPS else False
+        ionsPerBunchLHC = min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * self.SPS_transmission * self.SPS_slipstacking_transmission
+
+        result = {
+            "Ion": self.ion_type,
+            "chargeBeforeStrip": int(self.Q),
+            "atomicNumber": int(self.Z),
+            "massNumber": int(self.A),
+            "Linac3_current [A]": self.linac3_current,
+            "Linac3_pulse_length [s]": self.linac3_pulseLength, 
+            "LEIR_numberofPulses": nPulsesLEIR,
+            "LEIR_injection_efficiency": self.LEIR_injection_efficiency, 
+            "LEIR_splitting": self.LEIR_bunches,
+            "LEIR_transmission": self.LEIR_transmission, 
+            "PS_splitting": self.PS_splitting, 
+            "PS_transmission": self.PS_transmission, 
+            "PS_SPS_stripping_efficiency": self.PS_SPS_stripping_efficiency, 
+            "SPS_transmission": self.SPS_transmission, 
+            "Linac3_ionsPerPulse": ionsPerPulseLinac3,
+            "LEIR_maxIntensity": totalIntLEIR,
+            "LEIR_space_charge_limit": spaceChargeLimitLEIR,
+            "LEIR_extractedIonPerBunch": ionsPerBunchExtractedLEIR,
+            "PS_space_charge_limit": spaceChargeLimitPS,
+            "PS_maxIntensity": ionsPerBunchInjectedPS,
+            "PS_ionsExtractedPerBunch":  ionsPerBunchExtracted_PS,
+            "SPS_maxIntensity": ionsPerBunchSPSinj,
+            "SPS_spaceChargeLimit": spaceChargeLimitSPS,
+            "LHC_ionsPerBunch": ionsPerBunchLHC,
+            "LHC_chargesPerBunch": ionsPerBunchLHC * self.Z,
+            "LEIR_gamma_inj": self.gamma_LEIR_inj,
+            "LEIR_gamma_extr": self.gamma_LEIR_extr,
+            "PS_gamma_inj": self.gamma_PS_inj,
+            "PS_gamma_extr": self.gamma_PS_extr,
+            "SPS_gamma_inj": self.gamma_SPS_inj,
+            "SPS_gamma_extr": self.gamma_SPS_extr,
+            "PS_B_field_is_too_low": self.PS_B_field_is_too_low,
+            "LEIR_space_charge_limit_hit": LEIR_space_charge_limit_hit,
+            "consider_PS_space_charge_limit": self.consider_PS_space_charge_limit,
+            "PS_space_charge_limit_hit": PS_space_charge_limit_hit,
+            "SPS_space_charge_limit_hit": SPS_space_charge_limit_hit,
+            "LEIR_ratio_SC_limit_maxIntensity": spaceChargeLimitLEIR / totalIntLEIR,
+            "PS_ratio_SC_limit_maxIntensity": spaceChargeLimitPS / ionsPerBunchInjectedPS,
+            "SPS_ratio_SC_limit_maxIntensity": spaceChargeLimitSPS / ionsPerBunchSPSinj
+        }
+
+        # Add key of LEIR-PS stripping efficiency if this is done 
+        if self.LEIR_PS_strip:
+            result["LEIR_PS_strippingEfficiency"] = self.LEIR_PS_stripping_efficiency
+    
+        return result
+
+
+    def calculate_LHC_bunch_intensity_all_ion_species(self, save_csv=False, output_name='output'):
+        """
+        Estimate LHC bunch intensity for all ion species provided in table
+        through Linac3, LEIR, PS and SPS considering all the limits of the injectors
+        """
+        # Check that output directory exists
+        os.makedirs(self.save_path, exist_ok=True)
+        
+        # Initialize full dicionary
+        full_result = defaultdict(list)
+        
+        # Iterate over all ions in data 
+        for i, ion_type in enumerate(self.full_ion_data.columns):
+            # Initiate the correct ion
+            self.init_ion(ion_type)
+            result = self.calculate_LHC_bunch_intensity()
+
+            # Append the values to the corresponding key 
+            for key, value in result.items():
+                full_result[key].append(value)
+            
+            del result
+            
+        # Convert dictionary to dataframe 
+        df_all_ions = pd.DataFrame(full_result)
+        df_all_ions = df_all_ions.set_index("Ion")
+        
+        # Save CSV file if desired 
+        if save_csv:
+            float_columns = df_all_ions.select_dtypes(include=['float']).columns
+            df_save = df_all_ions.copy()
+            df_save[float_columns]  = df_save[float_columns].applymap(self.format_large_numbers)
+            df_save = df_save.T
+            df_save.to_csv("{}/{}.csv".format(self.save_path, output_name))
+            
+        return df_all_ions
