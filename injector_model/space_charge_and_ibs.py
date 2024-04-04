@@ -121,8 +121,8 @@ class SC_Tune_Shifts:
 
 
     def maxIntensity_from_SC_integral(self, 
-                                      dQx_max, 
-                                      dQy_max, 
+                                      dQx_max : float, 
+                                      dQy_max : float, 
                                       line : xt.Line, 
                                       beamParams : dataclass
                                       ):
@@ -155,7 +155,7 @@ class SC_Tune_Shifts:
         integrand_y = twiss_xtrack_interpolated['bety'] / (sigma_y * (sigma_x + sigma_y)) 
 
         # Calculate maximum bunch intensity for given max tune shift in x and in y
-        Nb_x_max = -dQx_max / ( (2 * r0) / (4 * np.pi * beta**2 * gamma**3 * np.sqrt(2*np.pi) * beamParams.igma_z) \
+        Nb_x_max = -dQx_max / ( (2 * r0) / (4 * np.pi * beta**2 * gamma**3 * np.sqrt(2*np.pi) * beamParams.sigma_z) \
                              * np.trapz(integrand_x, x = twiss_xtrack_interpolated['s']))
         Nb_y_max = -dQy_max / ( (2 * r0) / (4 * np.pi * beta**2 * gamma**3 * np.sqrt(2*np.pi) * beamParams.sigma_z) \
                              * np.trapz(integrand_y, x = twiss_xtrack_interpolated['s']))

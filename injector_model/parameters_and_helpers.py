@@ -37,6 +37,7 @@ class BeamParams_LEIR:
     eyn : float = 0.4e-6
     sigma_z : float = 4.256
     delta: float = 1.18e-3
+    # add sigma_delta
 
 @dataclass
 class Reference_Values:
@@ -45,7 +46,8 @@ class Reference_Values:
     including injection/extraction energies, number of charges extracted today, etc
 
     If not measured, default values from Table (1) in John and Bartosik, 2021 (https://cds.cern.ch/record/2749453)
-    All emittances are normalized
+    For injection and extraction energy, use known Pb ion values from LIU report on 
+    https://edms.cern.ch/ui/file/1420286/2/LIU-Ions_beam_parameter_table.pdf
     """
     ##### Pb rest mass and final charge #####
     m0_GeV = 193.687 # rest mass in GeV for Pb reference case 
@@ -78,22 +80,22 @@ class Reference_Values:
     PS_transmission = 0.9
     PS_SPS_transmission_efficiency = 1.0 # 0.9 is what we see today, but Roderik uses 1.0
     PS_SPS_stripping_efficiency = 0.9  # default value until we have other value
-    SPS_transmission = 0.62
+    SPS_transmission = 0.79 # old value 0.62, but discussed with Reyes 2024-03-18 from last year's performance
     SPS_slipstacking_transmission = 1.0
             
     def __post_init__(self):
         ###### LEIR #####
         self.Nb0_LEIR_extr = self.Nq0_LEIR_extr/self.Q0_LEIR
-        self.gamma0_LEIR_inj = (self.m0_GeV + self.E_kin_per_A_LEIR_inj * 208)/self.m0_GeV
-        self.gamma0_LEIR_extr = (self.m0_GeV + self.E_kin_per_A_LEIR_extr * 208)/self.m0_GeV
+        self.gamma0_LEIR_inj = (self.m0_GeV + self.E_kin_per_A_LEIR_inj * self.A0)/self.m0_GeV
+        self.gamma0_LEIR_extr = (self.m0_GeV + self.E_kin_per_A_LEIR_extr * self.A0)/self.m0_GeV
         
         ##### PS #####
         self.Nb0_PS_extr = self.Nq0_PS_extr/self.Q0_PS
-        self.gamma0_PS_inj = (self.m0_GeV + self.E_kin_per_A_PS_inj * 208)/self.m0_GeV
-        self.gamma0_PS_extr = (self.m0_GeV + self.E_kin_per_A_PS_extr * 208)/self.m0_GeV
+        self.gamma0_PS_inj = (self.m0_GeV + self.E_kin_per_A_PS_inj * self.A0)/self.m0_GeV
+        self.gamma0_PS_extr = (self.m0_GeV + self.E_kin_per_A_PS_extr * self.A0)/self.m0_GeV
         
         ##### SPS #####
         self.Nb0_SPS_extr = 2.21e8/self.SPS_transmission # outgoing ions per bunch from SPS (2015 values), adjusted for 62% transmission
         self.Nq0_SPS_extr = self.Nb0_SPS_extr*self.Q0_SPS
-        self.gamma0_SPS_inj = (self.m0_GeV + self.E_kin_per_A_SPS_inj * 208)/self.m0_GeV
-        self.gamma0_SPS_extr = (self.m0_GeV + self.E_kin_per_A_SPS_extr * 208)/self.m0_GeV
+        self.gamma0_SPS_inj = (self.m0_GeV + self.E_kin_per_A_SPS_inj * self.A0)/self.m0_GeV
+        self.gamma0_SPS_extr = (self.m0_GeV + self.E_kin_per_A_SPS_extr * self.A0)/self.m0_GeV

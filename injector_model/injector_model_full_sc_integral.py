@@ -5,6 +5,7 @@ Simulation model of the CERN Injector Chain for different ions
 solving for full space charge (SC) lattice integral 
 - by Elias Waagaard 
 """
+import os
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -14,8 +15,11 @@ import xtrack as xt
 import xpart as xp
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
+from collections import defaultdict
 
-from .parameters_and_helpers import Inj_Parameters, IBS_Growth_Rates
+from .parameters_and_helpers import Reference_Values, BeamParams_LEIR, BeamParams_PS, BeamParams_SPS
+from .sequence_makers import Sequences
+from .space_charge_and_ibs import SC_Tune_Shifts, IBS_Growth_Rates
 
 #### PLOT SETTINGS #######
 plt.rcParams.update(
@@ -33,14 +37,10 @@ plt.rcParams.update(
 
 # Calculate the absolute path to the data folder relative to the module's location
 data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
+energy_folder = Path(__file__).resolve().parent.joinpath('injection_energies/calculated_injection_energies').absolute()
 output_folder = Path(__file__).resolve().parent.joinpath('../output').absolute()
 
 
- #ibs_folder = Path(__file__).resolve().parent.joinpath('../IBS_for_Xsuite').absolute()
-# Import IBS module after "pip install -e IBS_for_Xsuite" has been executed 
-# from lib.IBSfunctions import NagaitsevIBS
-
-@dataclass
 class InjectorChain_full_SC:
     """
     Representation of the CERN Injector Chain for different ions with full space charge lattice integral. 
@@ -51,35 +51,20 @@ class InjectorChain_full_SC:
                  nPulsesLEIR = 1,
                  LEIR_bunches = 2,
                  PS_splitting = 2,
-                 account_for_SPS_transmission=True,
                  LEIR_PS_strip=False,
                  save_path_csv = '{}/csv_tables'.format(output_folder)
                  ):
         
+        # Import reference data and initiate ion
         self.full_ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), header=0, index_col=0).T
         self.LEIR_PS_strip = LEIR_PS_strip
-        self.account_for_SPS_transmission = account_for_SPS_transmission
-        
-        ####################################
-        
-        # Initiate ion and reference Pb ion type 
         self.init_ion(ion_type)
-        self.ion0_referenceValues() 
-        
-        self.debug_mode = False
                 
         # Rules for splitting and bunches 
         self.nPulsesLEIR = nPulsesLEIR
         self.LEIR_bunches = LEIR_bunches
         self.PS_splitting = PS_splitting
-    
-        # Save path
-        self.save_path = save_path_csv
-
-        #For printing some reference values
-        if self.debug_mode:
-            print(f"Initiate. Type: {self.ion_type}")
-            print("Q = {}, Z = {}\n".format(self.Q, self.Z))
+        self.save_path = save_path_csv # Save path for data
 
 
     def init_ion(self, ion_type):
@@ -87,6 +72,7 @@ class InjectorChain_full_SC:
         Initialize ion species for a given type 
         """
         self.ion_type = ion_type
+        self.ion_str = ''.join(filter(str.isalpha, ion_type))
         self.ion_data = self.full_ion_data[ion_type]
         self.mass_GeV = self.ion_data['mass [GeV]']
         self.Z = self.ion_data['Z']
@@ -101,68 +87,39 @@ class InjectorChain_full_SC:
         self.linac3_current = self.ion_data['Linac3 current [uA]'] * 1e-6
         self.linac3_pulseLength = self.ion_data['Linac3 pulse length [us]'] * 1e-6
         self.LEIR_PS_stripping_efficiency = self.ion_data['LEIR-PS Stripping Efficiency']
+        self.load_ion_energy()
+
+        print(f"Initiated ion type: {self.ion_type}")
+        print("Q_LEIR = {}, Q_PS = {}, Q_SPS = {} (fully stripped)\nStrip LEIR-PS: {}".format(self.Q_LEIR, 
+                                                                                              self.Q_PS, 
+                                                                                              self.Q_SPS,
+                                                                                              self.LEIR_PS_strip))
 
 
-        
-    def ion0_referenceValues(self):
+    def load_ion_energy(self):
         """
-        Sets bunch intensity Nb, gamma factor and mass of reference ion species 
-        As of now, use reference values from Pb from Hannes 
-        For injection and extraction energy, use known Pb ion values from LIU report on 
-        https://edms.cern.ch/ui/file/1420286/2/LIU-Ions_beam_parameter_table.pdf
+        Loads calculated ion energies for all stable ion isotopes from the ion_injection_energies module
         """
+        # Load ion energy data depending on where stripping is made 
+        if self.LEIR_PS_strip:
+            self.ion_energy_data = pd.read_csv('{}/ion_injection_energies_LEIR_PS_strip.csv'.format(energy_folder), index_col=0)
+        else:
+            self.ion_energy_data = pd.read_csv('{}/ion_injection_energies_PS_SPS_strip.csv'.format(energy_folder), index_col=0)
+        
+        # Load correct entry in ion energy table - key composed of lower charge state Q before stripping, then ion string, then mass number A
+        key = str(int(self.Q_LEIR)) + self.ion_str + str(int(self.A))
+        ion_energy = self.ion_energy_data.loc[key]
+        
+        # Load reference injection energies
+        self.LEIR_gamma_inj = ion_energy['LEIR_gamma_inj']
+        self.LEIR_gamma_extr = ion_energy['LEIR_gamma_extr']
+        self.PS_gamma_inj = ion_energy['PS_gamma_inj']
+        self.PS_gamma_extr = ion_energy['PS_gamma_extr']
+        self.SPS_gamma_inj = ion_energy['SPS_gamma_inj']
+        self.SPS_gamma_extr = ion_energy['SPS_gamma_extr']
+        print('Ion type {}: \nPS extr gamma: {:.3f}'.format(self.ion_type, self.PS_gamma_extr))
 
-    
-        ################## Find current tune shifts from xtrack sequences ##################    
-        # LEIR 
-        self.particle0_LEIR = xp.Particles(mass0 = 1e9 * self.m0_GeV, q0 = self.Q0_LEIR, gamma0 = self.gamma0_LEIR_inj)
-        self.line_LEIR_Pb = xt.Line.from_json('{}/xtrack_sequences/LEIR_2021_Pb_ions_with_RF.json'.format(data_folder))
-        self.line_LEIR_Pb.reference_particle = self.particle0_LEIR
-        self.line_LEIR_Pb.build_tracker()
-        self.twiss0_LEIR = self.line_LEIR_Pb.twiss()
-        self.twiss0_LEIR_interpolated, self.sigma_x0_LEIR, self.sigma_y0_LEIR = self.interpolate_Twiss_table(self.twiss0_LEIR, 
-                                                                                                             self.line_LEIR_Pb, 
-                                                                                                             self.particle0_LEIR, 
-                                                                                                             self.ex_LEIR, 
-                                                                                                             self.ey_LEIR,
-                                                                                                             self.delta_LEIR,
-                                                                                                             )
-        self.dQx0_LEIR, self.dQy0_LEIR = self.calculate_SC_tuneshift(self.Nb0_LEIR, self.particle0_LEIR, self.sigma_z_LEIR, 
-                                                 self.twiss0_LEIR_interpolated, self.sigma_x0_LEIR, self.sigma_y0_LEIR)
-        
-        # PS 
-        self.particle0_PS = xp.Particles(mass0 = 1e9 * self.m0_GeV, q0 = self.Q0_PS, gamma0 = self.gamma0_PS_inj)
-        self.line_PS_Pb = xt.Line.from_json('{}/xtrack_sequences/PS_2022_Pb_ions_matched_with_RF.json'.format(data_folder))
-        self.line_PS_Pb.reference_particle = self.particle0_PS
-        self.line_PS_Pb.build_tracker()
-        self.twiss0_PS = self.line_PS_Pb.twiss()
-        self.twiss0_PS_interpolated, self.sigma_x0_PS, self.sigma_y0_PS = self.interpolate_Twiss_table(self.twiss0_PS, 
-                                                                                                             self.line_PS_Pb, 
-                                                                                                             self.particle0_PS, 
-                                                                                                             self.ex_PS, 
-                                                                                                             self.ey_PS,
-                                                                                                             self.delta_PS,
-                                                                                                             )
-        self.dQx0_PS, self.dQy0_PS = self.calculate_SC_tuneshift(self.Nb0_PS, self.particle0_PS, self.sigma_z_PS, 
-                                                 self.twiss0_PS_interpolated, self.sigma_x0_PS, self.sigma_y0_PS)
-        
-        # SPS 
-        self.particle0_SPS = xp.Particles(mass0 = 1e9 * self.m0_GeV, q0 = self.Q0_SPS, gamma0 = self.gamma0_SPS_inj)
-        self.line_SPS_Pb = xt.Line.from_json('{}/xtrack_sequences/SPS_2021_Pb_ions_matched_with_RF.json'.format(data_folder))
-        self.line_SPS_Pb.reference_particle = self.particle0_SPS
-        self.line_SPS_Pb.build_tracker()
-        self.twiss0_SPS = self.line_SPS_Pb.twiss()
-        self.twiss0_SPS_interpolated, self.sigma_x0_SPS, self.sigma_y0_SPS = self.interpolate_Twiss_table(self.twiss0_SPS, 
-                                                                                                             self.line_SPS_Pb, 
-                                                                                                             self.particle0_SPS, 
-                                                                                                             self.ex_SPS, 
-                                                                                                             self.ey_SPS,
-                                                                                                             self.delta_SPS,
-                                                                                                             )
-        self.dQx0_SPS, self.dQy0_SPS = self.calculate_SC_tuneshift(self.Nb0_SPS, self.particle0_SPS, self.sigma_z_SPS, 
-                                                 self.twiss0_SPS_interpolated, self.sigma_x0_SPS, self.sigma_y0_SPS)
-        
-    
+
     def beta(self, gamma):
         """
         Relativistic beta factor from gamma factor 
@@ -181,7 +138,6 @@ class InjectorChain_full_SC:
         p = gamma * mass_in_eV_stripped * beta # in eV/c, so as mass is already in eV/c^2 then a factor c is not needed 
         return p
 
-
     def calcBrho(self, p, q):
         """
         Calculates Brho from momentum [eV/c] and charge (number of elementary charges) 
@@ -189,244 +145,127 @@ class InjectorChain_full_SC:
         Brho = p / (q * constants.c) # in Tm
         return Brho    
        
-    
-    def LEIR(self):
+    def LEIR_SC_limit(self):
         """
-        Calculate gamma at entrance and exit of the LEIR and transmitted bunch intensity 
-        using known Pb ion values from LIU report on 
-        https://edms.cern.ch/ui/file/1420286/2/LIU-Ions_beam_parameter_table.pdf
+        LEIR: Load Pb reference values and line, calculate present Pb space charge tune shift
+        Solve for maximum bunch intensity Nb_max with new particles
         """
-        # Estimate gamma at extraction
-        self.gamma_LEIR_inj = (self.mass_GeV + self.E_kin_per_A_LEIR_inj * self.A)/self.mass_GeV
-        self.gamma_LEIR_extr =  np.sqrt(
-                                1 + ((self.Q_LEIR / 54) / (self.mass_GeV/self.m0_GeV))**2
-                                * (self.gamma0_LEIR_extr**2 - 1)
-                                )
-                 
-        # Define particle object for LEIR 
-        self.particle_LEIR = xp.Particles(mass0 = 1e9 * self.mass_GeV, 
-                                     q0 = self.Q_LEIR, 
-                                     gamma0 = self.gamma_LEIR_inj
-                                     )
+
+        # Calculate max tune shift for Pb ions today - first call Pb reference values
+        ref_val = Reference_Values()
+        line_LEIR_Pb0 = Sequences.get_LEIR_line(m0_GeV = ref_val.m0_GeV, 
+                                            Q = ref_val.Q0_LEIR, 
+                                            gamma = ref_val.gamma0_LEIR_inj)
+        dQx0, dQy0 = SC_Tune_Shifts.calculate_SC_tuneshift(line=line_LEIR_Pb0, 
+                                                           beamParams=BeamParams_LEIR)
+
+        # Call LEIR sequence with new ion
+        line_LEIR = Sequences.get_LEIR_line(m0_GeV = self.mass_GeV, 
+                                            Q = self.Q_LEIR, 
+                                            gamma = self.LEIR_gamma_inj)
+ 
+        # Calculate max intensity from space charge tune shift, assuming we are at the maximum limit today
+        Nb_spaceChargeLimitLEIR = SC_Tune_Shifts.maxIntensity_from_SC_integral(dQx_max=dQx0, dQy_max=dQy0,
+                                                                   line=line_LEIR, beamParams=BeamParams_LEIR)
         
-        # Twiss and beam sizes sigma 
-        self.line_LEIR = self.line_LEIR_Pb.copy()
-        self.line_LEIR.reference_particle = self.particle_LEIR
-        self.line_LEIR.build_tracker()
-        self.twiss_LEIR = self.line_LEIR.twiss()
-        self.twiss_LEIR_interpolated, self.sigma_x_LEIR, self.sigma_y_LEIR = self.interpolate_Twiss_table(self.twiss_LEIR, 
-                                                                                                             self.line_LEIR, 
-                                                                                                             self.particle_LEIR, 
-                                                                                                             self.ex_LEIR, 
-                                                                                                             self.ey_LEIR,
-                                                                                                             self.delta_LEIR,
-                                                                                                             )
-        # Maximum intensity for space charge limit - keep same tune shift as today
-        self.Nb_x_max_LEIR, self.Nb_y_max_LEIR = self.maxIntensity_from_SC_integral(self.dQx0_LEIR, self.dQy0_LEIR,
-                                                                                    self.particle_LEIR, self.sigma_z_LEIR,
-                                                                                    self.twiss_LEIR_interpolated, self.sigma_x_LEIR, 
-                                                                                    self.sigma_y_LEIR)
-
-        self.Nb_LEIR_extr = min(self.Nb_x_max_LEIR, self.Nb_y_max_LEIR)  # pick the limiting intensity
-        self.Nq_LEIR_extr = self.Nb_LEIR_extr*self.Q_LEIR  # number of outgoing charges, before any stripping
-        self.limiting_plane_LEIR = 'X' if self.Nb_x_max_LEIR < self.Nb_y_max_LEIR else 'Y' # flag to identify if x or y plane is limiting
-
-        # Also find IBS growth rates after first turn
-        self.Ixx_LEIR, self.Iyy_LEIR, self.Ipp_LEIR = self.find_analytical_IBS_growth_rates(self.particle_LEIR,
-                                                                                            self.twiss_LEIR, 
-                                                                                            self.line_LEIR,
-                                                                                            self.Nb_LEIR_extr, 
-                                                                                            self.sigma_z_LEIR,
-                                                                                            self.ex_LEIR, 
-                                                                                            self.ey_LEIR,
-                                                                                            self.delta_LEIR)
+        return Nb_spaceChargeLimitLEIR
 
     
-    def PS(self):
+    def PS_SC_limit(self):
         """
-        Calculate gamma at entrance and exit of the PS and transmitted bunch intensity 
+        PS: Load Pb reference values and line, calculate present Pb space charge tune shift
+        Solve for maximum bunch intensity Nb_max with new particles
         """
-        # Estimate gamma at extraction
-        self.gamma_PS_inj =  self.gamma_LEIR_extr
-        self.gamma_PS_extr =  np.sqrt(
-                                1 + ((self.Q_PS / 54) / (self.mass_GeV/self.m0_GeV))**2
-                                * (self.gamma0_PS_extr**2 - 1)
-                                )
-        
-        # Define particle object for PS 
-        self.particle_PS = xp.Particles(mass0 = 1e9 * self.mass_GeV, 
-                                     q0 = self.Q_PS, 
-                                     gamma0 = self.gamma_PS_inj
-                                     )
-        
-        # Twiss and beam sizes sigma 
-        self.line_PS = self.line_PS_Pb.copy()
-        self.line_PS.reference_particle = self.particle_PS
-        self.line_PS.build_tracker()
-        self.twiss_PS = self.line_PS.twiss()
-        self.twiss_PS_interpolated, self.sigma_x_PS, self.sigma_y_PS = self.interpolate_Twiss_table(self.twiss_PS, 
-                                                                                                             self.line_PS, 
-                                                                                                             self.particle_PS, 
-                                                                                                             self.ex_PS, 
-                                                                                                             self.ey_PS,
-                                                                                                             self.delta_PS,
-                                                                                                             )
-        # Maximum intensity for space charge limit - keep same tune shift as today
-        self.Nb_x_max_PS, self.Nb_y_max_PS = self.maxIntensity_from_SC_integral(self.dQx0_PS, self.dQy0_PS,
-                                                                                    self.particle_PS, self.sigma_z_PS,
-                                                                                    self.twiss_PS_interpolated, self.sigma_x_PS, 
-                                                                                    self.sigma_y_PS)
 
-        self.Nb_PS_extr = min(self.Nb_x_max_PS, self.Nb_y_max_PS)  # pick the limiting intensity
-        self.Nq_PS_extr = self.Nb_PS_extr*self.Q_PS  # number of outgoing charges, before any stripping
-        self.limiting_plane_PS = 'X' if self.Nb_x_max_PS < self.Nb_y_max_PS else 'Y' # flag to identify if x or y plane is limiting
+        # Calculate max tune shift for Pb ions today - first call Pb reference values
+        ref_val = Reference_Values()
+        line_PS_Pb0 = Sequences.get_PS_line(m0_GeV = ref_val.m0_GeV, 
+                                            Q = ref_val.Q0_PS, 
+                                            gamma = ref_val.gamma0_PS_inj)
+        dQx0, dQy0 = SC_Tune_Shifts.calculate_SC_tuneshift(line=line_PS_Pb0, 
+                                                           beamParams=BeamParams_PS)
 
-        # Also find IBS growth rates after first turn
-        self.Ixx_PS, self.Iyy_PS, self.Ipp_PS = self.find_analytical_IBS_growth_rates(self.particle_PS,
-                                                                                            self.twiss_PS,
-                                                                                            self.line_PS,
-                                                                                            self.Nb_PS_extr, 
-                                                                                            self.sigma_z_PS,
-                                                                                            self.ex_PS, 
-                                                                                            self.ey_PS,
-                                                                                            self.delta_PS)
-    
-    def SPS(self):
-        """
-        Calculate gamma at entrance and exit of the SPS, and transmitted bunch intensity 
-        Space charge limit comes from gamma at injection
-        """
-        # Calculate gamma at injection, simply scaling with the kinetic energy per nucleon as of today
-         # consider same magnetic rigidity at PS extraction for all ion species: Brho = P/Q, P = m*gamma*beta*c
-        self.gamma_SPS_inj =  np.sqrt(
-                                1 + ((self.Q_PS / 54) / (self.mass_GeV/self.m0_GeV))**2
-                                * (self.gamma0_SPS_inj**2 - 1)
-                            )
-        self.gamma_SPS_extr = (self.mass_GeV + self.E_kin_per_A_SPS_extr * self.A)/self.mass_GeV
+        # Call PS sequence with new ion
+        line_PS = Sequences.get_PS_line(m0_GeV = self.mass_GeV, 
+                                            Q = self.Q_PS, 
+                                            gamma = self.PS_gamma_inj)
+ 
+        # Calculate max intensity from space charge tune shift, assuming we are at the maximum limit today
+        Nb_spaceChargeLimitPS = SC_Tune_Shifts.maxIntensity_from_SC_integral(dQx_max=dQx0, dQy_max=dQy0,
+                                                                   line=line_PS, beamParams=BeamParams_PS)
         
-        # Define particle object for SPS 
-        self.particle_SPS = xp.Particles(mass0 = 1e9 * self.mass_GeV, 
-                                     q0 = self.Q_SPS, 
-                                     gamma0 = self.gamma_SPS_inj
-                                     )
+        return Nb_spaceChargeLimitPS
+
+
+    def SPS_SC_limit(self):
+        """
+        SPS: Load Pb reference values and line, calculate present Pb space charge tune shift
+        Solve for maximum bunch intensity Nb_max with new particles
+        """
+
+        # Calculate max tune shift for Pb ions today - first call Pb reference values
+        ref_val = Reference_Values()
+        line_SPS_Pb0 = Sequences.get_SPS_line(m0_GeV = ref_val.m0_GeV, 
+                                            Q = ref_val.Q0_SPS, 
+                                            gamma = ref_val.gamma0_SPS_inj)
+        dQx0, dQy0 = SC_Tune_Shifts.calculate_SC_tuneshift(line=line_SPS_Pb0, 
+                                                           beamParams=BeamParams_SPS)
+
+        # Call SPS sequence with new ion
+        line_SPS = Sequences.get_SPS_line(m0_GeV = self.mass_GeV, 
+                                            Q = self.Q_SPS, 
+                                            gamma = self.SPS_gamma_inj)
+ 
+        # Calculate max intensity from space charge tune shift, assuming we are at the maximum limit today
+        Nb_spaceChargeLimitSPS = SC_Tune_Shifts.maxIntensity_from_SC_integral(dQx_max=dQx0, dQy_max=dQy0,
+                                                                   line=line_SPS, beamParams=BeamParams_SPS)
         
-        # Twiss and beam sizes sigma 
-        self.line_SPS = self.line_SPS_Pb.copy()
-        self.line_SPS.reference_particle = self.particle_SPS
-        self.line_SPS.build_tracker()
-        self.twiss_SPS = self.line_SPS.twiss()
-        self.twiss_SPS_interpolated, self.sigma_x_SPS, self.sigma_y_SPS = self.interpolate_Twiss_table(self.twiss_SPS, 
-                                                                                                             self.line_SPS, 
-                                                                                                             self.particle_SPS, 
-                                                                                                             self.ex_SPS, 
-                                                                                                             self.ey_SPS,
-                                                                                                             self.delta_SPS,
-                                                                                                             )
-        # Maximum intensity for space charge limit - keep same tune shift as today
-        self.Nb_x_max_SPS, self.Nb_y_max_SPS = self.maxIntensity_from_SC_integral(self.dQx0_SPS, self.dQy0_SPS,
-                                                                                    self.particle_SPS, self.sigma_z_SPS,
-                                                                                    self.twiss_SPS_interpolated, self.sigma_x_SPS, 
-                                                                                    self.sigma_y_SPS)
-
-        self.Nb_SPS_extr = min(self.Nb_x_max_SPS, self.Nb_y_max_SPS)  # pick the limiting intensity
-        self.Nq_SPS_extr = self.Nb_SPS_extr*self.Q_SPS  # number of outgoing charges, before any stripping
-        self.limiting_plane_SPS = 'X' if self.Nb_x_max_SPS < self.Nb_y_max_SPS else 'Y' # flag to identify if x or y plane is limiting
-
-        # Also find IBS growth rates after first turn
-        self.Ixx_SPS, self.Iyy_SPS, self.Ipp_SPS = self.find_analytical_IBS_growth_rates(self.particle_SPS,
-                                                                                            self.twiss_SPS,
-                                                                                            self.line_SPS,
-                                                                                            self.Nb_SPS_extr, 
-                                                                                            self.sigma_z_SPS,
-                                                                                            self.ex_SPS, 
-                                                                                            self.ey_SPS,
-                                                                                            self.delta_SPS)    
-    
-    def simulate_injection(self):
-        """
-        Simulate injection and calculate injection energies for LEIR, PS and SPS 
-        """
-        self.LEIR()
-        self.PS()
-        self.SPS()
+        return Nb_spaceChargeLimitSPS 
     
 
     def calculate_LHC_bunch_intensity(self):
         """
         Estimate LHC bunch intensity for a given ion species
-        through Linac3, LEIR, PS and SPS considering all the limits of the injectors
-        """
-        self.simulate_injection()
-        
+        through Linac3, LEIR, PS and SPS considering full lattice integral space charge limits of the injectors
+        """        
         ### LINAC3 ### 
-        ionsPerPulseLinac3 = (self.linac3_current * self.linac3_pulseLength) / (self.Q * constants.e)
+        ionsPerPulseLinac3 = (self.linac3_current * self.linac3_pulseLength) / (self.Q_LEIR * constants.e)
         
         ### LEIR ###
-        spaceChargeLimitLEIR = self.linearIntensityLimit(
-                                               m = self.mass_GeV, 
-                                               gamma = self.gamma_LEIR_inj,  
-                                               Nb_0 = self.Nb0_LEIR_extr, 
-                                               charge_0 = self.Q0_LEIR, # partially stripped charged state 
-                                               m_0 = self.m0_GeV,  
-                                               gamma_0 = self.gamma0_LEIR_inj,  # use gamma at LEIR extraction
-                                               fully_stripped=False
-                                               )
+        spaceChargeLimitLEIR = self.LEIR_SC_limit()
         
-        nPulsesLEIR = (min(7, math.ceil(spaceChargeLimitLEIR / (ionsPerPulseLinac3 * self.LEIR_injection_efficiency))) if self.nPulsesLEIR == 0 else self.nPulsesLEIR)
-        totalIntLEIR = ionsPerPulseLinac3 * nPulsesLEIR * self.LEIR_injection_efficiency
-        ionsPerBunchExtractedLEIR = self.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
+        nPulsesLEIR = (min(7, math.ceil(spaceChargeLimitLEIR / (ionsPerPulseLinac3 * Reference_Values.LEIR_injection_efficiency))) if self.nPulsesLEIR == 0 else self.nPulsesLEIR)
+        totalIntLEIR = ionsPerPulseLinac3 * nPulsesLEIR * Reference_Values.LEIR_injection_efficiency
+        ionsPerBunchExtractedLEIR = Reference_Values.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
         LEIR_space_charge_limit_hit = True if totalIntLEIR > spaceChargeLimitLEIR else False 
         
         #### PS ####
         ionsPerBunchInjectedPS = ionsPerBunchExtractedLEIR * (self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else 1)
-        spaceChargeLimitPS = self.linearIntensityLimit(
-                                        m = self.mass_GeV, 
-                                        gamma = self.gamma_PS_inj,  
-                                        Nb_0 = self.Nb0_PS_extr, 
-                                        charge_0 = self.Q0_PS, # partially stripped charged state 
-                                        m_0 = self.m0_GeV,  
-                                        gamma_0 = self.gamma0_PS_inj,  # use gamma at PS inj
-                                        fully_stripped = self.LEIR_PS_strip # fully stripped if LEIR-PS strip
-                                        )
+        spaceChargeLimitPS = self.PS_SC_limit()
         
         # Check that injected momentum is not too low for the PS B-field
-        q_PS = self.Z if self.LEIR_PS_strip else self.Q
-        self.p_PS_inj = self.calcMomentum_from_gamma(self.gamma_PS_inj, q_PS)
-        self.Brho_PS_inj = self.calcBrho(self.p_PS_inj, q_PS) # same as LEIR extraction if no stripping, else will be different 
+        self.p_PS_inj = self.calcMomentum_from_gamma(self.PS_gamma_inj, self.Q_PS)
+        self.Brho_PS_inj = self.calcBrho(self.p_PS_inj, self.Q_PS) # same as LEIR extraction if no stripping, else will be different 
         B_PS_inj = self.Brho_PS_inj / self.PS_rho
         if B_PS_inj < self.PS_MinB:
             self.PS_B_field_is_too_low = True
         elif B_PS_inj > self.PS_MaxB:
-            print("\nA = {}, Q_low = {}, m_ion = {:.2f} u, Z = {}".format(self.A, self.Q_low, self.m_ion_in_u, self.Z))
+            print("\nA = {}, Q_PS = {}, m_ion = {:.2f} GeV, Z = {}".format(self.A, self.Q_PS, self.mass_GeV, self.Z))
             print('B = {:.4f} in PS at injection is too HIGH!'.format(B_PS_inj))
             raise ValueError("B field in PS is too high!")
         else:
             self.PS_B_field_is_too_low = False
         
-        # If space charge limit in PS is considered, choose the minimum between the SC limit and the extracted ionsPerBunchPS
-        if self.consider_PS_space_charge_limit:
-            ionsPerBunchPS = min(spaceChargeLimitPS, ionsPerBunchInjectedPS)
-            #if spaceChargeLimitPS < ionsPerBunchInjectedPS:
-            #    print("\nIon type: {}".format(self.ion_type))
-            #    print("Space charge limit PS: {:.3e} vs max injected ions per bunch PS: {:.3e}".format(spaceChargeLimitPS, ionsPerBunchInjectedPS))
-        else:
-            ionsPerBunchPS = ionsPerBunchInjectedPS 
+        # Select minimum between maxiumum possible injected intensity and PS space charge limit
+        ionsPerBunchPS = min(spaceChargeLimitPS, ionsPerBunchInjectedPS)
         PS_space_charge_limit_hit = True if ionsPerBunchInjectedPS > spaceChargeLimitPS else False 
-        ionsPerBunchExtracted_PS = ionsPerBunchPS * self.PS_transmission / self.PS_splitting # maximum intensity without SC
+        ionsPerBunchExtracted_PS = ionsPerBunchPS * Reference_Values.PS_transmission / self.PS_splitting # maximum intensity without SC
         
         # Calculate ion transmission for SPS 
-        ionsPerBunchSPSinj = ionsPerBunchExtracted_PS * (self.PS_SPS_transmission_efficiency if self.Z == self.Q or self.LEIR_PS_strip else self.PS_SPS_stripping_efficiency)
-        spaceChargeLimitSPS = self.linearIntensityLimit(
-                                               m = self.mass_GeV, 
-                                               gamma = self.gamma_SPS_inj,  
-                                               Nb_0 = self.Nb0_SPS_extr, 
-                                               charge_0 = self.Q0_SPS, 
-                                               m_0 = self.m0_GeV,  
-                                               gamma_0 = self.gamma0_SPS_inj, # use gamma at SPS inj
-                                               fully_stripped=True
-                                               )
+        ionsPerBunchSPSinj = ionsPerBunchExtracted_PS * (Reference_Values.PS_SPS_transmission_efficiency if self.Z == self.Q_SPS or self.LEIR_PS_strip else Reference_Values.PS_SPS_stripping_efficiency)
+        spaceChargeLimitSPS = self.SPS_SC_limit()
         SPS_space_charge_limit_hit = True if ionsPerBunchSPSinj > spaceChargeLimitSPS else False
-        ionsPerBunchLHC = min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * self.SPS_transmission * self.SPS_slipstacking_transmission
+        ionsPerBunchLHC = min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * Reference_Values.SPS_transmission * Reference_Values.SPS_slipstacking_transmission
 
         result = {
             "Ion": self.ion_type,
@@ -436,13 +275,13 @@ class InjectorChain_full_SC:
             "Linac3_current [A]": self.linac3_current,
             "Linac3_pulse_length [s]": self.linac3_pulseLength, 
             "LEIR_numberofPulses": nPulsesLEIR,
-            "LEIR_injection_efficiency": self.LEIR_injection_efficiency, 
+            "LEIR_injection_efficiency": Reference_Values.LEIR_injection_efficiency, 
             "LEIR_splitting": self.LEIR_bunches,
-            "LEIR_transmission": self.LEIR_transmission, 
+            "LEIR_transmission": Reference_Values.LEIR_transmission, 
             "PS_splitting": self.PS_splitting, 
-            "PS_transmission": self.PS_transmission, 
-            "PS_SPS_stripping_efficiency": self.PS_SPS_stripping_efficiency, 
-            "SPS_transmission": self.SPS_transmission, 
+            "PS_transmission": Reference_Values.PS_transmission, 
+            "PS_SPS_stripping_efficiency": Reference_Values.PS_SPS_stripping_efficiency, 
+            "SPS_transmission": Reference_Values.SPS_transmission, 
             "Linac3_ionsPerPulse": ionsPerPulseLinac3,
             "LEIR_maxIntensity": totalIntLEIR,
             "LEIR_space_charge_limit": spaceChargeLimitLEIR,
@@ -462,7 +301,6 @@ class InjectorChain_full_SC:
             "SPS_gamma_extr": self.gamma_SPS_extr,
             "PS_B_field_is_too_low": self.PS_B_field_is_too_low,
             "LEIR_space_charge_limit_hit": LEIR_space_charge_limit_hit,
-            "consider_PS_space_charge_limit": self.consider_PS_space_charge_limit,
             "PS_space_charge_limit_hit": PS_space_charge_limit_hit,
             "SPS_space_charge_limit_hit": SPS_space_charge_limit_hit,
             "LEIR_ratio_SC_limit_maxIntensity": spaceChargeLimitLEIR / totalIntLEIR,
