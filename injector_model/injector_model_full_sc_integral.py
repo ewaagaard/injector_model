@@ -41,13 +41,13 @@ energy_folder = Path(__file__).resolve().parent.joinpath('injection_energies/cal
 output_folder = Path(__file__).resolve().parent.joinpath('../output').absolute()
 
 
-class InjectorChain_full_SC:
+class InjectorChain_v2:
     """
     Representation of the CERN Injector Chain for different ions with full space charge lattice integral. 
     This model accounts for
     - full space charge integrals in LEIR, PS and SPS 
     """
-    def __init__(self, ion_type, 
+    def __init__(self, ion_type='Pb', 
                  nPulsesLEIR = 1,
                  LEIR_bunches = 2,
                  PS_splitting = 2,
@@ -89,7 +89,7 @@ class InjectorChain_full_SC:
         self.LEIR_PS_stripping_efficiency = self.ion_data['LEIR-PS Stripping Efficiency']
         self.load_ion_energy()
 
-        print(f"Initiated ion type: {self.ion_type}")
+        print(f"\nInitiated ion type: {self.ion_type}")
         print("Q_LEIR = {}, Q_PS = {}, Q_SPS = {} (fully stripped)\nStrip LEIR-PS: {}".format(self.Q_LEIR, 
                                                                                               self.Q_PS, 
                                                                                               self.Q_SPS,
@@ -163,8 +163,9 @@ class InjectorChain_full_SC:
         line_LEIR_Pb0 = Sequences.get_LEIR_line(m0_GeV = ref_val.m0_GeV, 
                                             Q = ref_val.Q0_LEIR, 
                                             gamma = ref_val.gamma0_LEIR_inj)
-        dQx0, dQy0 = SC_Tune_Shifts.calculate_SC_tuneshift(line=line_LEIR_Pb0, 
-                                                           beamParams=BeamParams_LEIR)
+        leir_sc = SC_Tune_Shifts()
+        dQx0, dQy0 = leir_sc.calculate_SC_tuneshift(line=line_LEIR_Pb0, 
+                                                    beamParams=BeamParams_LEIR)
 
         # Call LEIR sequence with new ion
         line_LEIR = Sequences.get_LEIR_line(m0_GeV = self.mass_GeV, 
@@ -172,7 +173,7 @@ class InjectorChain_full_SC:
                                             gamma = self.LEIR_gamma_inj)
  
         # Calculate max intensity from space charge tune shift, assuming we are at the maximum limit today
-        Nb_spaceChargeLimitLEIR = SC_Tune_Shifts.maxIntensity_from_SC_integral(dQx_max=dQx0, dQy_max=dQy0,
+        Nb_spaceChargeLimitLEIR = leir_sc.maxIntensity_from_SC_integral(dQx_max=dQx0, dQy_max=dQy0,
                                                                    line=line_LEIR, beamParams=BeamParams_LEIR)
         
         return Nb_spaceChargeLimitLEIR, dQx0, dQy0
@@ -196,7 +197,8 @@ class InjectorChain_full_SC:
         line_PS_Pb0 = Sequences.get_PS_line(m0_GeV = ref_val.m0_GeV, 
                                             Q = ref_val.Q0_PS, 
                                             gamma = ref_val.gamma0_PS_inj)
-        dQx0, dQy0 = SC_Tune_Shifts.calculate_SC_tuneshift(line=line_PS_Pb0, 
+        ps_sc = SC_Tune_Shifts()
+        dQx0, dQy0 = ps_sc.calculate_SC_tuneshift(line=line_PS_Pb0, 
                                                            beamParams=BeamParams_PS)
 
         # Call PS sequence with new ion
@@ -205,7 +207,7 @@ class InjectorChain_full_SC:
                                             gamma = self.PS_gamma_inj)
  
         # Calculate max intensity from space charge tune shift, assuming we are at the maximum limit today
-        Nb_spaceChargeLimitPS = SC_Tune_Shifts.maxIntensity_from_SC_integral(dQx_max=dQx0, dQy_max=dQy0,
+        Nb_spaceChargeLimitPS = ps_sc.maxIntensity_from_SC_integral(dQx_max=dQx0, dQy_max=dQy0,
                                                                    line=line_PS, beamParams=BeamParams_PS)
         
         return Nb_spaceChargeLimitPS, dQx0, dQy0
@@ -229,7 +231,8 @@ class InjectorChain_full_SC:
         line_SPS_Pb0 = Sequences.get_SPS_line(m0_GeV = ref_val.m0_GeV, 
                                             Q = ref_val.Q0_SPS, 
                                             gamma = ref_val.gamma0_SPS_inj)
-        dQx0, dQy0 = SC_Tune_Shifts.calculate_SC_tuneshift(line=line_SPS_Pb0, 
+        sps_sc = SC_Tune_Shifts()
+        dQx0, dQy0 = sps_sc.calculate_SC_tuneshift(line=line_SPS_Pb0, 
                                                            beamParams=BeamParams_SPS)
 
         # Call SPS sequence with new ion
@@ -238,7 +241,7 @@ class InjectorChain_full_SC:
                                             gamma = self.SPS_gamma_inj)
  
         # Calculate max intensity from space charge tune shift, assuming we are at the maximum limit today
-        Nb_spaceChargeLimitSPS = SC_Tune_Shifts.maxIntensity_from_SC_integral(dQx_max=dQx0, dQy_max=dQy0,
+        Nb_spaceChargeLimitSPS = sps_sc.maxIntensity_from_SC_integral(dQx_max=dQx0, dQy_max=dQy0,
                                                                    line=line_SPS, beamParams=BeamParams_SPS)
         
         return Nb_spaceChargeLimitSPS, dQx0, dQy0
@@ -342,10 +345,15 @@ class InjectorChain_full_SC:
         return result
 
 
-    def calculate_LHC_bunch_intensity_all_ion_species(self, save_csv=False, output_name='output'):
+    def calculate_LHC_bunch_intensity_all_ion_species(self, save_csv=True, output_name='output'):
         """
         Estimate LHC bunch intensity for all ion species provided in table
         through Linac3, LEIR, PS and SPS considering all the limits of the injectors
+
+        Returns:
+        --------
+        df_all_ions : pd.DataFrame
+            pandas dataframe containing result of all ions
         """
         # Check that output directory exists
         os.makedirs(self.save_path, exist_ok=True)
@@ -376,5 +384,12 @@ class InjectorChain_full_SC:
             df_save[float_columns]  = df_save[float_columns].applymap(self.format_large_numbers)
             df_save = df_save.T
             df_save.to_csv("{}/{}.csv".format(self.save_path, output_name))
+
+            # Also make simple output in single-decimal exponential_notation
+            df_SC_and_max_intensity = df_save[['LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity', 'PS_space_charge_limit', 
+                        'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
+            for col in df_SC_and_max_intensity.columns:
+                df_SC_and_max_intensity[col] = df_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
+            df_SC_and_max_intensity.to_csv("{}/{}_for_paper.csv".format(self.save_path, output_name), index=True)
             
         return df_all_ions

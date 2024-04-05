@@ -17,7 +17,9 @@ class SC_Tune_Shifts:
     Class to analytically calculate space charge tune shift from 
     Eq. (1) in John and Bartosik, 2021 (https://cds.cern.ch/record/2749453)
     """
-    
+    def __init__(self) -> None:
+        self.mode = 'frozen'
+
     def beta(self, gamma):
         """
         Relativistic beta factor from gamma factor 
