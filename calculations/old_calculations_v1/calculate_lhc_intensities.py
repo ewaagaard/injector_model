@@ -8,14 +8,20 @@ import matplotlib.pyplot as plt
 import pandas as pd 
 from injector_model import InjectorChain
 import numpy as np
+from pathlib import Path
+import os
 
 # Load ion data and initialize for test for bunch intensities 
-ion_data = pd.read_csv("../data/Ion_species.csv", header=0, index_col=0).T
+data_folder = Path(__file__).resolve().parent.joinpath('../../data').absolute()
+ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), header=0, index_col=0).T
 ion_type = 'Pb'
+os.makedirs('output/figures', exist_ok=True)
+os.makedirs('output/output_for_paper', exist_ok=True)
+
 
 # Compare to reference intensities - WG5 and Roderik
-ref_Table_SPS = pd.read_csv('../data/test_and_benchmark_data/SPS_final_intensities_WG5_and_Hannes.csv', delimiter=';', index_col=0)
-Roderik_LHC_charges_per_bunch = pd.read_csv('../data/test_and_benchmark_data/Roderik_2021_LHC_charges_per_bunch_output.csv', index_col=0)
+ref_Table_SPS = pd.read_csv('{}/test_and_benchmark_data/SPS_final_intensities_WG5_and_Hannes.csv'.format(data_folder), delimiter=';', index_col=0)
+Roderik_LHC_charges_per_bunch = pd.read_csv('{}/test_and_benchmark_data/Roderik_2021_LHC_charges_per_bunch_output.csv'.format(data_folder), index_col=0)
 ref_val = Roderik_LHC_charges_per_bunch.sort_values('Z')
 
 # Define all relevant scenarios (baseline, stripping, PS splitting, etc) in a function
