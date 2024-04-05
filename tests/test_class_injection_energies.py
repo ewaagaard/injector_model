@@ -5,13 +5,15 @@ from injector_model import InjectionEnergies
 import pandas as pd
 import numpy as np
 
+# Test values for Pb
+A, Q_low, m_ion_in_u, Z = 208, 54, 207.9766525, 82
+
 class TestInjectionEnergies:
 
-    def test_Pb_injection_energies(self):
+    def test_Pb_injection_energies():
         """
         Test Pb54+, with and without moving stripping to LEIR-PS 
         """
-        A, Q_low, m_ion_in_u, Z = 208, 54, 207.9766525, 82
         inj_energies = InjectionEnergies(A, Q_low, m_ion_in_u, Z)
     
         # Test with normal PS-SPS stripping
@@ -21,5 +23,5 @@ class TestInjectionEnergies:
     
 # Execute some test statements 
 if __name__ == "__main__":
-    test_E = InjectionEnergies()
-    test_E.test_Pb_injection_energies()
+    test_E = InjectionEnergies(A, Q_low, m_ion_in_u, Z)
+    TestInjectionEnergies.test_Pb_injection_energies()
