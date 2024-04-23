@@ -13,9 +13,9 @@ data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
 class BeamParams_SPS:
     """Data Container for SPS Pb default beam parameters"""
     Nb : float = 3.5e8
-    exn : float = 1.3e-6
+    exn : float = 1.1e-6 # previously 1.3e-6
     eyn : float = 0.9e-6
-    sigma_z : float = 0.23
+    sigma_z : float = 0.225 #previously 0.23
     delta : float = 1e-3
     # add sigma_delta
 
