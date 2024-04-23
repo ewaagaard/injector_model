@@ -1,5 +1,6 @@
 """
 Container for helper functions and parameter data classes
+Unless specified, parameters originate from: https://cds.cern.ch/record/2749453 - Bartosik & John, 2021
 """
 import numpy as np
 import xpart as xp
@@ -13,11 +14,11 @@ data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
 class BeamParams_SPS:
     """Data Container for SPS Pb default beam parameters"""
     Nb : float = 3.5e8
-    exn : float = 1.1e-6 # previously 1.3e-6
+    exn : float =  1.3e-6 #1.1e-6 # previously 1.3e-6
     eyn : float = 0.9e-6
     sigma_z : float = 0.225 #previously 0.23
     delta : float = 1e-3
-    # add sigma_delta
+    # add sigma_delta - needed for IBS
 
 @dataclass
 class BeamParams_PS:

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Simulation model of the CERN Injector Chain for different ions
 solving for full space charge (SC) lattice integral 
@@ -14,7 +12,6 @@ from scipy import constants
 import xtrack as xt
 import xpart as xp
 import matplotlib.pyplot as plt
-from dataclasses import dataclass
 from collections import defaultdict
 
 from .parameters_and_helpers import Reference_Values, BeamParams_LEIR, BeamParams_PS, BeamParams_SPS
@@ -46,13 +43,23 @@ class InjectorChain_v2:
     Representation of the CERN Injector Chain for different ions with full space charge lattice integral. 
     This model accounts for
     - full space charge integrals in LEIR, PS and SPS 
+
+    Parameters:
+    -----------
+    nPulsesLEIR : int
+        number of pulses injected into LEIR (maximum 7 today with Pb). If "0", then calculate max from SC limit
+    LEIR_bunches : int
+        after RF capture, how many bunches that will circulate in LEIR
+    PS_splitting : int
+        number of bunches that injected bunch in PS will be split into. E.g. "2" means that bunch will be split into 2 bunches
+    LEIR_PS_strip : bool
+        whether stripping foil should be placed between LEIR and PS. If "False", then default stripping between PS and SPS
     """
     def __init__(self, ion_type='Pb', 
-                 nPulsesLEIR = 1,
+                 nPulsesLEIR = 0,
                  LEIR_bunches = 2,
                  PS_splitting = 2,
-                 LEIR_PS_strip=False,
-                 save_path_csv = '{}/csv_tables'.format(output_folder)
+                 LEIR_PS_strip=False
                  ):
         
         # Import reference data and initiate ion
@@ -65,7 +72,6 @@ class InjectorChain_v2:
         self.nPulsesLEIR = nPulsesLEIR
         self.LEIR_bunches = LEIR_bunches
         self.PS_splitting = PS_splitting
-        self.save_path = save_path_csv # Save path for data
 
 
     def load_Pb_lines(self) -> None:
@@ -226,11 +232,6 @@ class InjectorChain_v2:
 
         # Calculate max tune shift for Pb ions today - first call Pb reference values
         leir_sc = SC_Tune_Shifts()
-        dQx, dQy = leir_sc.calculate_SC_tuneshift(twissTableXsuite=self.twiss_LEIR_Pb0,
-                                                    particle_ref=LEIR_particle,
-                                                    line_length=self.line_LEIR_length, 
-                                                    Nb=Nb_max,
-                                                    beamParams=BeamParams_LEIR)
  
         # Calculate max intensity from space charge tune shift, assuming we are at the maximum limit today
         Nb_spaceChargeLimitLEIR = leir_sc.maxIntensity_from_SC_integral(dQx_max=self.dQx0_LEIR_Pb, dQy_max=self.dQy0_LEIR_Pb,
@@ -239,10 +240,17 @@ class InjectorChain_v2:
                                                                         line_length=self.line_LEIR_length, 
                                                                         beamParams=BeamParams_LEIR)
         
+        # Find tune shifts of space charge limits
+        dQx, dQy = leir_sc.calculate_SC_tuneshift(twissTableXsuite=self.twiss_LEIR_Pb0,
+                                            particle_ref=LEIR_particle,
+                                            line_length=self.line_LEIR_length, 
+                                            Nb=Nb_spaceChargeLimitLEIR,
+                                            beamParams=BeamParams_LEIR)
+        
         return Nb_spaceChargeLimitLEIR, dQx, dQy
 
     
-    def PS_SC_limit(self, Nb_max):
+    def PS_SC_limit(self, Nb_max=None):
         """
         PS: Load Pb reference values and line, calculate present Pb space charge tune shift
         Solve for maximum bunch intensity Nb_max with new particles
@@ -259,17 +267,15 @@ class InjectorChain_v2:
         dQx, dQy : float
             space charge tune shift assuming maximum possible intensity from previous injectors
         """
+        # If Nb_max is None, set to default value
+        if Nb_max is None:
+            Nb_max = BeamParams_PS.Nb
 
         # Generate new ion
         PS_particle = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_PS, gamma0 = self.PS_gamma_inj)   
 
         # Calculate max tune shift for Pb ions today - first call Pb reference values
         ps_sc = SC_Tune_Shifts()
-        dQx, dQy = ps_sc.calculate_SC_tuneshift(twissTableXsuite=self.twiss_PS_Pb0,
-                                                  particle_ref=PS_particle,
-                                                  line_length=self.line_PS_length,
-                                                  Nb=Nb_max,
-                                                  beamParams=BeamParams_PS)
         
         # Calculate max intensity from space charge tune shift, assuming we are at the maximum limit today
         Nb_spaceChargeLimitPS = ps_sc.maxIntensity_from_SC_integral(dQx_max=self.dQx0_PS_Pb, dQy_max=self.dQy0_PS_Pb,
@@ -278,10 +284,17 @@ class InjectorChain_v2:
                                                                     line_length=self.line_PS_length, 
                                                                     beamParams=BeamParams_PS)
         
+        # Find tune shifts of space charge limit
+        dQx, dQy = ps_sc.calculate_SC_tuneshift(twissTableXsuite=self.twiss_PS_Pb0,
+                                            particle_ref=PS_particle,
+                                            line_length=self.line_PS_length,
+                                            Nb=Nb_spaceChargeLimitPS,
+                                            beamParams=BeamParams_PS)
+        
         return Nb_spaceChargeLimitPS, dQx, dQy
 
 
-    def SPS_SC_limit(self, Nb_max):
+    def SPS_SC_limit(self, Nb_max=None):
         """
         SPS: Load Pb reference values and line, calculate present Pb space charge tune shift
         Solve for maximum bunch intensity Nb_max with new particles
@@ -298,16 +311,14 @@ class InjectorChain_v2:
         dQx, dQy : float
             space charge tune shift assuming maximum possible intensity from previous injectors
         """
+        if Nb_max is None:
+            Nb_max = BeamParams_SPS.Nb
+
         # Generate new ion
         SPS_particle = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_SPS, gamma0 = self.SPS_gamma_inj)
 
         # Calculate max tune shift for Pb ions today - first call Pb reference values
         sps_sc = SC_Tune_Shifts()
-        dQx, dQy = sps_sc.calculate_SC_tuneshift(twissTableXsuite=self.twiss_SPS_Pb0,
-                                                   particle_ref=SPS_particle,
-                                                   line_length=self.line_SPS_length,
-                                                   Nb=Nb_max,
-                                                   beamParams=BeamParams_SPS)
        
         # Calculate max intensity from space charge tune shift, assuming we are at the maximum limit today
         Nb_spaceChargeLimitSPS = sps_sc.maxIntensity_from_SC_integral(dQx_max=self.dQx0_SPS_Pb, dQy_max=self.dQy0_SPS_Pb,
@@ -315,6 +326,12 @@ class InjectorChain_v2:
                                                                       particle_ref=SPS_particle,
                                                                       line_length=self.line_SPS_length,
                                                                       beamParams=BeamParams_SPS)
+        
+        dQx, dQy = sps_sc.calculate_SC_tuneshift(twissTableXsuite=self.twiss_SPS_Pb0,
+                                                   particle_ref=SPS_particle,
+                                                   line_length=self.line_SPS_length,
+                                                   Nb=Nb_spaceChargeLimitSPS,
+                                                   beamParams=BeamParams_SPS)
         
         return Nb_spaceChargeLimitSPS, dQx, dQy
     

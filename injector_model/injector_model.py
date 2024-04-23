@@ -15,6 +15,7 @@ import os
 
 # Calculate the absolute path to the data folder relative to the module's location
 data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
+energy_folder = Path(__file__).resolve().parent.joinpath('injection_energies/calculated_injection_energies').absolute()
 
 class InjectorChain:
     """
@@ -22,8 +23,8 @@ class InjectorChain:
     to calculte maximum intensity limits
     following Roderik Bruce's example from 2021
     """
-    def __init__(self, ion_type, 
-                 ion_data, 
+    def __init__(self, 
+                 ion_type = 'Pb',
                  ion_type_ref='Pb',
                  nPulsesLEIR = 1,
                  LEIR_bunches = 2,
@@ -36,7 +37,7 @@ class InjectorChain:
                  save_path_csv = 'output/csv_tables'
                  ):
         
-        self.full_ion_data = ion_data
+        self.full_ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), header=0, index_col=0).T
         self.LEIR_PS_strip = LEIR_PS_strip
         self.higher_brho_LEIR = higher_brho_LEIR
         self.brho_string = '_higher_brho_LEIR' if self.higher_brho_LEIR else ''
@@ -110,9 +111,9 @@ class InjectorChain:
         """
         # Load ion energy data depending on where stripping is made 
         if self.LEIR_PS_strip:
-            self.ion_energy_data = pd.read_csv('{}/injection_energies/ion_injection_energies_LEIR_PS_strip{}.csv'.format(data_folder, self.brho_string), index_col=0)
+            self.ion_energy_data = pd.read_csv('{}/ion_injection_energies_LEIR_PS_strip.csv'.format(energy_folder), index_col=0)
         else:
-            self.ion_energy_data = pd.read_csv('{}/injection_energies/ion_injection_energies_PS_SPS_strip{}.csv'.format(data_folder, self.brho_string), index_col=0)
+            self.ion_energy_data = pd.read_csv('{}/ion_injection_energies_PS_SPS_strip.csv'.format(energy_folder), index_col=0)
         
         key = str(int(self.Q)) + self.ion_str + str(int(self.A))
         ion_energy = self.ion_energy_data.loc[key]
