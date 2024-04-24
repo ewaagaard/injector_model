@@ -228,14 +228,14 @@ class InjectorChain:
             self.Z0 = 82.0
             
             # LEIR - reference case for Pb54+ --> BEFORE stripping
-            self.Nq0_LEIR_extr = 10e10  # number of observed charges extracted at LEIR
+            self.Nq0_LEIR_extr = 10e10  # number of observed charges injected into LEIR
             self.Q0_LEIR = 54.0
             self.Nb0_LEIR_extr = self.Nq0_LEIR_extr/self.Q0_LEIR
             self.gamma0_LEIR_inj = (self.m0_GeV + self.E_kin_per_A_LEIR_inj * 208)/self.m0_GeV
             self.gamma0_LEIR_extr = (self.m0_GeV + self.E_kin_per_A_LEIR_extr * 208)/self.m0_GeV
             
             # PS - reference case for Pb54+ --> BEFORE stripping
-            self.Nq0_PS_extr =  6e10 # from November 2022 ionlifetime MD, previously 8e10  # number of observed charges extracted at PS for nominal beam
+            self.Nq0_PS_extr =  6e10 # from November 2022 ionlifetime MD, previously 8e10  # number of observed charges injected at PS for nominal beam
             self.Q0_PS = 54.0
             self.Nb0_PS_extr = self.Nq0_PS_extr/self.Q0_PS
             self.gamma0_PS_inj = (self.m0_GeV + self.E_kin_per_A_PS_inj * 208)/self.m0_GeV
