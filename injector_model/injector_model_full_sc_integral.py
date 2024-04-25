@@ -47,24 +47,28 @@ class InjectorChain_v2:
     Parameters:
     -----------
     nPulsesLEIR : int
-        number of pulses injected into LEIR (maximum 7 today with Pb). If "0", then calculate max from SC limit
+        number of pulses injected into LEIR (maximum 7 today with Pb). If "None", then calculate max from SC limit
     LEIR_bunches : int
         after RF capture, how many bunches that will circulate in LEIR
     PS_splitting : int
         number of bunches that injected bunch in PS will be split into. E.g. "2" means that bunch will be split into 2 bunches
+    account_for_LEIR_ecooling : bool
+        whether to factor electron cooling time in LEIR, which is longer for lighter ions
     LEIR_PS_strip : bool
         whether stripping foil should be placed between LEIR and PS. If "False", then default stripping between PS and SPS
     """
     def __init__(self, ion_type='Pb', 
-                 nPulsesLEIR = 0,
+                 nPulsesLEIR = None,
                  LEIR_bunches = 2,
                  PS_splitting = 2,
+                 account_for_LEIR_ecooling=False,
                  LEIR_PS_strip=False
                  ):
         
         # Import reference data and initiate ion
         self.full_ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), header=0, index_col=0).T
         self.LEIR_PS_strip = LEIR_PS_strip
+        self.account_for_LEIR_ecooling = account_for_LEIR_ecooling
         self.init_ion(ion_type)
         self.load_Pb_lines()
                 
@@ -146,12 +150,17 @@ class InjectorChain_v2:
         self.linac3_pulseLength = self.ion_data['Linac3 pulse length [us]'] * 1e-6
         self.LEIR_PS_stripping_efficiency = self.ion_data['LEIR-PS Stripping Efficiency']
         self.load_ion_energy()
-
+        
         print(f"Initiated ion type: {self.ion_type}")
         print("Q_LEIR = {}, Q_PS = {}, Q_SPS = {} (fully stripped)\nStrip LEIR-PS: {}".format(self.Q_LEIR, 
                                                                                               self.Q_PS, 
                                                                                               self.Q_SPS,
                                                                                               self.LEIR_PS_strip))
+        
+        # LEIR ecooling rations
+        if self.account_for_LEIR_ecooling:
+            self.relative_ecooling_time_leir = self.ion_data['Relative_LEIR_ecooling_time']
+            print('E-cooling time w.r.t to Pb: {:.2f}\n'.format(self.relative_ecooling_time_leir))
 
 
     def load_ion_energy(self):
@@ -423,9 +432,22 @@ class InjectorChain_v2:
         ionsPerPulseLinac3 = (self.linac3_current * self.linac3_pulseLength) / (self.Q_LEIR * constants.e)
         
         ### LEIR ###
-        spaceChargeLimitLEIR, dQx0_LEIR, dQy0_LEIR = self.LEIR_SC_limit()  # don't calculate new tune shifts until we know limit
+        spaceChargeLimitLEIR, dQx0_LEIR, dQy0_LEIR = self.LEIR_SC_limit()  # space charge limit assuming same tune shifts as today
         
-        nPulsesLEIR = (min(7, math.ceil(spaceChargeLimitLEIR / (ionsPerPulseLinac3 * Reference_Values.LEIR_injection_efficiency))) if self.nPulsesLEIR == 0 else self.nPulsesLEIR)
+        # Calculate maximum number of pulses (ceiling value) in LEIR due to space charge effects
+        if self.nPulsesLEIR is None:
+            #nPulsesLEIR_SC = min(Reference_Values.max_injections_into_LEIR, math.ceil(spaceChargeLimitLEIR / (ionsPerPulseLinac3 * Reference_Values.LEIR_injection_efficiency)))
+            nPulsesLEIR_default = Reference_Values.max_injections_into_LEIR
+        else:
+            nPulsesLEIR_default = self.nPulsesLEIR
+                              
+        # Calculate number of bunches to inject if we consider electron cooling
+        if self.account_for_LEIR_ecooling:
+            num_injections_LEIR_with_ecooling = math.ceil(Reference_Values.max_injections_into_LEIR / self.relative_ecooling_time_leir)
+            nPulsesLEIR = np.min([num_injections_LEIR_with_ecooling, nPulsesLEIR_default])
+        else:
+            nPulsesLEIR = nPulsesLEIR_default
+        
         totalIntLEIR = ionsPerPulseLinac3 * nPulsesLEIR * Reference_Values.LEIR_injection_efficiency
         ionsPerBunchExtractedLEIR = Reference_Values.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
         LEIR_space_charge_limit_hit = True if totalIntLEIR > spaceChargeLimitLEIR else False 
@@ -520,6 +542,10 @@ class InjectorChain_v2:
         # Add key of LEIR-PS stripping efficiency if this is done 
         if self.LEIR_PS_strip:
             result["LEIR_PS_strippingEfficiency"] = self.LEIR_PS_stripping_efficiency
+            
+        if self.account_for_LEIR_ecooling:
+            result["LEIR_relative_ecooling_time"] = self.relative_ecooling_time_leir
+            result["LEIR_numberofPulses_ecooling"] = num_injections_LEIR_with_ecooling
     
         return result
 

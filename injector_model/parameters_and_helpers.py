@@ -25,7 +25,7 @@ class BeamParams_SPS:
 @dataclass
 class BeamParams_PS:
     """Data Container for PS Pb default beam parameters"""
-    Nb : float =  7e8 # measured in 2023 at injection for LHC Pb beams
+    Nb : float =  8e8 # measured in 2023 at injection for LHC Pb beams
     exn : float = 0.8e-6
     eyn : float = 0.5e-6
     sigma_z : float = 5.0 # measured in 2023 at injection for LHC Pb beams
@@ -60,6 +60,7 @@ class Reference_Values:
     Z0 = 82.0  # atomic number
 
     ### LEIR reference case for Pb54+ --> BEFORE stripping ###
+    max_injections_into_LEIR = 7
     E_kin_per_A_LEIR_inj = 4.2e-3 # kinetic energy per nucleon in LEIR before RF capture, same for all species
     E_kin_per_A_LEIR_extr = 7.22e-2 # kinetic energy per nucleon in LEIR at exit, same for all species
     Nq0_LEIR_extr = 10e10  # number of observed charges extracted at LEIR
