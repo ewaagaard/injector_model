@@ -1,6 +1,8 @@
 """
 Container for helper functions and parameter data classes
-Unless specified, parameters originate from: https://cds.cern.ch/record/2749453 - Bartosik & John, 2021
+
+Parameters based on operational Pb values
+For references, `Nb_isabelle` originate from: https://cds.cern.ch/record/2749453 - Bartosik & John, 2021
 """
 import numpy as np
 import xpart as xp
@@ -13,7 +15,7 @@ data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
 @dataclass
 class BeamParams_SPS:
     """Data Container for SPS Pb default beam parameters"""
-    Nb : float = 3.5e8
+    Nb : float = 3.5645e8
     exn : float =  1.3e-6 #1.1e-6 # previously 1.3e-6
     eyn : float = 0.9e-6
     sigma_z : float = 0.225 #previously 0.23
@@ -23,21 +25,23 @@ class BeamParams_SPS:
 @dataclass
 class BeamParams_PS:
     """Data Container for PS Pb default beam parameters"""
-    Nb : float = 8.1e8
+    Nb : float =  6e10/54
     exn : float = 0.8e-6
     eyn : float = 0.5e-6
     sigma_z : float = 4.74
     delta : float = 0.63e-3
+    Nb_isabelle : float = 8.1e8
     # add sigma_delta
 
 @dataclass
 class BeamParams_LEIR:
     """Data Container for LEIR Pb default beam parameters"""
-    Nb : float = 1e9
+    Nb : float = 10e10/54
     exn : float = 0.4e-6
     eyn : float = 0.4e-6
     sigma_z : float = 4.256
     delta: float = 1.18e-3
+    Nb_isabelle : float = 1e9
     # add sigma_delta
 
 @dataclass
@@ -81,7 +85,7 @@ class Reference_Values:
     PS_transmission = 0.9
     PS_SPS_transmission_efficiency = 1.0 # 0.9 is what we see today, but Roderik uses 1.0
     PS_SPS_stripping_efficiency = 0.9  # default value until we have other value
-    SPS_transmission = 0.79 # old value 0.62, but discussed with Reyes 2024-03-18 from last year's performance
+    SPS_transmission = 0.62#0.79 # old value 0.62, but discussed with Reyes 2024-03-18 from last year's performance
     SPS_slipstacking_transmission = 1.0
             
     def __post_init__(self):
@@ -100,3 +104,4 @@ class Reference_Values:
         self.Nq0_SPS_extr = self.Nb0_SPS_extr*self.Q0_SPS
         self.gamma0_SPS_inj = (self.m0_GeV + self.E_kin_per_A_SPS_inj * self.A0)/self.m0_GeV
         self.gamma0_SPS_extr = (self.m0_GeV + self.E_kin_per_A_SPS_extr * self.A0)/self.m0_GeV
+

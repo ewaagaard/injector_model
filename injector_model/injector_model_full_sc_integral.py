@@ -377,7 +377,7 @@ class InjectorChain_v2:
         ionsPerBunchExtracted_PS = ionsPerBunchPS * Reference_Values.PS_transmission / self.PS_splitting # maximum intensity without SC
         
         # Calculate ion transmission for SPS 
-        ionsPerBunchSPSinj = ionsPerBunchExtracted_PS * (Reference_Values.PS_SPS_transmission_efficiency if self.Z == self.Q_SPS or self.LEIR_PS_strip else Reference_Values.PS_SPS_stripping_efficiency)
+        ionsPerBunchSPSinj = ionsPerBunchExtracted_PS * (Reference_Values.PS_SPS_transmission_efficiency if self.LEIR_PS_strip else Reference_Values.PS_SPS_stripping_efficiency)
         spaceChargeLimitSPS, dQx0_SPS, dQy0_SPS = self.SPS_SC_limit(Nb_max=ionsPerBunchSPSinj)
         SPS_space_charge_limit_hit = True if ionsPerBunchSPSinj > spaceChargeLimitSPS else False
         ionsPerBunchLHC = min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * Reference_Values.SPS_transmission * Reference_Values.SPS_slipstacking_transmission
@@ -407,7 +407,7 @@ class InjectorChain_v2:
             "PS_maxIntensity": ionsPerBunchInjectedPS,
             "PS_ionsExtractedPerBunch":  ionsPerBunchExtracted_PS,
             "SPS_maxIntensity": ionsPerBunchSPSinj,
-            "SPS_spaceChargeLimit": spaceChargeLimitSPS,
+            "SPS_space_charge_limit": spaceChargeLimitSPS,
             "LHC_ionsPerBunch": ionsPerBunchLHC,
             "LHC_chargesPerBunch": ionsPerBunchLHC * self.Z,
             "LEIR_gamma_inj": self.LEIR_gamma_inj,
@@ -472,17 +472,18 @@ class InjectorChain_v2:
         
         # Save CSV file if desired 
         if save_csv:
-            float_columns = df_all_ions.select_dtypes(include=['float']).columns
+            
+            # First save full CSV
             df_save = df_all_ions.copy()
+            df_save0 = df_save.T
+            df_save0.to_csv("output_csv/{}.csv".format(output_name))
+            
+            # Then save copy in exponential form with decimal number for paper - only some columns
+            float_columns = df_all_ions.select_dtypes(include=['float']).columns
             for col in float_columns:
                 df_save[col] = df_save[col].apply(lambda x: '{:.1e}'.format(x))
-
-            # Also make simple output in single-decimal exponential_notation
             df_SC_and_max_intensity = df_save[['LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity', 'PS_space_charge_limit', 
-                        'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
-            # Save results
-            df_save = df_save.T
-            df_save.to_csv("output_csv/{}.csv".format(output_name))
+                        'SPS_maxIntensity', 'SPS_space_charge_limit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
             df_SC_and_max_intensity.to_csv("output_csv/{}_for_paper.csv".format(output_name), index=True)
             
         return df_all_ions

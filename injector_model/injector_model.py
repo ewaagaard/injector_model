@@ -517,7 +517,7 @@ class InjectorChain:
             "PS_maxIntensity": ionsPerBunchInjectedPS,
             "PS_ionsExtractedPerBunch":  ionsPerBunchExtracted_PS,
             "SPS_maxIntensity": ionsPerBunchSPSinj,
-            "SPS_spaceChargeLimit": spaceChargeLimitSPS,
+            "SPS_space_charge_limit": spaceChargeLimitSPS,
             "LHC_ionsPerBunch": ionsPerBunchLHC,
             "LHC_chargesPerBunch": ionsPerBunchLHC * self.Z,
             "LEIR_gamma_inj": self.gamma_LEIR_inj,
