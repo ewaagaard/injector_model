@@ -20,7 +20,7 @@ class BeamParams_SPS:
     eyn : float = 0.9e-6
     sigma_z : float = 0.225 #previously 0.23
     delta : float = 1e-3
-    sigma_delta : float = 5e-4
+    sigma_delta : float = 5e-4  # from Momentum_Spread class
 
 @dataclass
 class BeamParams_PS:
@@ -31,7 +31,7 @@ class BeamParams_PS:
     sigma_z : float = 5.0 # measured in 2023 at injection for LHC Pb beams
     delta : float = 0.63e-3
     Nb_isabelle : float = 8.1e8
-    # add sigma_delta
+    sigma_delta : float = 6e-4  # from Momentum_Spread class
 
 @dataclass
 class BeamParams_LEIR:
@@ -42,7 +42,7 @@ class BeamParams_LEIR:
     sigma_z : float = 8.0 # Isabelle had 4.256 m before, but seems to short
     delta: float = 1.18e-3
     Nb_isabelle : float = 1e9
-    # add sigma_delta
+    sigma_delta : float = 2.4e-3  # from Momentum_Spread class
 
 @dataclass
 class Reference_Values:
