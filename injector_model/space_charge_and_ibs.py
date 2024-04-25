@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from xibs.inputs import BeamParameters, OpticsParameters
 from xibs.kicks import KineticKickIBS
 from xibs.analytical import NagaitsevIBS
+from .parameters_and_helpers import Reference_Values, BeamParams_LEIR, BeamParams_PS, BeamParams_SPS
 
 class SC_Tune_Shifts:
     """
@@ -198,8 +199,10 @@ class IBS_Growth_Rates:
     """
     Class to calculate IBS growth rates for a given lattice for given lattice and beam parameters
     """
-    @staticmethod
-    def get_growth_rates(line, beamParams, also_calculate_kinetic=False, num_part=10_000):
+    def __init__(self) -> None:
+        pass
+
+    def get_growth_rates(self, line, beamParams, also_calculate_kinetic=False, num_part=10_000):
         """
         Calculate analytical Nagaitsev IBS growth rates and kinetic growth rates
         from line and beam parameters 
@@ -252,3 +255,5 @@ class IBS_Growth_Rates:
             return growth_rates, kinetic_kick_coefficients
         else:       
             return growth_rates
+
+        

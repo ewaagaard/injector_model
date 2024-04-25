@@ -20,7 +20,7 @@ class BeamParams_SPS:
     eyn : float = 0.9e-6
     sigma_z : float = 0.225 #previously 0.23
     delta : float = 1e-3
-    # add sigma_delta - needed for IBS
+    sigma_delta : float = 5e-4
 
 @dataclass
 class BeamParams_PS:
