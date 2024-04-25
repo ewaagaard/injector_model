@@ -15,8 +15,8 @@ data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
 @dataclass
 class BeamParams_SPS:
     """Data Container for SPS Pb default beam parameters"""
-    Nb : float = 3.5645e8
-    exn : float =  1.3e-6 #1.1e-6 # previously 1.3e-6
+    Nb : float = 3.5e8
+    exn : float =  1.3e-6 #1.1e-6 measured in 2023, but for smaller Nb and then larger emittance blow-up
     eyn : float = 0.9e-6
     sigma_z : float = 0.225 #previously 0.23
     delta : float = 1e-3
@@ -25,10 +25,10 @@ class BeamParams_SPS:
 @dataclass
 class BeamParams_PS:
     """Data Container for PS Pb default beam parameters"""
-    Nb : float =  6e10/54
+    Nb : float =  7e8 # measured in 2023 at injection for LHC Pb beams
     exn : float = 0.8e-6
     eyn : float = 0.5e-6
-    sigma_z : float = 4.74
+    sigma_z : float = 5.0 # measured in 2023 at injection for LHC Pb beams
     delta : float = 0.63e-3
     Nb_isabelle : float = 8.1e8
     # add sigma_delta
@@ -36,10 +36,10 @@ class BeamParams_PS:
 @dataclass
 class BeamParams_LEIR:
     """Data Container for LEIR Pb default beam parameters"""
-    Nb : float = 10e10/54
+    Nb : float = 10e10/54  # also measured in 2023 at injection for LHC Pb beams
     exn : float = 0.4e-6
     eyn : float = 0.4e-6
-    sigma_z : float = 4.256
+    sigma_z : float = 8.0 # Isabelle had 4.256 m before, but seems to short
     delta: float = 1.18e-3
     Nb_isabelle : float = 1e9
     # add sigma_delta
@@ -85,7 +85,8 @@ class Reference_Values:
     PS_transmission = 0.9
     PS_SPS_transmission_efficiency = 1.0 # 0.9 is what we see today, but Roderik uses 1.0
     PS_SPS_stripping_efficiency = 0.9  # default value until we have other value
-    SPS_transmission = 0.62#0.79 # old value 0.62, but discussed with Reyes 2024-03-18 from last year's performance
+    SPS_transmission = 0.62 # # old value 0.62, when Nb=3.5e8 was used. Discussed with Reyes 2024-03-18 from last year's performance, then
+    # 0.79 reasonable, but then starting intensity Nb0 = 2.5e8 ions was used. For space charge limit, use Nb = 3.5e8 and 0.62 as transmission
     SPS_slipstacking_transmission = 1.0
             
     def __post_init__(self):
