@@ -83,7 +83,7 @@ class Reference_Values:
     LEIR_injection_efficiency = 0.5
     LEIR_transmission = 0.8
     PS_transmission = 0.9
-    PS_SPS_transmission_efficiency = 1.0 # 0.9 is what we see today, but Roderik uses 1.0
+    PS_SPS_transmission_efficiency = 1.0 # 0.9 is what we see today with stripping, but Roderik uses 1.0 as we assume losses from stripping
     PS_SPS_stripping_efficiency = 0.9  # default value until we have other value
     SPS_transmission = 0.62 # # old value 0.62, when Nb=3.5e8 was used. Discussed with Reyes 2024-03-18 from last year's performance, then
     # 0.79 reasonable, but then starting intensity Nb0 = 2.5e8 ions was used. For space charge limit, use Nb = 3.5e8 and 0.62 as transmission
