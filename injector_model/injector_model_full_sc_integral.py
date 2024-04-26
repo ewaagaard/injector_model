@@ -550,6 +550,24 @@ class InjectorChain_v2:
         return result
 
 
+    def calculate_IBS_growth_rates_all_ion_species(self, save_csv=True, output_name='output_IBS'):
+        """
+        Calculate analytical Nagaitsev IBS growth rates for all ions in LEIR, PS and SPS
+
+        Parameters
+        ----------
+        save_csv : bool
+            whether to save output in csv format
+        output_name : str
+            name of csv file to be generated
+
+        Returns
+        -------
+        None.
+
+        """
+
+
     def calculate_LHC_bunch_intensity_all_ion_species(self, save_csv=True, output_name='output'):
         """
         Estimate LHC bunch intensity for all ion species provided in table
