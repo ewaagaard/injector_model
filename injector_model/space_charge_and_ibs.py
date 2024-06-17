@@ -214,7 +214,7 @@ class IBS_Growth_Rates:
             xtrack line to use
         beamParams : dataclass
             beamParams class containing bunch intensity Nb, normalized emittances exn and eyn,
-            sigma_delta and bunch_length
+            sigma_delta and sigma_z (bunch_length)
         also_calculate_kinetic : bool
             whether to also calculate kinetic growth rates
         num_part : int
@@ -222,8 +222,8 @@ class IBS_Growth_Rates:
             
         Returns:
         --------
-        growth_rates : dataclass
-            containing Tx, Ty and Tz - growth rates in respective plane
+        growth_rates : np.ndarray
+            array containing Tx, Ty and Tz - growth rates in respective plane
         """
 
         beamparams = BeamParameters.from_line(line, n_part=beamParams.Nb)
@@ -231,11 +231,12 @@ class IBS_Growth_Rates:
 
         # Instantiate analytical Nagaitsev IBS class
         NIBS = NagaitsevIBS(beamparams, opticsparams)
-        growth_rates = NIBS.growth_rates(beamParams.exn, 
+        growth_rates_in_class = NIBS.growth_rates(beamParams.exn, 
                                          beamParams.eyn, 
                                          beamParams.sigma_delta, 
-                                         beamParams.bunch_length,
+                                         beamParams.sigma_z,
                                          normalized_emittances=True)
+        growth_rates = np.array([growth_rates_in_class.Tx, growth_rates_in_class.Ty, growth_rates_in_class.Tz])
         
         if also_calculate_kinetic:
             # Instantiate kinetic IBS class

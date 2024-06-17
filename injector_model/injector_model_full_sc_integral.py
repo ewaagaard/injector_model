@@ -549,24 +549,19 @@ class InjectorChain_v2:
     
         return result
 
-
-    def calculate_IBS_growth_rates_all_ion_species(self, save_csv=True, output_name='output_IBS'):
-        """
-        Calculate analytical Nagaitsev IBS growth rates for all ions in LEIR, PS and SPS
-
-        Parameters
-        ----------
-        save_csv : bool
-            whether to save output in csv format
-        output_name : str
-            name of csv file to be generated
-
-        Returns
-        -------
-        df_IBS : pd.DataFrame
-            dataframe containing all IBS growth rates
-        """
         
+    def calculate_IBS_growth_rates(self):
+        """
+        Calculate IBS growth rates for initiated ion species and beam parameters
+
+        Returns:
+        --------
+        self.ion_str : str
+            ion type in string format
+        growth_rates_dict : dict
+            IBS Nagaitsev growth rates dictionary
+        """
+
         # Instantiate IBS analytical model
         IBS = IBS_Growth_Rates()
         
@@ -584,9 +579,54 @@ class InjectorChain_v2:
         sps_line = self.line_SPS_Pb0.copy()
         sps_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_SPS, gamma0 = self.SPS_gamma_inj)
         growth_rates_sps = IBS.get_growth_rates(sps_line, BeamParams_SPS)
+        print('IBS growth rates calculated for {}'.format(self.ion_str))
+
+        growth_rates_dict = {'LEIR Tx': growth_rates_leir[0],
+                             'LEIR Ty': growth_rates_leir[1],
+                             'LEIR Tz': growth_rates_leir[2],
+                             'PS Tx': growth_rates_ps[0],
+                             'PS Ty': growth_rates_ps[1],
+                             'PS Tz': growth_rates_ps[2],
+                             'SPS Tx': growth_rates_sps[0],
+                             'SPS Ty': growth_rates_sps[1], 
+                             'SPS Tz': growth_rates_sps[2]}
         
-        # Make pandas dataframe
-        
+        return self.ion_str, growth_rates_dict
+
+
+    def calculate_IBS_growth_rates_all_ion_species(self, save_csv=True, output_name='IBS_growth_rates.csv'):
+        """
+        Calculate analytical Nagaitsev IBS growth rates for all ions in LEIR, PS and SPS
+
+        Parameters
+        ----------
+        save_csv : bool
+            whether to save output in csv format, else return it
+        output_name : str
+            name of csv file to be generated
+
+        Returns
+        -------
+        df_IBS : pd.DataFrame
+            dataframe containing all IBS growth rates
+        """        
+        # Check that output directory exists
+        os.makedirs('output_csv', exist_ok=True)
+
+        # Iterate over all ions in data 
+        all_ion_IBS_dict = {}
+        for ion_type in self.full_ion_data.columns:
+            
+            # Initiate the correct ion and calculate growth rates
+            self.init_ion(ion_type)
+            ion_str, growth_rates_dict = self.calculate_IBS_growth_rates()
+            all_ion_IBS_dict[ion_str] = growth_rates_dict
+
+        df_IBS = pd.DataFrame(all_ion_IBS_dict)
+        if save_csv:
+            df_IBS.to_csv('output_csv/{}'.format(output_name))
+        else:
+            return df_IBS
 
 
     def calculate_LHC_bunch_intensity_all_ion_species(self, save_csv=True, output_name='output'):
