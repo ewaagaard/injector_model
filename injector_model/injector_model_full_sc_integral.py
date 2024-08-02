@@ -561,35 +561,31 @@ class InjectorChain_v2:
         growth_rates_dict : dict
             IBS Nagaitsev growth rates dictionary
         """
-
-        # Instantiate IBS analytical model
-        IBS = IBS_Growth_Rates()
-        
         # LEIR growth rates
         leir_line = self.line_LEIR_Pb0.copy()
         leir_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_LEIR, gamma0 = self.LEIR_gamma_inj)
-        growth_rates_leir = IBS.get_growth_rates(leir_line, BeamParams_LEIR)
+        growth_rates_leir = IBS_Growth_Rates.get_growth_rates(leir_line, BeamParams_LEIR)
         
         # PS growth rates
         ps_line = self.line_PS_Pb0.copy()
         ps_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_PS, gamma0 = self.PS_gamma_inj)
-        growth_rates_ps = IBS.get_growth_rates(ps_line, BeamParams_PS)
+        growth_rates_ps = IBS_Growth_Rates.get_growth_rates(ps_line, BeamParams_PS)
         
         # SPS growth rates
         sps_line = self.line_SPS_Pb0.copy()
         sps_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_SPS, gamma0 = self.SPS_gamma_inj)
-        growth_rates_sps = IBS.get_growth_rates(sps_line, BeamParams_SPS)
+        growth_rates_sps = IBS_Growth_Rates.get_growth_rates(sps_line, BeamParams_SPS)
         print('IBS growth rates calculated for {}'.format(self.ion_str))
 
-        growth_rates_dict = {'LEIR Tx': growth_rates_leir[0],
-                             'LEIR Ty': growth_rates_leir[1],
-                             'LEIR Tz': growth_rates_leir[2],
-                             'PS Tx': growth_rates_ps[0],
-                             'PS Ty': growth_rates_ps[1],
-                             'PS Tz': growth_rates_ps[2],
-                             'SPS Tx': growth_rates_sps[0],
-                             'SPS Ty': growth_rates_sps[1], 
-                             'SPS Tz': growth_rates_sps[2]}
+        growth_rates_dict = {'LEIR Tx': growth_rates_leir.Tx,
+                             'LEIR Ty': growth_rates_leir.Ty,
+                             'LEIR Tz': growth_rates_leir.Tz,
+                             'PS Tx': growth_rates_ps.Tx,
+                             'PS Ty': growth_rates_ps.Ty,
+                             'PS Tz': growth_rates_ps.Tz,
+                             'SPS Tx': growth_rates_sps.Tx,
+                             'SPS Ty': growth_rates_sps.Ty, 
+                             'SPS Tz': growth_rates_sps.Tz}
         
         return self.ion_str, growth_rates_dict
 

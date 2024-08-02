@@ -199,10 +199,9 @@ class IBS_Growth_Rates:
     """
     Class to calculate IBS growth rates for a given lattice for given lattice and beam parameters
     """
-    def __init__(self) -> None:
-        pass
 
-    def get_growth_rates(self, line, beamParams, also_calculate_kinetic=False, num_part=10_000):
+    @staticmethod
+    def get_growth_rates(line, beamParams):
         """
         Calculate analytical Nagaitsev IBS growth rates and kinetic growth rates
         from line and beam parameters 
@@ -215,46 +214,25 @@ class IBS_Growth_Rates:
         beamParams : dataclass
             beamParams class containing bunch intensity Nb, normalized emittances exn and eyn,
             sigma_delta and sigma_z (bunch_length)
-        also_calculate_kinetic : bool
-            whether to also calculate kinetic growth rates
-        num_part : int
-            number of macroparticles for xp.Part object for kinetic kick calculation
             
         Returns:
         --------
         growth_rates : np.ndarray
             array containing Tx, Ty and Tz - growth rates in respective plane
         """
+        twiss = line.twiss()
 
-        beamparams = BeamParameters.from_line(line, n_part=beamParams.Nb)
-        opticsparams = OpticsParameters.from_line(line)
+        growth_rates = twiss.get_ibs_growth_rates(
+            formalism="nagaitsev",
+            total_beam_intensity=beamParams.Nb,
+            nemitt_x=beamParams.exn,
+            nemitt_y=beamParams.eyn,
+            sigma_delta=beamParams.sigma_delta,
+            bunch_length=beamParams.sigma_z,
+            bunched=True,
+        )
 
-        # Instantiate analytical Nagaitsev IBS class
-        NIBS = NagaitsevIBS(beamparams, opticsparams)
-        growth_rates_in_class = NIBS.growth_rates(beamParams.exn, 
-                                         beamParams.eyn, 
-                                         beamParams.sigma_delta, 
-                                         beamParams.sigma_z,
-                                         normalized_emittances=True)
-        growth_rates = np.array([growth_rates_in_class.Tx, growth_rates_in_class.Ty, growth_rates_in_class.Tz])
-        
-        if also_calculate_kinetic:
-            # Instantiate kinetic IBS class
-            IBS = KineticKickIBS(beamparams, opticsparams)
+        return growth_rates
 
-            # Generate Gaussian particle object 
-            particles = xp.generate_matched_gaussian_bunch(
-                num_particles=num_part, 
-                total_intensity_particles=beamParams.Nb,
-                nemitt_x=beamParams.exn, 
-                nemitt_y=beamParams.eyn, 
-                sigma_z= beamParams.sigma_z,
-                particle_ref=line.particle_ref, 
-                line=line)
-            kinetic_kick_coefficients = IBS.compute_kick_coefficients(particles)
-
-            return growth_rates, kinetic_kick_coefficients
-        else:       
-            return growth_rates
 
         
