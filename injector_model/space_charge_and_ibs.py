@@ -7,10 +7,7 @@ import xtrack as xt
 import pandas as pd
 from dataclasses import dataclass
 
-# Import xibs for IBS growth rate calculations
-from xibs.inputs import BeamParameters, OpticsParameters
-from xibs.kicks import KineticKickIBS
-from xibs.analytical import NagaitsevIBS
+# Beam parameters
 from .parameters_and_helpers import Reference_Values, BeamParams_LEIR, BeamParams_PS, BeamParams_SPS
 
 class SC_Tune_Shifts:
