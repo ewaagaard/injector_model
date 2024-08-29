@@ -1,14 +1,15 @@
 """
 Test calculating propagated beam intensity with the full space charge integral
 """
-from injector_model import InjectorChain, InjectorChain_v2
+from injector_model import InjectorChain
+from injector_model import InjectorChain_v0
 
 # Instantiate injector chain version 2 and calculate LHC bunch intensity for all ions
-injector_chain = InjectorChain_v2(nPulsesLEIR=7)  # 7 OR DEFAULT NUMBER?
+injector_chain = InjectorChain(nPulsesLEIR=7)  # 7 OR DEFAULT NUMBER?
 df = injector_chain.calculate_LHC_bunch_intensity_all_ion_species()
 
 # Run same calculation for old injector chain, and observe difference
-injector_chain_old = InjectorChain(nPulsesLEIR=7, use_gammas_ref=True) 
+injector_chain_old = InjectorChain_v0(nPulsesLEIR=7, use_gammas_ref=True) 
 df2 = injector_chain_old.calculate_LHC_bunch_intensity_all_ion_species()
 df2['LEIR SC limit ratio new vs old'] = df['LEIR_space_charge_limit'] / df2['LEIR_space_charge_limit']
 df2['PS SC limit ratio new vs old'] = df['PS_space_charge_limit'] / df2['PS_space_charge_limit']
