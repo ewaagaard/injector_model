@@ -4,7 +4,6 @@ Brho data and ion mass data
 - 
 - considers if we strip between PS-SPS (as of today) or between LEIR-PS 
 """
-
 import numpy as np
 from scipy import constants
 

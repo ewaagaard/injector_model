@@ -3,7 +3,7 @@ Test class to compare simplified space charge scaling factor in old injector mod
 vs new full SC lattice integral
 
 """
-from injector_model import InjectorChain_full_SC
+from injector_model import InjectorChain_v2
 import pandas as pd
 import numpy as np
 
@@ -20,8 +20,8 @@ class TestClass_old_vs_new_SC:
     def test_SC_scaling_factor_O(self):
     
         # Instantiate new model with full lattice integrals 
-        inj = InjectorChain_full_SC('Xe')
-        inj.simulate_injection()
+        inj = InjectorChain_v2('O')
+        #inj.simulate_injection()
 
         ###################### LEIR ######################
         # Calculate for Pb

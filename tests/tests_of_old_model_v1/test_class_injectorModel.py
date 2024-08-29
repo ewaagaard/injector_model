@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-General test class for Injector Class to check
+General test class for old model v1 Injector Class to check
 - incoming bunch intensity to the LHC 
 """
 from injector_model import InjectorChain
 import pandas as pd
 import numpy as np
+from pathlib import Path
 
 # Import data - old version that Roderik used with wrong Kr22+ charge state
-ion_data = pd.read_csv("../data/Ion_species_old_currents.csv", header=0, index_col=0).T
+data_folder = Path(__file__).resolve().parent.joinpath('../../data').absolute()
+ion_data = pd.read_csv("{}/Ion_species_old_currents.csv".format(data_folder), header=0, index_col=0).T
 ion_type = 'Pb'
 
 # Load reference values from Roderik Bruce's Mathematica notebook output (2021)
-Roderik_LHC_charges_per_bunch = pd.read_csv('../data/test_and_benchmark_data/Roderik_2021_LHC_charges_per_bunch_output.csv', index_col=0)
+Roderik_LHC_charges_per_bunch = pd.read_csv('{}/test_and_benchmark_data/Roderik_2021_LHC_charges_per_bunch_output.csv'.format(data_folder), 
+                                            index_col=0)
 ref_val = Roderik_LHC_charges_per_bunch.sort_values('Z')
 
 
