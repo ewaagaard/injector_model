@@ -1,8 +1,7 @@
 """
 Test calculating propagated beam intensity with the full space charge integral
 """
-from injector_model import InjectorChain
-from injector_model import InjectorChain_v0
+from injector_model import InjectorChain, InjectorChain_v0
 
 # Instantiate injector chain version 2 and calculate LHC bunch intensity for all ions
 injector_chain = InjectorChain(nPulsesLEIR=7)  # 7 OR DEFAULT NUMBER?
