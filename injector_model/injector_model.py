@@ -443,8 +443,12 @@ class InjectorChain:
                               
         # Calculate number of bunches to inject if we consider electron cooling
         if self.account_for_LEIR_ecooling:
-            num_injections_LEIR_with_ecooling = math.ceil(Reference_Values.max_injections_into_LEIR / self.relative_ecooling_time_leir)
-            nPulsesLEIR = np.min([num_injections_LEIR_with_ecooling, nPulsesLEIR_default])
+            num_injections_LEIR_with_ecooling = math.floor(Reference_Values.max_injections_into_LEIR / self.relative_ecooling_time_leir)
+            if num_injections_LEIR_with_ecooling > 1:
+                nPulsesLEIR = np.min([num_injections_LEIR_with_ecooling, nPulsesLEIR_default])
+            else:
+                nPulsesLEIR = 1
+            print('Number of LEIR inejctions considering e-cooling: {}'.format(nPulsesLEIR))
         else:
             nPulsesLEIR = nPulsesLEIR_default
         
