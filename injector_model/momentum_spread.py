@@ -3,14 +3,14 @@ Container for class to calculate momentum spread
 """
 import numpy as np
 import xpart as xp
-from .injector_model_full_sc_integral import InjectorChain_v2
+from .injector_model import InjectorChain
 from .parameters_and_helpers import BeamParams_LEIR, BeamParams_PS, BeamParams_SPS
 
-class Momentum_Spread(InjectorChain_v2):
+class Momentum_Spread(InjectorChain):
     """"Beam parameter class to calculate typical momentum spread values"""
 
     def __init__(self):
-        InjectorChain_v2.__init__(self)
+        InjectorChain.__init__(self)
 
     def calculate_sigma_delta_LEIR_for_all_ions(self, num_part=5000)->None:
         """Find momentum spread for all ions in LEIR"""

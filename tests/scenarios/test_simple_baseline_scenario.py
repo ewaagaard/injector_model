@@ -1,10 +1,10 @@
 """
 Test baseline scenario of new model with full SC lattice integral 
 """
-from injector_model import InjectorChain_v2
+from injector_model import InjectorChain
 
 # Instantiate injector chain version 2 and calculate LHC bunch intensity for all ions
-injector_chain = InjectorChain_v2() 
+injector_chain = InjectorChain() 
 df = injector_chain.calculate_LHC_bunch_intensity_all_ion_species()
 
 # Then try assuming 7 injections in LEIR

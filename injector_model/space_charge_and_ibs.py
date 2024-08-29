@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from xibs.inputs import BeamParameters, OpticsParameters
 from xibs.kicks import KineticKickIBS
 from xibs.analytical import NagaitsevIBS
-from .parameters_and_helpers import Reference_Values, BeamParams_LEIR, BeamParams_PS, BeamParams_SPS
+#from .parameters_and_helpers import Reference_Values, BeamParams_LEIR, BeamParams_PS, BeamParams_SPS
 
 class SC_Tune_Shifts:
     """
