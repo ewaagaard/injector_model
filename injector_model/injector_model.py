@@ -445,14 +445,14 @@ class InjectorChain:
         if self.account_for_LEIR_ecooling:
             num_injections_LEIR_with_ecooling = math.floor(Reference_Values.max_injections_into_LEIR / self.relative_ecooling_time_leir)
             if num_injections_LEIR_with_ecooling > 1:
-                nPulsesLEIR = np.min([num_injections_LEIR_with_ecooling, nPulsesLEIR_default])
+                self.nPulsesLEIR = np.min([num_injections_LEIR_with_ecooling, nPulsesLEIR_default])
             else:
-                nPulsesLEIR = 1
-            print('Number of LEIR inejctions considering e-cooling: {}'.format(nPulsesLEIR))
+                self.nPulsesLEIR = 1
+            print('Number of LEIR inejctions considering e-cooling: {}'.format(self.nPulsesLEIR))
         else:
-            nPulsesLEIR = nPulsesLEIR_default
+            self.nPulsesLEIR = nPulsesLEIR_default
         
-        totalIntLEIR = ionsPerPulseLinac3 * nPulsesLEIR * Reference_Values.LEIR_injection_efficiency
+        totalIntLEIR = ionsPerPulseLinac3 * self.nPulsesLEIR * Reference_Values.LEIR_injection_efficiency
         ionsPerBunchExtractedLEIR = Reference_Values.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
         LEIR_space_charge_limit_hit = True if totalIntLEIR > spaceChargeLimitLEIR else False 
 
@@ -497,7 +497,7 @@ class InjectorChain:
             "Q_SPS": int(self.Q_SPS),
             "Linac3_current [A]": self.linac3_current,
             "Linac3_pulse_length [s]": self.linac3_pulseLength, 
-            "LEIR_numberofPulses": nPulsesLEIR,
+            "LEIR_numberofPulses": self.nPulsesLEIR,
             "LEIR_injection_efficiency": Reference_Values.LEIR_injection_efficiency, 
             "LEIR_splitting": self.LEIR_bunches,
             "LEIR_transmission": Reference_Values.LEIR_transmission, 
