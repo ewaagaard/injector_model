@@ -18,7 +18,7 @@ os.makedirs('output/output_for_paper', exist_ok=True)
 
 
 # Compare to reference intensities - WG5 and Roderik
-ref_Table_SPS = pd.read_csv('{}/test_and_benchmark_data/SPS_final_intensities_WG5_and_Hannes.csv'.format(data_folder), delimiter=';', index_col=0)
+ref_Table_SPS = pd.read_csv('{}/test_and_benchmark_data/SPS_final_intensities_WG5_and_Hannes.csv'.format(data_folder), index_col=0)
 Roderik_LHC_charges_per_bunch = pd.read_csv('{}/test_and_benchmark_data/Roderik_2021_LHC_charges_per_bunch_output.csv'.format(data_folder), index_col=0)
 ref_val = Roderik_LHC_charges_per_bunch.sort_values('Z')
 
@@ -202,11 +202,3 @@ if __name__ == '__main__':
                                             output_extra_str = '', # to identify case
                                             return_dataframes=True
                                             )
-    print("\nDefault case 1: baseline agrees with Roderik for all ions:")
-    print(np.isclose(ref_val['Baseline'].values, df['LHC_chargesPerBunch'].values, rtol=1e-2))
-    print("\nDefault case 2: no PS split agrees with Roderik for all ions:")
-    print(np.isclose(ref_val['No_PS_splitting'].values, df2['LHC_chargesPerBunch'].values, rtol=1e-2)) 
-    print("\nDefault case 3: LEIR-PS strip agrees with Roderik for all ions:")
-    print(np.isclose(ref_val['LEIR_PS_strip'].values, df3['LHC_chargesPerBunch'].values, rtol=1e-2))
-    print("\nDefault case 4: LEIR-PS strip and no PS split agrees with Roderik for all ions:")
-    print(np.isclose(ref_val['No_PS_split_and_LEIR_PS_strip'].values, df4['LHC_chargesPerBunch'].values, rtol=1e-2))
