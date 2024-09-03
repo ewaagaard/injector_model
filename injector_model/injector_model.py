@@ -575,6 +575,8 @@ class InjectorChain:
         leir_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_LEIR, gamma0 = self.LEIR_gamma_inj)
         beamParams_LEIR = BeamParams_LEIR()
         beamParams_LEIR.Nb = Nb_LEIR
+        if self.ion_type == 'Ca':
+            beamParams_LEIR.sigma_delta = beamParams_LEIR.sigma_delta_Ca
         growth_rates_leir = IBS.get_growth_rates(leir_line, beamParams_LEIR)
         
         # PS growth rates
@@ -582,6 +584,9 @@ class InjectorChain:
         ps_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_PS, gamma0 = self.PS_gamma_inj)
         beamParams_PS = BeamParams_PS()
         beamParams_PS.Nb = Nb_PS
+        if self.ion_type == 'Ca':
+            beamParams_PS.sigma_delta = beamParams_PS.sigma_delta_Ca
+            print('Updating sigma delta for Ca special case!')
         growth_rates_ps = IBS.get_growth_rates(ps_line, beamParams_PS)
         
         # SPS growth rates
@@ -589,8 +594,16 @@ class InjectorChain:
         sps_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_SPS, gamma0 = self.SPS_gamma_inj)
         beamParams_SPS = BeamParams_SPS()
         beamParams_SPS.Nb = Nb_SPS
+        if self.ion_type == 'Ca':
+            beamParams_SPS.sigma_delta = beamParams_SPS.sigma_delta_Ca
         growth_rates_sps = IBS.get_growth_rates(sps_line, beamParams_SPS)
+        
+        
+        print('\nSPS beam params for {}: {}'.format(self.ion_type, beamParams_SPS))
         print('IBS growth rates calculated for {}'.format(self.ion_str))
+        print(growth_rates_sps)
+        print('Particle:')
+        sps_line.particle_ref.show()
 
         growth_rates_dict = {'LEIR Tx': growth_rates_leir[0],
                              'LEIR Ty': growth_rates_leir[1],

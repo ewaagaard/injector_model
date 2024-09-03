@@ -21,6 +21,7 @@ class BeamParams_SPS:
     sigma_z : float = 0.225 #previously 0.23
     delta : float = 1e-3
     sigma_delta : float = 5e-4  # from Momentum_Spread class
+    sigma_delta_Ca : float = 7.4e-4 # Ca has higher energy inj. energy, probably why its momentum spread is different
 
 @dataclass
 class BeamParams_PS:
@@ -32,6 +33,7 @@ class BeamParams_PS:
     delta : float = 0.63e-3
     Nb_isabelle : float = 8.1e8
     sigma_delta : float = 6e-4  # from Momentum_Spread class
+    sigma_delta_Ca : float = 5e-4 # Ca has higher energy inj. energy, probably why its momentum spread is different
 
 @dataclass
 class BeamParams_LEIR:
@@ -43,6 +45,7 @@ class BeamParams_LEIR:
     delta: float = 1.18e-3
     Nb_isabelle : float = 1e9
     sigma_delta : float = 2.4e-3  # from Momentum_Spread class
+    sigma_delta_Ca : float = 3e-3 # Ca has higher energy inj. energy, probably why its momentum spread is different
 
 @dataclass
 class Reference_Values:
