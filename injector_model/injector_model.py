@@ -550,9 +550,14 @@ class InjectorChain:
         return result
 
         
-    def calculate_IBS_growth_rates(self):
+    def calculate_IBS_growth_rates(self, Nb_LEIR, Nb_PS, Nb_SPS):
         """
         Calculate IBS growth rates for initiated ion species and beam parameters
+
+        Parameters:
+        -----------
+        Nb : float
+            bunch intensity
 
         Returns:
         --------
@@ -568,17 +573,23 @@ class InjectorChain:
         # LEIR growth rates
         leir_line = self.line_LEIR_Pb0.copy()
         leir_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_LEIR, gamma0 = self.LEIR_gamma_inj)
-        growth_rates_leir = IBS.get_growth_rates(leir_line, BeamParams_LEIR)
+        beamParams_LEIR = BeamParams_LEIR()
+        beamParams_LEIR.Nb = Nb_LEIR
+        growth_rates_leir = IBS.get_growth_rates(leir_line, beamParams_LEIR)
         
         # PS growth rates
         ps_line = self.line_PS_Pb0.copy()
         ps_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_PS, gamma0 = self.PS_gamma_inj)
-        growth_rates_ps = IBS.get_growth_rates(ps_line, BeamParams_PS)
+        beamParams_PS = BeamParams_PS()
+        beamParams_PS.Nb = Nb_PS
+        growth_rates_ps = IBS.get_growth_rates(ps_line, beamParams_PS)
         
         # SPS growth rates
         sps_line = self.line_SPS_Pb0.copy()
         sps_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_SPS, gamma0 = self.SPS_gamma_inj)
-        growth_rates_sps = IBS.get_growth_rates(sps_line, BeamParams_SPS)
+        beamParams_SPS = BeamParams_SPS()
+        beamParams_SPS.Nb = Nb_SPS
+        growth_rates_sps = IBS.get_growth_rates(sps_line, beamParams_SPS)
         print('IBS growth rates calculated for {}'.format(self.ion_str))
 
         growth_rates_dict = {'LEIR Tx': growth_rates_leir[0],
@@ -594,14 +605,12 @@ class InjectorChain:
         return self.ion_str, growth_rates_dict
 
 
-    def calculate_IBS_growth_rates_all_ion_species(self, save_csv=True, output_name='IBS_growth_rates.csv'):
+    def calculate_IBS_growth_rates_all_ion_species(self, output_name='IBS_growth_rates.csv'):
         """
         Calculate analytical Nagaitsev IBS growth rates for all ions in LEIR, PS and SPS
 
         Parameters
         ----------
-        save_csv : bool
-            whether to save output in csv format, else return it
         output_name : str
             name of csv file to be generated
 
@@ -619,14 +628,20 @@ class InjectorChain:
             
             # Initiate the correct ion and calculate growth rates
             self.init_ion(ion_type)
-            ion_str, growth_rates_dict = self.calculate_IBS_growth_rates()
+            
+            # calculate propagated bunch intensity
+            result = self.calculate_LHC_bunch_intensity() 
+            Nb_LEIR = result['LEIR_space_charge_limit']
+            Nb_PS = result['PS_space_charge_limit']
+            Nb_SPS = result['SPS_space_charge_limit']
+            
+            ion_str, growth_rates_dict = self.calculate_IBS_growth_rates(Nb_LEIR, Nb_PS, Nb_SPS)
             all_ion_IBS_dict[ion_str] = growth_rates_dict
 
         df_IBS = pd.DataFrame(all_ion_IBS_dict)
-        if save_csv:
-            df_IBS.to_csv('output_csv/{}'.format(output_name))
-        else:
-            return df_IBS
+        df_IBS.to_csv('output_csv/{}'.format(output_name))
+
+        return df_IBS
 
 
     def calculate_LHC_bunch_intensity_all_ion_species(self, save_csv=True, output_name='output'):

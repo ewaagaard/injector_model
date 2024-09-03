@@ -82,7 +82,7 @@ class Reference_Values:
 
     # General rules - stripping and transmission
     LEIR_injection_efficiency = 0.5
-    LEIR_transmission = 0.8
+    LEIR_transmission = 0.9
     PS_transmission = 0.9
     PS_SPS_transmission_efficiency = 1.0 # 0.9 is what we see today with stripping, but Roderik uses 1.0 as we assume losses from stripping
     PS_SPS_stripping_efficiency = 0.9  # default value until we have other value
