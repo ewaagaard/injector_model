@@ -2,7 +2,9 @@
 Container for helper functions and parameter data classes
 
 Parameters based on operational Pb values
-For references, `Nb_isabelle` originate from: https://cds.cern.ch/record/2749453 - Bartosik & John, 2021
+Reference values
+- Pb ions per bunch from 2016 HL-LHC LIU targets: https://edms.cern.ch/ui/file/1420286/2/LIU-Ions_beam_parameter_table.pdf
+- emittances and dp/p from https://cds.cern.ch/record/2749453 - Bartosik & John, 2021
 """
 import numpy as np
 import xpart as xp
@@ -15,10 +17,10 @@ data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
 @dataclass
 class BeamParams_SPS:
     """Data Container for SPS Pb default beam parameters"""
-    Nb : float = 3.5e8
+    Nb : float = 3.5e8 # LIU 2016 values
     exn : float =  1.3e-6 #1.1e-6 measured in 2023, but for smaller Nb and then larger emittance blow-up
     eyn : float = 0.9e-6
-    sigma_z : float = 0.225 #previously 0.23
+    sigma_z : float = 0.23
     delta : float = 1e-3
     sigma_delta : float = 5e-4  # from Momentum_Spread class
     sigma_delta_Ca : float = 7.4e-4 # Ca has higher energy inj. energy, probably why its momentum spread is different
@@ -26,19 +28,18 @@ class BeamParams_SPS:
 @dataclass
 class BeamParams_PS:
     """Data Container for PS Pb default beam parameters"""
-    Nb : float =  8e8 # measured in 2023 at injection for LHC Pb beams
+    Nb : float =  8.1e8 # LIU 2016 values
     exn : float = 0.8e-6
     eyn : float = 0.5e-6
-    sigma_z : float = 5.0 # measured in 2023 at injection for LHC Pb beams
+    sigma_z : float = 4.74 # around 5.0 measured in 2023 at injection for LHC Pb beams
     delta : float = 0.63e-3
-    Nb_isabelle : float = 8.1e8
     sigma_delta : float = 6e-4  # from Momentum_Spread class
     sigma_delta_Ca : float = 5e-4 # Ca has higher energy inj. energy, probably why its momentum spread is different
 
 @dataclass
 class BeamParams_LEIR:
     """Data Container for LEIR Pb default beam parameters"""
-    Nb : float = 10e10/54  # also measured in 2023 at injection for LHC Pb beams
+    Nb : float = 19.1e8  # LIU 2016, corresponds to 10.3e10 charges
     exn : float = 0.4e-6
     eyn : float = 0.4e-6
     sigma_z : float = 8.0 # Isabelle had 4.256 m before, but seems to short
@@ -85,11 +86,11 @@ class Reference_Values:
 
     # General rules - stripping and transmission
     LEIR_injection_efficiency = 0.5
-    LEIR_transmission = 0.9
-    PS_transmission = 0.9
-    PS_SPS_transmission_efficiency = 1.0 # 0.9 is what we see today with stripping, but Roderik uses 1.0 as we assume losses from stripping
+    LEIR_transmission = 0.85
+    PS_transmission = 0.95
+    PS_SPS_transmission_efficiency = 1.0 # 0.9 is what we see today with stripping, but Roderik uses 1.0 if we strip LEIR-PS
     PS_SPS_stripping_efficiency = 0.9  # default value until we have other value
-    SPS_transmission = 0.62 # # old value 0.62, when Nb=3.5e8 was used. Discussed with Reyes 2024-03-18 from last year's performance, then
+    SPS_transmission = 0.55 # # old value 0.62, when old PS values and not new LIU 2016 parameters used. Discussed with Reyes 2024-03-18 from last year's performance, then
     # 0.79 reasonable, but then starting intensity Nb0 = 2.5e8 ions was used. For space charge limit, use Nb = 3.5e8 and 0.62 as transmission
     SPS_slipstacking_transmission = 1.0
             
