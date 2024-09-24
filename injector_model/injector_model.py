@@ -132,13 +132,19 @@ class InjectorChain:
         print('Loaded all sequences.\n')
 
 
-    def init_ion(self, ion_type) -> None:
+    def init_ion(self, ion_type, ion_data_custom=None) -> None:
         """
         Initialize ion species for a given type 
         """
         self.ion_type = ion_type
         self.ion_str = ''.join(filter(str.isalpha, ion_type))
-        self.ion_data = self.full_ion_data[ion_type]
+
+        # Provide custom ion data if desired
+        if ion_data_custom is None:
+            self.ion_data = self.full_ion_data[ion_type]
+        else:
+            self.ion_data = ion_data_custom[ion_type]
+
         self.mass_GeV = self.ion_data['mass [GeV]']
         self.Z = self.ion_data['Z']
         self.A = self.ion_data['A']
