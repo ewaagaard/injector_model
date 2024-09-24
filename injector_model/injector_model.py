@@ -17,6 +17,7 @@ from collections import defaultdict
 from .parameters_and_helpers import Reference_Values, BeamParams_LEIR, BeamParams_PS, BeamParams_SPS
 from .sequence_makers import Sequences
 from .space_charge_and_ibs import SC_Tune_Shifts, IBS_Growth_Rates
+from .injection_energies import InjectionEnergies
 
 #### PLOT SETTINGS #######
 plt.rcParams.update(
@@ -134,7 +135,7 @@ class InjectorChain:
 
     def init_ion(self, ion_type, ion_data_custom=None) -> None:
         """
-        Initialize ion species for a given type 
+        Initialize ion species for a given type - can be a customized pd.Dataframe with ion_type already chosen
         """
         self.ion_type = ion_type
         self.ion_str = ''.join(filter(str.isalpha, ion_type))
@@ -143,7 +144,7 @@ class InjectorChain:
         if ion_data_custom is None:
             self.ion_data = self.full_ion_data[ion_type]
         else:
-            self.ion_data = ion_data_custom[ion_type]
+            self.ion_data = ion_data_custom
 
         self.mass_GeV = self.ion_data['mass [GeV]']
         self.Z = self.ion_data['Z']
@@ -184,7 +185,17 @@ class InjectorChain:
         
         # Load correct entry in ion energy table - key composed of lower charge state Q before stripping, then ion string, then mass number A
         key = str(int(self.Q_LEIR)) + self.ion_str + str(int(self.A))
-        ion_energy = self.ion_energy_data.loc[key]
+
+        # See if ion energy has been calculated, otherwise calculate it for this svenario
+        try:
+            ion_energy = self.ion_energy_data.loc[key]
+        except KeyError:
+            print('Calculating new injection energies...')
+            A, Q_low, Z = self.A, self.ion_data['Q before stripping'], self.Z
+            m_in_eV = self.ion_data['mass [GeV]']  * 1e9
+            m_ion_in_u = m_in_eV / constants.physical_constants['atomic mass unit-electron volt relationship'][0] 
+            inj_energies0 = InjectionEnergies(A, Q_low, m_ion_in_u, Z, LEIR_PS_strip=self.LEIR_PS_strip)
+            ion_energy = inj_energies0.return_all_gammas()
         
         # Load reference injection energies
         self.LEIR_gamma_inj = ion_energy['LEIR_gamma_inj']
@@ -193,7 +204,7 @@ class InjectorChain:
         self.PS_gamma_extr = ion_energy['PS_gamma_extr']
         self.SPS_gamma_inj = ion_energy['SPS_gamma_inj']
         self.SPS_gamma_extr = ion_energy['SPS_gamma_extr']
-        print('\nIon type {}: \nPS extr gamma: {:.3f}'.format(self.ion_type, self.PS_gamma_extr))
+        print('\nIon type {} with Q_PS = {}: \nPS extr gamma: {:.3f}'.format(self.ion_type, self.Q_PS, self.PS_gamma_extr))
 
 
     def beta(self, gamma):
