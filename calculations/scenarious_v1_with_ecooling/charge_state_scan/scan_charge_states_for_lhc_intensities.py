@@ -43,25 +43,25 @@ def calculate_LHC_intensities_all_scenarios_vary_charge_state(
     ecool_str = 'with_ecooling_limits' if account_for_LEIR_ecooling else ''
 
     ## CASE 1: BASELINE (default Pb production)
-    output_1 = '1_baseline{}'.format(output_extra_str)
+    output_1 = '1_baseline_{}'.format(output_extra_str)
     injector_chain1 = InjectorChain(PS_splitting = 2,
                                     account_for_LEIR_ecooling=account_for_LEIR_ecooling
                                     )
                                     
     ## 2: WITHOUT PS SPLITTING
-    output_2 ='2_no_PS_splitting{}'.format(output_extra_str)
+    output_2 ='2_no_PS_splitting_{}'.format(output_extra_str)
     injector_chain2 = InjectorChain(PS_splitting = 1,
                                     account_for_LEIR_ecooling=account_for_LEIR_ecooling
                                     )
     
     ## 3: WITH PS SPLITTING AND LEIR-PS STRIPPING
-    output_3 = '3_LEIR_PS_stripping{}'.format(output_extra_str)
+    output_3 = '3_LEIR_PS_stripping_{}'.format(output_extra_str)
     injector_chain3 = InjectorChain(PS_splitting = 2,
                                     account_for_LEIR_ecooling=account_for_LEIR_ecooling,
                                     LEIR_PS_strip=True)
     
     ## 4: WITH NO SPLITTING AND LEIR-PS STRIPPING
-    output_4 = '4_no_PS_splitting_and_LEIR_PS_stripping{}'.format(output_extra_str)
+    output_4 = '4_no_PS_splitting_and_LEIR_PS_stripping_{}'.format(output_extra_str)
     injector_chain4 = InjectorChain(PS_splitting = 1,
                                     account_for_LEIR_ecooling=account_for_LEIR_ecooling,
                                     LEIR_PS_strip=True
@@ -116,10 +116,10 @@ def calculate_LHC_intensities_all_scenarios_vary_charge_state(
     df3_all_LEIR_charge_states = pd.DataFrame(full_result_df3).set_index("Q_LEIR")
     df4_all_LEIR_charge_states = pd.DataFrame(full_result_df4).set_index("Q_LEIR")
 
-    df1_all_LEIR_charge_states.T.to_csv("output/charge_scan_results/{}_{}_{}_{}.csv".format(ion_type, output_1, ecool_str, output_extra_str))
-    df2_all_LEIR_charge_states.T.to_csv("output/charge_scan_results/{}_{}_{}_{}.csv".format(ion_type, output_2, ecool_str, output_extra_str))
-    df3_all_LEIR_charge_states.T.to_csv("output/charge_scan_results/{}_{}_{}_{}.csv".format(ion_type, output_3, ecool_str, output_extra_str))
-    df4_all_LEIR_charge_states.T.to_csv("output/charge_scan_results/{}_{}_{}_{}.csv".format(ion_type, output_4, ecool_str, output_extra_str))
+    df1_all_LEIR_charge_states.T.to_csv("output/charge_scan_results/{}_{}_{}.csv".format(ion_type, output_1, ecool_str))
+    df2_all_LEIR_charge_states.T.to_csv("output/charge_scan_results/{}_{}_{}.csv".format(ion_type, output_2, ecool_str))
+    df3_all_LEIR_charge_states.T.to_csv("output/charge_scan_results/{}_{}_{}.csv".format(ion_type, output_3, ecool_str))
+    df4_all_LEIR_charge_states.T.to_csv("output/charge_scan_results/{}_{}_{}.csv".format(ion_type, output_4, ecool_str))
 
 
 
