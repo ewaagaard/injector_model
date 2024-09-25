@@ -57,13 +57,18 @@ class InjectorChain:
         whether to factor electron cooling time in LEIR, which is longer for lighter ions
     LEIR_PS_strip : bool
         whether stripping foil should be placed between LEIR and PS. If "False", then default stripping between PS and SPS
+    PS_factor_SC : float
+        acceptance factor, number of times by which we accept the SC limit in PS to be exceeded compared to Pb. Relies on
+        assumption that we are not limited by space charge in PS today. For example, a PS_factor_SC = 1.5 will allow SC limit to
+        cause tune shifts 1.5 higher than today. np.inf removes space charge limit entirely
     """
     def __init__(self, ion_type='Pb', 
                  nPulsesLEIR = None,
                  LEIR_bunches = 2,
                  PS_splitting = 2,
                  account_for_LEIR_ecooling=False,
-                 LEIR_PS_strip=False
+                 LEIR_PS_strip=False,
+                 PS_factor_SC = 1.0
                  ):
         
         # Import reference data and initiate ion
@@ -80,6 +85,7 @@ class InjectorChain:
             self.nPulsesLEIR_default = nPulsesLEIR
         self.LEIR_bunches = LEIR_bunches
         self.PS_splitting = PS_splitting
+        self.PS_factor_SC = PS_factor_SC
 
 
     def load_Pb_lines(self) -> None:
@@ -490,8 +496,8 @@ class InjectorChain:
             self.PS_B_field_is_too_low = False
         
         # Select minimum between maxiumum possible injected intensity and PS space charge limit
-        ionsPerBunchPS = min(spaceChargeLimitPS, ionsPerBunchInjectedPS)
-        PS_space_charge_limit_hit = True if ionsPerBunchInjectedPS > spaceChargeLimitPS else False 
+        ionsPerBunchPS = min(self.PS_factor_SC * spaceChargeLimitPS, ionsPerBunchInjectedPS)
+        PS_space_charge_limit_hit = True if ionsPerBunchInjectedPS > self.PS_factor_SC * spaceChargeLimitPS else False 
         ionsPerBunchExtracted_PS = ionsPerBunchPS * Reference_Values.PS_transmission / self.PS_splitting # maximum intensity without SC
         
         # Calculate ion transmission for SPS 
@@ -553,7 +559,8 @@ class InjectorChain:
             "dQx PS tune shift with Nb_max": dQx_PS,
             "dQy PS tune shift with Nb_max": dQy_PS,
             "dQx SPS tune shift with Nb_max": dQx_SPS,
-            "dQy SPS tune shift with Nb_max": dQy_SPS
+            "dQy SPS tune shift with Nb_max": dQy_SPS,
+            "PS space charge acceptance factor": self.PS_factor_SC
         }
 
         # Add key of LEIR-PS stripping efficiency if this is done 
