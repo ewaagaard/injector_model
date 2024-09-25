@@ -497,7 +497,7 @@ class InjectorChain:
         
         # Select minimum between maxiumum possible injected intensity and PS space charge limit
         ionsPerBunchPS = min(self.PS_factor_SC * spaceChargeLimitPS, ionsPerBunchInjectedPS)
-        PS_space_charge_limit_hit = True if ionsPerBunchInjectedPS > self.PS_factor_SC * spaceChargeLimitPS else False 
+        PS_space_charge_limit_hit = True if ionsPerBunchInjectedPS > spaceChargeLimitPS else False # check if we are above SC tune shifts for Pb in PS today, without factor 
         ionsPerBunchExtracted_PS = ionsPerBunchPS * Reference_Values.PS_transmission / self.PS_splitting # maximum intensity without SC
         
         # Calculate ion transmission for SPS 
