@@ -1,8 +1,10 @@
 """
-Main script to calculate final nucleon intensity into the LHC with new injector model version
-Includes:
-- Full space charge limit
-- Electron cooling (set to True)
+Main script to calculate final nucleon intensity into the LHC scanning over charge states
+
+This scenario considers only specifically tested charge states for the unstripped species: He, Mg, Ar, O and Kr
+Kr is also tested for the stripped scenario: assume peak at Q = 29+ with 25 uA
+
+For Kr, In, Ca, Xe and Pb, use results from Baron's formula 
 """
 import matplotlib.pyplot as plt
 import pandas as pd 
@@ -17,11 +19,6 @@ data_folder = Path(__file__).resolve().parent.joinpath('../../../data').absolute
 os.makedirs('output/figures', exist_ok=True)
 os.makedirs('output/output_for_paper', exist_ok=True)
 os.makedirs('output/charge_scan_results', exist_ok=True)
-
-# Compare to reference intensities - WG5 and Roderik
-ref_Table_SPS = pd.read_csv('{}/test_and_benchmark_data/SPS_final_intensities_WG5_and_Hannes.csv'.format(data_folder), index_col=0)
-Roderik_LHC_charges_per_bunch = pd.read_csv('{}/test_and_benchmark_data/Roderik_2021_LHC_charges_per_bunch_output.csv'.format(data_folder), index_col=0)
-ref_val = Roderik_LHC_charges_per_bunch.sort_values('Z')
 
 # Load possible charge states and currents
 full_ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), header=0, index_col=0).T
@@ -130,7 +127,7 @@ for ion_type in full_ion_data.columns:
     if ion_type in ions_not_stripped:
         strip_state = 'unstripped_currents'
     
-        # Stripped ions after LINAC3 - define path and load LINAC3 current data
+        # Unstripped ions after LINAC3 - define path and load LINAC3 current data
         ion_path = '{}/charge_state_scan_currents/{}_{}.parquet'.format(data_folder, ion_type, strip_state)
         df = pd.read_parquet(ion_path)
         print('\nIon type: {}, UNSTRIPPED'.format(ion_type))
@@ -147,7 +144,7 @@ for ion_type in full_ion_data.columns:
     if ion_type not in ions_not_stripped or ion_type == 'Kr':
         strip_state = 'stripped_Barons_formula_currents'
     
-        # Same for unstripped ions after LINAC3
+        # Same for stripped ions after LINAC3
         ion_path = '{}/charge_state_scan_currents/{}_{}.parquet'.format(data_folder, ion_type, strip_state)
         df = pd.read_parquet(ion_path)
         print('\nIon type: {}, STRIPPED'.format(ion_type))
