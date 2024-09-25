@@ -208,6 +208,6 @@ if __name__ == '__main__':
     
     # First cases, following Roderik's methods: not considering space charge limits, 
     df, df2, df3, df4 = calculate_LHC_intensities_all_scenarios(
-                                            output_extra_str = '_no_PS_SC_limit', # to identify case
+                                            output_extra_str = '',
                                             return_dataframes=True
                                             )
