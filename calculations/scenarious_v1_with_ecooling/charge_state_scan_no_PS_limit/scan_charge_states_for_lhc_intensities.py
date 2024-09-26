@@ -81,7 +81,7 @@ def calculate_LHC_intensities_all_scenarios_vary_charge_state(
         Q = Q_dist.iloc[i]
 
         # Update Linac3/LEIR charge state and Linac3 current in custom ion data
-        custom_ion_data = injector_chain1.full_ion_data[ion_type] # copy entry
+        custom_ion_data = injector_chain1.full_ion_data[ion_type].copy() # copy entry
         custom_ion_data['Q before stripping'] = Q
         custom_ion_data['Linac3 current [uA]'] = current
         print('Q strip = {} has Linac3 current: {} uA'.format(Q, current))

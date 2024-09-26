@@ -66,7 +66,7 @@ class InjectorChain:
                  nPulsesLEIR = None,
                  LEIR_bunches = 2,
                  PS_splitting = 2,
-                 account_for_LEIR_ecooling=False,
+                 account_for_LEIR_ecooling=True,
                  LEIR_PS_strip=False,
                  PS_factor_SC = 1.0
                  ):
@@ -151,6 +151,7 @@ class InjectorChain:
             self.ion_data = self.full_ion_data[ion_type].copy()
         else:
             self.ion_data = ion_data_custom
+            print('Setting custom ion data')
 
         self.mass_GeV = self.ion_data['mass [GeV]']
         self.Z = self.ion_data['Z']
@@ -183,7 +184,7 @@ class InjectorChain:
             A = self.ion_data['A']
             
             # If new charge state, determine which factor by which to change the ecooling time
-            if Q == Q_default:
+            if Q == Q_default and A == A_default:
                 ecooling_factor = 1.0
             else:
                 ecooling_factor = (Q_default/Q)**2 * (A/A_default)
