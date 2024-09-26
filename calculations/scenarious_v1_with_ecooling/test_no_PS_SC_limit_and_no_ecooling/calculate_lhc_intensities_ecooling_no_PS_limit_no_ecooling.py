@@ -12,7 +12,7 @@ from pathlib import Path
 import os
 
 # Load ion data and initialize for test for bunch intensities 
-data_folder = Path(__file__).resolve().parent.joinpath('../../../../data').absolute()
+data_folder = Path(__file__).resolve().parent.joinpath('../../../data').absolute()
 os.makedirs('output/figures', exist_ok=True)
 os.makedirs('output/output_for_paper', exist_ok=True)
 

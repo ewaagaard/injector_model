@@ -7,6 +7,7 @@ import json
 import numpy as np
 from pathlib import Path
 import matplotlib.ticker as mticker
+import injector_model
 
 # Which ion scenarios we consider - also whether to include electron cooling or not
 account_for_LEIR_ecooling = True
@@ -53,8 +54,8 @@ def read_isotope_scan_results(ion_type, output_extra_str):
     #### PLOTTING - performance of all charge states ####
     fig, ax = plt.subplots(1, 1, figsize = (6,5))
     ax.plot(A_default, Nb0, 'ro', markersize=13, alpha=0.8, label='1: Baseline with\ndefault charge state')
-    ax.plot(A_states, np.array(list(map(float, df1.loc['LHC_ionsPerBunch'].values))), marker='o', color='blue', linewidth=4, linestyle='-', label='1: Baseline')
-    ax.plot(A_states, np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))), marker='o', linestyle='--', color='gold', linewidth=3, label='2: No PS splitting') #
+    ax.plot(A_states, np.array(list(map(float, df1.loc['LHC_ionsPerBunch'].values))), marker='o', color='blue', linewidth=4.2, linestyle='-', label='1: Baseline')
+    ax.plot(A_states, np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))), marker='o', linestyle='--', color='gold', linewidth=3.8, label='2: No PS splitting') #
     ax.plot(A_states, np.array(list(map(float, df3.loc['LHC_ionsPerBunch'].values))), marker='o', linestyle='-.', color='limegreen', linewidth=3.5, label='3: LEIR-PS stripping') #
     ax.plot(A_states, np.array(list(map(float, df4.loc['LHC_ionsPerBunch'].values))), marker='o', linestyle='--', color='gray', linewidth=3, label='4: LEIR-PS stripping, \nno PS splitting') #
     plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
