@@ -148,7 +148,7 @@ class InjectorChain:
 
         # Provide custom ion data if desired
         if ion_data_custom is None:
-            self.ion_data = self.full_ion_data[ion_type]
+            self.ion_data = self.full_ion_data[ion_type].copy()
         else:
             self.ion_data = ion_data_custom
 
@@ -173,10 +173,24 @@ class InjectorChain:
                                                                                               self.Q_SPS,
                                                                                               self.LEIR_PS_strip))
         
-        # LEIR ecooling rations
+        # LEIR ecooling ratios - if new charge states, scale with reference data
         if self.account_for_LEIR_ecooling:
-            self.relative_ecooling_time_leir = self.ion_data['Relative_LEIR_ecooling_time']
-            print('E-cooling time w.r.t to Pb: {:.2f}\n'.format(self.relative_ecooling_time_leir))
+            
+            # Check if we are testing a different charge state
+            Q_default = self.full_ion_data[ion_type]['Q before stripping']
+            A_default = self.full_ion_data[ion_type]['A']
+            Q = self.ion_data['Q before stripping']
+            A = self.ion_data['A']
+            
+            # If new charge state, determine which factor by which to change the ecooling time
+            if Q == Q_default:
+                ecooling_factor = 1.0
+            else:
+                ecooling_factor = (Q_default/Q)**2 * (A/A_default)
+                print('New charge state! --> recalculate e-cooling time factor to {:.3f}'.format(ecooling_factor))
+                
+            self.relative_ecooling_time_leir = self.ion_data['Relative_LEIR_ecooling_time'] * ecooling_factor
+            print('E-cooling time w.r.t to Pb: {:.3f}\n'.format(self.relative_ecooling_time_leir * ecooling_factor))
 
 
     def load_ion_energy(self):
