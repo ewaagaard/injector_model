@@ -90,10 +90,10 @@ def calculate_LHC_intensities_all_scenarios_vary_charge_state(
         df2 = injector_chain2.calculate_LHC_bunch_intensity()
 
         injector_chain3.init_ion(ion_type=ion_type, ion_data_custom=custom_ion_data)
-        df3 = injector_chain1.calculate_LHC_bunch_intensity()
+        df3 = injector_chain3.calculate_LHC_bunch_intensity()
 
         injector_chain4.init_ion(ion_type=ion_type, ion_data_custom=custom_ion_data)
-        df4 = injector_chain1.calculate_LHC_bunch_intensity()
+        df4 = injector_chain4.calculate_LHC_bunch_intensity()
 
         # Append the values to the corresponding key 
         for key, value in df1.items():
