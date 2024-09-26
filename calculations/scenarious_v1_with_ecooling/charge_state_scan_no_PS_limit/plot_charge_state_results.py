@@ -47,8 +47,8 @@ def read_charge_scan_results(ion_type, output_extra_str):
     #fig.suptitle(ion, fontsize=20)
     #if row['Z'] > 2.0:
     #    ax.axvspan(0.0, np.max(Q_states[Q_states / row['A'] < LinacLEIRlim]), alpha=0.25, color='coral', label='Not accessible LINAC3-LEIR')
-    ax.plot(Q_states, np.array(list(map(float, df1.loc['LHC_ionsPerBunch'].values))), color='blue', linewidth=4, linestyle='-', label='1: Baseline')
-    ax.plot(Q_states, np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))), linestyle='--', color='gold', linewidth=3, label='2: No PS splitting') #
+    ax.plot(Q_states, np.array(list(map(float, df1.loc['LHC_ionsPerBunch'].values))), color='blue', linewidth=4.2, linestyle='-', label='1: Baseline')
+    ax.plot(Q_states, np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))), linestyle='-.', color='gold', linewidth=3.8, label='2: No PS splitting') #
     ax.plot(Q_states, np.array(list(map(float, df3.loc['LHC_ionsPerBunch'].values))), linestyle='-.', color='limegreen', linewidth=3.5, label='3: LEIR-PS stripping') #
     ax.plot(Q_states, np.array(list(map(float, df4.loc['LHC_ionsPerBunch'].values))), linestyle='--', color='gray', linewidth=3, label='4: LEIR-PS stripping, \nno PS splitting') #
     ax.plot(Q_default, Nb0, 'ro', markersize=13, alpha=0.8, label='1: Baseline with\ndefault charge state')
