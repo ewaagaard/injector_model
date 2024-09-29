@@ -61,6 +61,8 @@ class InjectorChain:
         acceptance factor, number of times by which we accept the SC limit in PS to be exceeded compared to Pb. Relies on
         assumption that we are not limited by space charge in PS today. For example, a PS_factor_SC = 1.5 will allow SC limit to
         cause tune shifts 1.5 higher than today. np.inf removes space charge limit entirely
+    round_number_of_ecool_injections_up : bool
+        whether to round up the number of Pb LEIR injections, and not down. Default is False, i.e. round down 
     """
     def __init__(self, ion_type='Pb', 
                  nPulsesLEIR = None,
@@ -68,13 +70,15 @@ class InjectorChain:
                  PS_splitting = 2,
                  account_for_LEIR_ecooling=True,
                  LEIR_PS_strip=False,
-                 PS_factor_SC = 1.0
+                 PS_factor_SC = 1.0,
+                 round_number_of_LEIR_inj_up=False
                  ):
         
         # Import reference data and initiate ion
         self.full_ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), header=0, index_col=0).T
         self.LEIR_PS_strip = LEIR_PS_strip
         self.account_for_LEIR_ecooling = account_for_LEIR_ecooling
+        self.round_number_of_ecool_injections_up = round_number_of_LEIR_inj_up
         self.init_ion(ion_type)
         self.load_Pb_lines()
                 
@@ -477,7 +481,17 @@ class InjectorChain:
                              
         # Calculate number of bunches to inject if we consider electron cooling
         if self.account_for_LEIR_ecooling:
-            num_injections_LEIR_with_ecooling = math.floor(Reference_Values.max_injections_into_LEIR / self.relative_ecooling_time_leir)
+            
+            # Decide whether to round the number of pulses up or down
+            num_LEIR_injections_float = Reference_Values.max_injections_into_LEIR / self.relative_ecooling_time_leir
+            if self.round_number_of_ecool_injections_up:
+                num_injections_LEIR_with_ecooling = math.ceil(num_LEIR_injections_float)
+                print('Rounding number of LEIR injections UP, from {:.3f}!'.format(num_LEIR_injections_float))
+            else:
+                num_injections_LEIR_with_ecooling = math.floor(num_LEIR_injections_float)
+                print('Rounding number of LEIR injections DOWN, from {:.3f}!'.format(num_LEIR_injections_float))
+            
+            # Ensure that value does not exceed 7 or is inferior to 1
             if num_injections_LEIR_with_ecooling > 1:
                 self.nPulsesLEIR = np.min([num_injections_LEIR_with_ecooling, self.nPulsesLEIR_default])
             else:
