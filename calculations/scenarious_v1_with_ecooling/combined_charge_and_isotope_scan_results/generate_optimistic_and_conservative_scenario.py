@@ -89,7 +89,16 @@ for i, ion_type in enumerate(ion_data.columns):
 
 # Make dataframe of optimistic scenario - save as csv and excel
 df_optimistic = pd.DataFrame(full_result_optimistic)
+df_optimistic = df_optimistic.set_index('Ion')
 df_optimistic.T.to_csv('output/2_no_PS_bunch_splitting_optimistic.csv')
-#df_optimistic.T.to_excel('output/2_no_PS_bunch_splitting_optimistic.xlsx')
 full_result_conservative.to_csv('output/2_no_PS_bunch_splitting_conservative.csv')
-#full_result_conservative.to_excel('output/2_no_PS_bunch_splitting_conservative.xlsx')
+
+ratio = df_optimistic['LHC_ionsPerBunch'] / full_result_conservative.T['LHC_ionsPerBunch'].astype(float)
+print('Final ratio optimistic vs conservative:\n{}'.format(ratio))
+
+# Make new dataframe with optimistic and conservative scenario
+df_both = pd.DataFrame()
+df_both['Conservative LHC_ionsPerBunch'] = full_result_conservative.T['LHC_ionsPerBunch'].astype(float)
+df_both['Optimistic LHC_ionsPerBunch'] = df_optimistic['LHC_ionsPerBunch']
+df_both['Ratio'] = ratio
+df_both.to_csv('output/Conservative_vs_optimistic.csv')
