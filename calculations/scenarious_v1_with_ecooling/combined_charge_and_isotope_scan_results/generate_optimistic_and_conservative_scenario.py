@@ -31,6 +31,7 @@ ions_not_stripped = ['He', 'O', 'Mg', 'Ar', 'Kr']
 ion_data = pd.read_csv("../../../data/Ion_species.csv", header=0, index_col=0).T
 mass_number = ion_data.loc['A']
 ref_Table_SPS = pd.read_csv('../../../data/test_and_benchmark_data/SPS_final_intensities_WG5_and_Hannes.csv', index_col=0)
+Roderik_values = pd.read_csv('../../../data/test_and_benchmark_data/Roderik_2021_LHC_charges_per_bunch_output.csv', index_col=0)
 
 # Load charge state scan - no PS space charge limit
 with open("../charge_state_scan_{}/output/charge_state_scan.json".format(PS_string), "r") as fp:
@@ -100,5 +101,25 @@ print('Final ratio optimistic vs conservative:\n{}'.format(ratio))
 df_both = pd.DataFrame()
 df_both['Conservative LHC_ionsPerBunch'] = full_result_conservative.T['LHC_ionsPerBunch'].astype(float)
 df_both['Optimistic LHC_ionsPerBunch'] = df_optimistic['LHC_ionsPerBunch']
-df_both['Ratio'] = ratio
-df_both.to_csv('output/Conservative_vs_optimistic.csv')
+df_both['Ratio opt over conserv'] = ratio
+df_both.to_csv('output/Conservative_vs_optimistic_scenario.csv')
+
+# Print baseline ratio vs Roderik's baseline values from 2021 - in charges per bunch
+print('Ratio number of charges into LHC: new baseline with ecooling / Roderik 2021 values:')
+print(df_both['Conservative LHC_ionsPerBunch'] * ion_data.T['Z'] / Roderik_values['Baseline'])
+
+# Define bar width for bar plot
+bar_width2 = 0.25
+x = np.arange(len(df_both.index))
+
+fig3, ax3 = plt.subplots(1, 1, figsize = (6,5))
+bar31 = ax3.bar(x - bar_width2, ref_Table_SPS['WG5 Intensity'] * ion_data.T['A'], bar_width2, color='red', label='WG5') #
+bar32 = ax3.bar(x, df_both['Conservative LHC_ionsPerBunch'] * ion_data.T['A'], bar_width2, color='blue', label='Conservative scenario') #
+bar33 = ax3.bar(x + bar_width2, df_both['Optimistic LHC_ionsPerBunch'] * ion_data.T['A'], bar_width2, color='lime', label='Optimistic scenario') #
+ax3.set_xticks(x)
+ax3.set_xticklabels(df_both.index)
+ax3.set_ylabel("Nucleons per bunch")
+ax3.legend()
+fig3.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+fig3.savefig('output/Conservative_Optimistic_vs_WG5_scecnario.png', dpi=250)
+plt.close()
