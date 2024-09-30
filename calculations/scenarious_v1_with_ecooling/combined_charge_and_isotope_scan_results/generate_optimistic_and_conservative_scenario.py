@@ -92,7 +92,7 @@ for i, ion_type in enumerate(ion_data.columns):
 df_optimistic = pd.DataFrame(full_result_optimistic)
 df_optimistic = df_optimistic.set_index('Ion')
 df_optimistic.T.to_csv('output/2_no_PS_bunch_splitting_optimistic.csv')
-full_result_conservative.to_csv('output/2_no_PS_bunch_splitting_conservative.csv')
+full_result_conservative.to_csv('output/1_baseline_conservative.csv')
 
 ratio = df_optimistic['LHC_ionsPerBunch'] / full_result_conservative.T['LHC_ionsPerBunch'].astype(float)
 print('Final ratio optimistic vs conservative:\n{}'.format(ratio))
