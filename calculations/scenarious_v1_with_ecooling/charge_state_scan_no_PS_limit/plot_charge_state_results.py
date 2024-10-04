@@ -13,6 +13,10 @@ ions_not_stripped = ['He', 'O', 'Mg', 'Ar', 'Kr']
 account_for_LEIR_ecooling = True
 ecool_str = 'with_ecooling_limits' if account_for_LEIR_ecooling else ''
 
+# Charge states with 3d10 shell structure - to be avoided for recombination
+recombination_dict = {'He': [], 'O': [], 'Mg': [], 'Ar':[], 'Ca': [], 'Kr': [7], 
+                      'In': [20], 'Xe' : [25], 'Pb': [53]}
+
 # Load ion data and initialize for test for bunch intensities 
 data_folder = Path(__file__).resolve().parent.joinpath('../../../data').absolute()
 full_ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), header=0, index_col=0).T
