@@ -94,6 +94,15 @@ df_optimistic = df_optimistic.set_index('Ion')
 df_optimistic.T.to_csv('output/2_no_PS_bunch_splitting_optimistic.csv')
 full_result_conservative.to_csv('output/1_baseline_conservative.csv')
 
+# Make optimistic datafram adapted for paper
+df_save = df_optimistic.copy()
+float_columns = df_save.select_dtypes(include=['float']).columns
+for col in float_columns:
+    df_save[col] = df_save[col].apply(lambda x: '{:.1e}'.format(x))
+df_SC_and_max_intensity = df_save[['LEIR_numberofPulses_ecooling', 'LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity', 'PS_space_charge_limit', 
+            'SPS_maxIntensity', 'SPS_space_charge_limit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
+df_SC_and_max_intensity.to_csv('output/2_no_PS_bunch_splitting_optimistic_for_paper.csv', index=True)
+
 ratio = df_optimistic['LHC_ionsPerBunch'] / full_result_conservative.T['LHC_ionsPerBunch'].astype(float)
 print('Final ratio optimistic vs conservative:\n{}'.format(ratio))
 
