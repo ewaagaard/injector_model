@@ -8,7 +8,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import injector_model
+import os
 
+os.makedirs('Figures', exist_ok=True)
 
 index = ['O', 'Ar', 'Ca', 'Kr', 'In', 'Xe', 'Pb']
 x = np.arange(len(index))
@@ -28,7 +30,7 @@ ax.set_ylabel(r'$\int \mathcal{L}_{AA} dt$  [nb$^{-1}$]')
 ax.legend()
 ax.set_yscale('log')
 fig.tight_layout()#pad=0.4, w_pad=0.5, h_pad=1.0)
-fig.savefig('AA_integrated_luminosity.png', dpi=250)
+fig.savefig('Figures/AA_integrated_luminosity.png', dpi=250)
 
 # Plot integrated nucleon-nucleon luminosity
 fig2, ax2 = plt.subplots(1, 1, figsize = (6,5))
@@ -41,5 +43,5 @@ ax2.set_ylabel(r'$\int \mathcal{L}_{NN} dt$  [pb$^{-1}$]')
 ax2.legend()
 ax2.set_yscale('log')
 fig2.tight_layout()#pad=0.4, w_pad=0.5, h_pad=1.0)
-fig2.savefig('NN_integrated_luminosity.png', dpi=250)
+fig2.savefig('Figures/NN_integrated_luminosity.png', dpi=250)
 plt.show()

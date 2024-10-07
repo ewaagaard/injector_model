@@ -25,7 +25,7 @@ else:
     PS_string = 'no_PS_limit'
 
 # Define output string for optimistic value
-ions_not_stripped = ['He', 'O', 'Mg', 'Ar', 'Kr']
+ions_not_stripped = ['He', 'O', 'Mg', 'Ar'] #'Kr' performs better with stripping
 
 # Load reference ion data
 ion_data = pd.read_csv("../../../data/Ion_species.csv", header=0, index_col=0).T
