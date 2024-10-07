@@ -7,6 +7,7 @@ import json
 import numpy as np
 from pathlib import Path
 import matplotlib.ticker as mticker
+from matplotlib.ticker import MaxNLocator, FormatStrFormatter
 import injector_model
 
 # Which ion scenarios we consider - also whether to include electron cooling or not
@@ -30,7 +31,12 @@ Pb_isotopes = np.array([204., 206., 207., 208.])
 
 all_isotopes = [He_isotopes, O_isotopes, Mg_isotopes, Ar_isotopes, Ca_isotopes, Kr_isotopes, In_isotopes, Xe_isotopes, Pb_isotopes]
 
-def read_isotope_scan_results(ion_type, output_extra_str):
+# Create the combined figure with subplots
+num_cols = 2  # Two columns
+num_rows = (len(full_ion_data.T.index) + 1) // num_cols  # Integer division to determine the number of rows, Kr appears twice
+fig0, axs = plt.subplots(num_rows, num_cols, figsize=(8.27, 10.2), constrained_layout=True)
+
+def read_isotope_scan_results(ion_type, output_extra_str, count):
     
     # Define output strings to read correct file
     output_1 = '1_baseline_{}'.format(output_extra_str)
@@ -68,6 +74,37 @@ def read_isotope_scan_results(ion_type, output_extra_str):
     fig.savefig('output/figures/{}{}_isotope_state_scan_{}.png'.format(ion_type, output_extra_str, ecool_str), dpi=250)
     plt.close()
     
+    # Also fill in the combined superplot
+    row3 = (count-1) // num_cols  # Row index
+    col3 = (count-1) % num_cols  # Column index
+    ax3 = axs[row3, col3]  # Select the current subplot
+    ax3.plot(A_default, Nb0, 'ro', markersize=13, alpha=0.8, label='1: Baseline with\ndefault charge state')
+    ax3.plot(A_states, np.array(list(map(float, df1.loc['LHC_ionsPerBunch'].values))), marker='o', color='blue', linewidth=4.2, linestyle='-', label='1: Baseline')
+    ax3.plot(A_states, np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))), marker='o', linestyle='--', color='gold', linewidth=3.8, label='2: No PS splitting') #
+    ax3.plot(A_states, np.array(list(map(float, df3.loc['LHC_ionsPerBunch'].values))), marker='o', linestyle='-.', color='limegreen', linewidth=3.5, label='3: LEIR-PS stripping') #
+    ax3.plot(A_states, np.array(list(map(float, df4.loc['LHC_ionsPerBunch'].values))), marker='o', linestyle='--', color='gray', linewidth=3, label='4: LEIR-PS stripping, \nno PS splitting') #
+    ax3.tick_params(axis='both', which='major', labelsize=14)
+    ax3.xaxis.set_major_locator(MaxNLocator(integer=True))
+    
+    # Determine where to place ion label
+    if count == 1:
+        vtext_loc = 0.81
+    elif count>1 and count<7:
+        vtext_loc = 0.65
+    elif count == 7:
+        vtext_loc = 0.42
+    elif count == 8:
+        vtext_loc = 0.6
+    else:
+        vtext_loc = 0.45
+    
+    ax3.text(0.023, vtext_loc, '{}'.format(ion_type), fontsize=18, weight='bold', transform=ax3.transAxes)
+    #ax3.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+    
+    # Add legend in oxygen plot
+    if count == 3:
+        ax3.legend(fontsize=8, loc='upper right')
+    
     # Find best isotope, compare to baseline case
     print('\nIon type: {}'.format(ion_type))
     print('Default A: {}'.format(A_default))
@@ -86,15 +123,36 @@ isotope_dict = {'Ion' : [],
                 'Scenario2_Nb0_improvement_factor': []
                 }
 
+# Keep track of subplot position
+count = 1  
+
 # Scan over ions and load results
 for ion_type in full_ion_data.columns:
 
     # Plot results
-    best_A, improvement_Nb_case2_rel = read_isotope_scan_results(ion_type, '_no_PS_SC_limit')
+    best_A, improvement_Nb_case2_rel = read_isotope_scan_results(ion_type, '_no_PS_SC_limit', count)
     
     isotope_dict['Ion'].append(ion_type)
     isotope_dict['Best A'].append(best_A)
     isotope_dict['Scenario2_Nb0_improvement_factor'].append(improvement_Nb_case2_rel)
+    
+    count += 1
+    
+    
+# Fix superplot
+# Share y-axes for the same row and share x-label for the same column
+#for col in range(num_cols):
+axs[-1, 0].set_xlabel('Mass number A', fontsize=13)
+axs[-2, 1].set_xlabel('Mass number A', fontsize=13)
+axs[-1, -1].axis('off')
+
+# Share y-label for the same row
+for row in axs:
+    row[0].set_ylabel('$N_{b}$ into LHC', fontsize=13)
+
+#### PLOT SETTINGS #######
+fig0.savefig('output/figures/Combined_isotope_scan.png', dpi=250)
+plt.show()
         
 
 # Flatten array

@@ -2,6 +2,7 @@
 Script to plot results from charge state scan in "scan_charge_states_for_lhc_intensities"
 """
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator, FormatStrFormatter
 import pandas as pd 
 import json
 import numpy as np
@@ -21,8 +22,12 @@ recombination_dict = {'He': [], 'O': [], 'Mg': [], 'Ar':[], 'Ca': [], 'Kr': [7],
 data_folder = Path(__file__).resolve().parent.joinpath('../../../data').absolute()
 full_ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), header=0, index_col=0).T
 
+# Create the combined figure with subplots
+num_cols = 2  # Two columns
+num_rows = (len(full_ion_data.T.index) + 1) // num_cols  # Integer division to determine the number of rows, Kr appears twice
+fig0, axs = plt.subplots(num_rows, num_cols, figsize=(8.27, 10.2), constrained_layout=True)
 
-def read_charge_scan_results(ion_type, output_extra_str):
+def read_charge_scan_results(ion_type, output_extra_str, count, stripped):
     
     # Define output strings to read correct file
     output_1 = '1_baseline_{}'.format(output_extra_str)
@@ -63,6 +68,23 @@ def read_charge_scan_results(ion_type, output_extra_str):
     fig.savefig('output/figures/{}_{}_LEIR_charge_state_scan_{}.png'.format(ion_type, output_extra_str, ecool_str), dpi=250)
     plt.close()
     
+    # Also fill in the combined superplot
+    row3 = (count-1) // num_cols  # Row index
+    col3 = (count-1) % num_cols  # Column index
+    ax3 = axs[row3, col3]  # Select the current subplot
+    ax3.plot(Q_states, np.array(list(map(float, df1.loc['LHC_ionsPerBunch'].values))), color='blue', linewidth=4.2, linestyle='-', label='1: Baseline')
+    ax3.plot(Q_states, np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))), linestyle='-.', color='gold', linewidth=3.8, label='2: No PS splitting') #
+    ax3.plot(Q_states, np.array(list(map(float, df3.loc['LHC_ionsPerBunch'].values))), linestyle='-.', color='limegreen', linewidth=3.5, label='3: LEIR-PS stripping') #
+    ax3.plot(Q_states, np.array(list(map(float, df4.loc['LHC_ionsPerBunch'].values))), linestyle='--', color='gray', linewidth=3, label='4: LEIR-PS stripping, \nno PS splitting') #
+    ax3.plot(Q_default, Nb0, 'ro', markersize=13, alpha=0.8, label='1: Baseline with\ndefault charge state')
+    ax3.tick_params(axis='both', which='major', labelsize=14)
+    ax3.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax3.text(0.023, 0.71, '{}'.format(ion_type), fontsize=18, weight='bold', transform=ax3.transAxes, color='teal' if stripped else 'purple')
+    #ax3.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+    
+    # Add legend in oxygen plot
+    if count == 3:
+        ax3.legend(fontsize=8, loc='upper right')
     
     # Find best charge state, compare to baseline case
     print('\nIon type: {}'.format(ion_type))
@@ -82,31 +104,51 @@ isotope_dict = {'Ion' : [],
                 'Scenario2_Nb0_improvement_factor': []
                 }
 
+# Keep track of subplot position
+count = 1  
+
 # Scan over ions and load results
 for ion_type in full_ion_data.columns:
 
+  
     if ion_type in ions_not_stripped:
 
         # Untripped ions after LINAC3 - define path and load LINAC3 current data
         print('\nIon type: {}, UNSTRIPPED'.format(ion_type))
-        best_Q, improvement_Nb_case2_rel = read_charge_scan_results(ion_type, 'UNSTRIPPED_no_PS_SC_limit')
+        best_Q, improvement_Nb_case2_rel = read_charge_scan_results(ion_type, 'UNSTRIPPED_no_PS_SC_limit', count, stripped=False)
         
         isotope_dict['Ion'].append(ion_type)
         isotope_dict['Best Q'].append(best_Q)
         isotope_dict['Scenario2_Nb0_improvement_factor'].append(improvement_Nb_case2_rel)
+        count += 1
         
     if ion_type not in ions_not_stripped or ion_type == 'Kr':
     
         # Same for unstripped ions after LINAC3
         print('\nIon type: {}, STRIPPED'.format(ion_type))
-        best_Q, improvement_Nb_case2_rel = read_charge_scan_results(ion_type, 'STRIPPED_no_PS_SC_limit')
+        best_Q, improvement_Nb_case2_rel = read_charge_scan_results(ion_type, 'STRIPPED_no_PS_SC_limit', count, stripped=True)
 
         # Append only krypton for its best case, not here when stripped        
         if ion_type not in ions_not_stripped:
             isotope_dict['Ion'].append(ion_type)
             isotope_dict['Best Q'].append(best_Q)
             isotope_dict['Scenario2_Nb0_improvement_factor'].append(improvement_Nb_case2_rel)
+    
+        count += 1
         
+# Fix superplot
+# Share y-axes for the same row and share x-label for the same column
+for col in range(num_cols):
+    axs[-1, col].set_xlabel('LEIR charge state', fontsize=13)
+
+# Share y-label for the same row
+for row in axs:
+    row[0].set_ylabel('$N_{b}$ into LHC', fontsize=13)
+
+#### PLOT SETTINGS #######
+fig0.savefig('output/figures/Combined_leir_charge_state_scan.png', dpi=250)
+plt.show()
+
 
 # Flatten array
 isotope_dict['Scenario2_Nb0_improvement_factor'] = np.array(isotope_dict['Scenario2_Nb0_improvement_factor']).tolist()
@@ -115,6 +157,3 @@ isotope_dict['Scenario2_Nb0_improvement_factor'] = np.array(isotope_dict['Scenar
 with open("output/charge_state_scan.json", "w") as fp:
     json.dump(isotope_dict , fp, default=str)     
 print('Created dictionary:\n{}'.format(isotope_dict))
-        
-        
-        
