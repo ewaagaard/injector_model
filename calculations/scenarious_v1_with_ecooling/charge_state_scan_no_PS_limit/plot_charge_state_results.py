@@ -99,7 +99,7 @@ def read_charge_scan_results(ion_type, output_extra_str, count, stripped):
     
 
 # Make empty dictionary 
-isotope_dict = {'Ion' : [],
+charge_dict = {'Ion' : [],
                 'Best Q': [],
                 'Scenario2_Nb0_improvement_factor': []
                 }
@@ -116,10 +116,12 @@ for ion_type in full_ion_data.columns:
         # Untripped ions after LINAC3 - define path and load LINAC3 current data
         print('\nIon type: {}, UNSTRIPPED'.format(ion_type))
         best_Q, improvement_Nb_case2_rel = read_charge_scan_results(ion_type, 'UNSTRIPPED_no_PS_SC_limit', count, stripped=False)
-        
-        isotope_dict['Ion'].append(ion_type)
-        isotope_dict['Best Q'].append(best_Q)
-        isotope_dict['Scenario2_Nb0_improvement_factor'].append(improvement_Nb_case2_rel)
+
+        # Append only Kr when stripped
+        if ion_type != 'Kr':        
+            charge_dict['Ion'].append(ion_type)
+            charge_dict['Best Q'].append(best_Q)
+            charge_dict['Scenario2_Nb0_improvement_factor'].append(improvement_Nb_case2_rel)
         count += 1
         
     if ion_type not in ions_not_stripped or ion_type == 'Kr':
@@ -128,11 +130,9 @@ for ion_type in full_ion_data.columns:
         print('\nIon type: {}, STRIPPED'.format(ion_type))
         best_Q, improvement_Nb_case2_rel = read_charge_scan_results(ion_type, 'STRIPPED_no_PS_SC_limit', count, stripped=True)
 
-        # Append only krypton for its best case, not here when stripped        
-        if ion_type not in ions_not_stripped:
-            isotope_dict['Ion'].append(ion_type)
-            isotope_dict['Best Q'].append(best_Q)
-            isotope_dict['Scenario2_Nb0_improvement_factor'].append(improvement_Nb_case2_rel)
+        charge_dict['Ion'].append(ion_type)
+        charge_dict['Best Q'].append(best_Q)
+        charge_dict['Scenario2_Nb0_improvement_factor'].append(improvement_Nb_case2_rel)
     
         count += 1
         
@@ -151,9 +151,9 @@ plt.show()
 
 
 # Flatten array
-isotope_dict['Scenario2_Nb0_improvement_factor'] = np.array(isotope_dict['Scenario2_Nb0_improvement_factor']).tolist()
+charge_dict['Scenario2_Nb0_improvement_factor'] = np.array(charge_dict['Scenario2_Nb0_improvement_factor']).tolist()
 
 # save dictionary
 with open("output/charge_state_scan.json", "w") as fp:
-    json.dump(isotope_dict , fp, default=str)     
-print('Created dictionary:\n{}'.format(isotope_dict))
+    json.dump(charge_dict , fp, default=str)     
+print('Created dictionary:\n{}'.format(charge_dict))
