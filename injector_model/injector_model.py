@@ -90,6 +90,9 @@ class InjectorChain:
         self.LEIR_bunches = LEIR_bunches
         self.PS_splitting = PS_splitting
         self.PS_factor_SC = PS_factor_SC
+        
+        # SPS slip-stacking transmission
+        self.SPS_slipstacking_transmission = Reference_Values.SPS_slipstacking_transmission
 
 
     def load_Pb_lines(self) -> None:
@@ -534,7 +537,7 @@ class InjectorChain:
         dQx_SPS, dQy_SPS = self.SPS_tune_shifts(Nb_max=ionsPerBunchSPSinj) # calculate tune shifts for SPS if max new intensity is injected
         spaceChargeLimitSPS, dQx0_SPS, dQy0_SPS = self.SPS_SC_limit()
         SPS_space_charge_limit_hit = True if ionsPerBunchSPSinj > spaceChargeLimitSPS else False
-        ionsPerBunchLHC = min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * Reference_Values.SPS_transmission * Reference_Values.SPS_slipstacking_transmission
+        ionsPerBunchLHC = min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * Reference_Values.SPS_transmission * self.SPS_slipstacking_transmission
 
         result = {
             "Ion": self.ion_type,
