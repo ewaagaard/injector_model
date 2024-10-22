@@ -182,12 +182,13 @@ class SC_Tune_Shifts:
         if particle_ref is None:
             particle_ref = line.particle_ref
             print('No ref. particle given - assume default Pb\n')
-        print('\n' + particle_ref.show() + '\n')
+        particle_ref.show()
 
         # Define new emittances
         beamParams.exn = exn
         beamParams.eyn = eyn
         beamParams.Nb = Nb
+        print('\nAssumed beam parameters:')
         print(beamParams)            
         
         # Calculate tune shifts
