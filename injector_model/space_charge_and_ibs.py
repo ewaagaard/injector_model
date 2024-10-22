@@ -6,6 +6,8 @@ import xpart as xp
 import xtrack as xt
 import pandas as pd
 from dataclasses import dataclass
+from .sequence_makers import Sequences
+from .parameters_and_helpers import Reference_Values,BeamParams_LEIR, BeamParams_PS, BeamParams_SPS
 
 # Import xibs for IBS growth rate calculations
 from xibs.inputs import BeamParameters, OpticsParameters
@@ -137,6 +139,63 @@ class SC_Tune_Shifts:
         dQx = - K_sc / (4 * np.pi) * np.trapz(integrand_x, x = twiss_xtrack_interpolated['s'])
         dQy = - K_sc / (4 * np.pi) * np.trapz(integrand_y, x = twiss_xtrack_interpolated['s'])
         
+        return dQx, dQy
+
+
+    def emittance_and_bunch_intensity_to_SC_tune_shift(self, exn, eyn, Nb, machine='SPS', particle_ref=None):
+        """
+        Compute space charge tune shifts for given emittances and bunch intensities
+        
+        Parameters:
+        exn : float
+            horizontal normalized emittance
+        eyn : float 
+            vertical normalized emittances
+        Nb : float
+            bunch intensity - ions per bunch
+        machine : str
+            which accelerator: LEIR, PS or SPS
+        particle_ref : xp.Particles
+            ion reference particle. Default is None
+        """
+        ref_val = Reference_Values()
+        
+        if machine == 'SPS':
+            line = Sequences.get_SPS_line(m0_GeV = ref_val.m0_GeV, 
+                                          Q = ref_val.Q0_SPS,
+                                          gamma = ref_val.gamma0_SPS_inj)
+            beamParams = BeamParams_SPS()
+        elif machine == 'PS':
+            line = Sequences.get_PS_line(m0_GeV = ref_val.m0_GeV, 
+                                         Q = ref_val.Q0_PS, 
+                                         gamma = ref_val.gamma0_PS_inj)
+            beamParams = BeamParams_PS()
+        elif machine == 'LEIR':
+            line = Sequences.get_LEIR_line(m0_GeV = ref_val.m0_GeV, 
+                                           Q = ref_val.Q0_LEIR, 
+                                           gamma = ref_val.gamma0_LEIR_inj)
+            beamParams = BeamParams_LEIR()
+        else:
+            raise ValueError('Machine not valid - either "LEIR", "PS" or "SPS"')
+        
+        # If particle_ref not provided, assume Pb default
+        if particle_ref is None:
+            particle_ref = line.particle_ref
+            print('No ref. particle given - assume default Pb\n')
+        print('\n' + particle_ref.show() + '\n')
+
+        # Define new emittances
+        beamParams.exn = exn
+        beamParams.eyn = eyn
+        beamParams.Nb = Nb
+        print(beamParams)            
+        
+        # Calculate tune shifts
+        dQx, dQy = self.calculate_SC_tuneshift(twissTableXsuite=line.twiss(),
+                                                    particle_ref=particle_ref,
+                                                    line_length=line.get_length(),
+                                                    Nb=Nb,
+                                                    beamParams=beamParams)
         return dQx, dQy
 
 

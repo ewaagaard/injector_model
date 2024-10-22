@@ -92,7 +92,7 @@ class Reference_Values:
     PS_SPS_stripping_efficiency = 0.9  # default value until we have other value
     SPS_transmission = 0.55 # # old value 0.62, when old PS values and not new LIU 2016 parameters used. Discussed with Reyes 2024-03-18 from last year's performance, then
     # 0.79 reasonable, but then starting intensity Nb0 = 2.5e8 ions was used. For space charge limit, use Nb = 3.5e8 and 0.62 as transmission
-    SPS_slipstacking_transmission = 1.0
+    SPS_slipstacking_transmission = 1.0 # for now assume the 0.98 transmission is most likely included in SPS transmission value to match LIU ion values for LHC
             
     def __post_init__(self):
         ###### LEIR #####
