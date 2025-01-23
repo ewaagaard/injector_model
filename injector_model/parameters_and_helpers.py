@@ -39,7 +39,7 @@ class BeamParams_PS:
 @dataclass
 class BeamParams_LEIR:
     """Data Container for LEIR Pb default beam parameters"""
-    Nb : float = 26e8 # updated to 2024 values, at injection --> old is  #19.1e8  # LIU 2016, corresponds to 10.3e10 charges
+    Nb : float = 25.9e8 # updated to 2024 values, at injection --> old is  #19.1e8  # LIU 2016, corresponds to 10.3e10 charges
     exn : float = 0.4e-6 # IPM did not work in 2024, keep approximate guess at injection from LIU 2016
     eyn : float = 0.4e-6 # IPM did not work in 2024, keep approximate guess at injection from LIU 2016
     sigma_z : float = 8.0 # Isabelle had 4.256 m before, but seems to short
@@ -71,7 +71,7 @@ class Reference_Values:
     Q0_LEIR = 54.0
 
     ### PS reference case for Pb54+ --> BEFORE stripping ###
-    LEIR_PS_Transmission = 0.95
+    LEIR_PS_Transmission = 0.93
     E_kin_per_A_PS_inj = 7.22e-2 # GeV/nucleon according to LIU design report 
     E_kin_per_A_PS_extr = 5.9 # GeV/nucleon according to LIU design report 
     PS_MinB = 383 * 1e-4 # [T] - minimum magnetic field in PS, (Gauss to Tesla) from Heiko Damerau
@@ -93,7 +93,7 @@ class Reference_Values:
     PS_SPS_stripping_efficiency = 0.93 # observed 2024 value  #0.9  # default value until we have other value
     SPS_transmission = 0.72 # observed 2024 transmission #0.55 # # old value 0.62, when old PS values and not new LIU 2016 parameters used. Discussed with Reyes 2024-03-18 from last year's performance, then
     # 0.79 reasonable, but then starting intensity Nb0 = 2.5e8 ions was used. For space charge limit, use Nb = 3.5e8 and 0.62 as transmission
-    SPS_to_LHC_transmission = 0.97 # in 2024, recorded about 3% losses
+    SPS_to_LHC_transmission = 0.93 # in 2024, recorded about 7% losses SPS to LHC
             
     def __post_init__(self):
         ###### LEIR #####
