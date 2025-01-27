@@ -260,15 +260,12 @@ class InjectorChain:
         
         totalIntLEIR = ionsPerPulseLinac3 * self.nPulsesLEIR * Reference_Values.LEIR_injection_efficiency
         ionsPerBunchExtractedLEIR = Reference_Values.LEIR_transmission * np.min([totalIntLEIR, spaceChargeLimitLEIR]) / self.LEIR_bunches
-        LEIR_space_charge_limit_hit = True if totalIntLEIR > spaceChargeLimitLEIR else False 
 
         dQx_LEIR, dQy_LEIR = self.LEIR_tune_shifts(Nb_max=totalIntLEIR) # calculate tune shifts for LEIR if max new intensity is injected
         
         #### PS ####
         ionsPerBunchInjectedPS = ionsPerBunchExtractedLEIR * (self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else Reference_Values.LEIR_PS_Transmission)
-
         # Ignore PS space charge limit for now
-        # spaceChargeLimitPS = 
         
         # Check that injected momentum is not too low for the PS B-field
         self.p_PS_inj = self.calcMomentum_from_gamma(self.PS_gamma_inj, self.Q_PS)
@@ -290,9 +287,14 @@ class InjectorChain:
         # Calculate ion transmission for SPS 
         ionsPerBunchSPSinj = ionsPerBunchExtracted_PS * (Reference_Values.PS_SPS_transmission_efficiency if self.LEIR_PS_strip else Reference_Values.PS_SPS_stripping_efficiency)
         
-        spaceChargeLimitSPS = 
-
-        ionsPerBunchLHC = min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * Reference_Values.SPS_transmission * Reference_Values.SPS_to_LHC_transmission
+        Lambda_SPS = self.Lambda(charge = self.Q_SPS, 
+                                           m = self.mass_GeV, 
+                                           gamma = self.gamma_SPS_inj,
+                                           charge_0 = self.Q0_SPS, 
+                                           m_0 = self.m0_GeV, 
+                                           gamma_0 = self.gamma0_SPS_inj)
+        SPS_transmission = Reference_Values.A_SPS_transmission * Lambda_SPS * ionsPerBunchSPSinj/1e8 + Reference_Values.B_SPS_transmission
+        ionsPerBunchLHC = ionsPerBunchSPSinj * SPS_transmission * Reference_Values.SPS_to_LHC_transmission
 
         result = {
             "Ion": self.ion_type,
@@ -310,7 +312,6 @@ class InjectorChain:
             "PS_splitting": self.PS_splitting, 
             "PS_transmission": Reference_Values.PS_transmission, 
             "PS_SPS_stripping_efficiency": Reference_Values.PS_SPS_stripping_efficiency, 
-            "SPS_transmission": Reference_Values.SPS_transmission, 
             "Linac3_ionsPerPulse": ionsPerPulseLinac3,
             "LEIR_maxIntensity": totalIntLEIR,
             "LEIR_space_charge_limit": spaceChargeLimitLEIR,
@@ -318,7 +319,7 @@ class InjectorChain:
             "PS_maxIntensity": ionsPerBunchInjectedPS,
             "PS_ionsExtractedPerBunch":  ionsPerBunchExtracted_PS,
             "SPS_maxIntensity": ionsPerBunchSPSinj,
-            "SPS_space_charge_limit": spaceChargeLimitSPS,
+            "SPS_transmission": SPS_transmission,
             "LHC_ionsPerBunch": ionsPerBunchLHC,
             "LHC_chargesPerBunch": ionsPerBunchLHC * self.Z,
             "LEIR_gamma_inj": self.LEIR_gamma_inj,
