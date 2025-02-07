@@ -91,13 +91,9 @@ class Reference_Values:
     PS_transmission = 0.92 # typical transmission end of 2024-11  #0.95
     PS_SPS_transmission_efficiency = 1.0 # 0.9 is what we see today with stripping, but Roderik uses 1.0 if we strip LEIR-PS
     PS_SPS_stripping_efficiency = 0.93 # observed 2024 value  #0.9  # default value until we have other value
-    SPS_transmission_Pb = 0.72 # observed 2024 transmission #0.55 # # old value 0.62, when old PS values and not new LIU 2016 parameters used. Discussed with Reyes 2024-03-18 from last year's performance, then
+    SPS_transmission = 0.72 # observed 2024 transmission #0.55 used for 2023 # # old value 0.62, when old PS values and not new LIU 2016 parameters used. Discussed with Reyes 2024-03-18 from last year's performance, then
     # 0.79 reasonable, but then starting intensity Nb0 = 2.5e8 ions was used. For space charge limit, use Nb = 3.5e8 and 0.62 as transmission
     SPS_to_LHC_transmission = 0.93 # in 2024, recorded about 7% losses SPS to LHC
-    
-    # SPS transmission coefficients - from 2024 SPS Pb run
-    A_SPS_transmission = -5.36/100. # convert percentage to fraction
-    B_SPS_transmission = 92.14/100. # convert percentage to fraction
     
             
     def __post_init__(self):
@@ -112,7 +108,7 @@ class Reference_Values:
         self.gamma0_PS_extr = (self.m0_GeV + self.E_kin_per_A_PS_extr * self.A0)/self.m0_GeV
         
         ##### SPS #####
-        self.Nb0_SPS_extr = 2.21e8/self.SPS_transmission_Pb # outgoing ions per bunch from SPS (2015 values), adjusted for 62% transmission
+        self.Nb0_SPS_extr = 2.21e8/self.SPS_transmission # outgoing ions per bunch from SPS (2015 values), adjusted for 62% transmission
         self.Nq0_SPS_extr = self.Nb0_SPS_extr*self.Q0_SPS
         self.gamma0_SPS_inj = (self.m0_GeV + self.E_kin_per_A_SPS_inj * self.A0)/self.m0_GeV
         self.gamma0_SPS_extr = (self.m0_GeV + self.E_kin_per_A_SPS_extr * self.A0)/self.m0_GeV
