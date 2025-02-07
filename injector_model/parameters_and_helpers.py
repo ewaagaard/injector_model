@@ -17,10 +17,10 @@ data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
 @dataclass
 class BeamParams_SPS:
     """Data Container for SPS Pb default beam parameters"""
-    Nb : float = 3.5e8 # LIU 2016 values
-    exn : float =  1.3e-6 #1.1e-6 measured in 2023, but for smaller Nb and then larger emittance blow-up
-    eyn : float = 0.9e-6
-    sigma_z : float = 0.23
+    Nb : float = 4.3e8 # achieved in 2024 3.5e8 # LIU 2016 values
+    exn : float = 2.1e-6 # updated to 2024 ion run values. # used befre 1.3e-6 #1.1e-6 measured in 2023, but for smaller Nb and then larger emittance blow-up
+    eyn : float = 1.1e-6  # updated to 2024 ion run values 0.9e-6
+    sigma_z : float = 0.215
     delta : float = 1e-3
     sigma_delta : float = 5e-4  # from Momentum_Spread class
     sigma_delta_Ca : float = 7.4e-4 # Ca has higher energy inj. energy, probably why its momentum spread is different
@@ -28,9 +28,9 @@ class BeamParams_SPS:
 @dataclass
 class BeamParams_PS:
     """Data Container for PS Pb default beam parameters"""
-    Nb : float =  8.1e8 # LIU 2016 values
-    exn : float = 0.8e-6
-    eyn : float = 0.5e-6
+    Nb : float = 10e8 # 9.2e8 achieved in 2024, but probably not due to space charge limit # 8.1e8 LIU 2016 values
+    exn : float = 1.4e-6 # measured in 2024 with Wire Scanner
+    eyn : float = 0.8e-6 # could not be measured at injection, but approximate guess from 1.1 measured at ejection
     sigma_z : float = 4.74 # around 5.0 measured in 2023 at injection for LHC Pb beams
     delta : float = 0.63e-3
     sigma_delta : float = 6e-4  # from Momentum_Spread class
@@ -39,9 +39,9 @@ class BeamParams_PS:
 @dataclass
 class BeamParams_LEIR:
     """Data Container for LEIR Pb default beam parameters"""
-    Nb : float = 19.1e8  # LIU 2016, corresponds to 10.3e10 charges
-    exn : float = 0.4e-6
-    eyn : float = 0.4e-6
+    Nb : float = 26e8 # updated to 2024 values, at injection --> old is  #19.1e8  # LIU 2016, corresponds to 10.3e10 charges
+    exn : float = 0.4e-6 # IPM did not work in 2024, keep approximate guess at injection from LIU 2016
+    eyn : float = 0.4e-6 # IPM did not work in 2024, keep approximate guess at injection from LIU 2016
     sigma_z : float = 8.0 # Isabelle had 4.256 m before, but seems to short
     delta: float = 1.18e-3
     Nb_isabelle : float = 1e9
@@ -64,19 +64,20 @@ class Reference_Values:
     Z0 = 82.0  # atomic number
 
     ### LEIR reference case for Pb54+ --> BEFORE stripping ###
-    max_injections_into_LEIR = 7
+    max_injections_into_LEIR = 8 #7
     E_kin_per_A_LEIR_inj = 4.2e-3 # kinetic energy per nucleon in LEIR before RF capture, same for all species
     E_kin_per_A_LEIR_extr = 7.22e-2 # kinetic energy per nucleon in LEIR at exit, same for all species
     Nq0_LEIR_extr = 10e10  # number of observed charges extracted at LEIR
     Q0_LEIR = 54.0
 
     ### PS reference case for Pb54+ --> BEFORE stripping ###
+    LEIR_PS_Transmission = 0.95
     E_kin_per_A_PS_inj = 7.22e-2 # GeV/nucleon according to LIU design report 
     E_kin_per_A_PS_extr = 5.9 # GeV/nucleon according to LIU design report 
     PS_MinB = 383 * 1e-4 # [T] - minimum magnetic field in PS, (Gauss to Tesla) from Heiko Damerau
     PS_MaxB = 1.26 # [T] - minimum magnetic field in PS, from reyes Alemany Fernandez
     PS_rho = 70.1206 # [m] - PS bending radius 
-    Nq0_PS_extr =  6e10 # from November 2022 ionlifetime MD, previously 8e10  # number of observed charges extracted at PS for nominal beam
+    Nq0_PS_extr =  9.2e10 # new value from 2024 #6e10 # from November 2022 ionlifetime MD, previously 8e10  # number of observed charges extracted at PS for nominal beam
     Q0_PS = 54.0
 
     ### SPS reference case for Pb82+ --> AFTER stripping ###
@@ -86,13 +87,13 @@ class Reference_Values:
 
     # General rules - stripping and transmission
     LEIR_injection_efficiency = 0.5
-    LEIR_transmission = 0.85
-    PS_transmission = 0.95
+    LEIR_transmission = 0.76 # value from 2024 #0.85
+    PS_transmission = 0.92 # typical transmission end of 2024-11  #0.95
     PS_SPS_transmission_efficiency = 1.0 # 0.9 is what we see today with stripping, but Roderik uses 1.0 if we strip LEIR-PS
-    PS_SPS_stripping_efficiency = 0.9  # default value until we have other value
-    SPS_transmission = 0.55 # # old value 0.62, when old PS values and not new LIU 2016 parameters used. Discussed with Reyes 2024-03-18 from last year's performance, then
+    PS_SPS_stripping_efficiency = 0.93 # observed 2024 value  #0.9  # default value until we have other value
+    SPS_transmission = 0.72 # observed 2024 transmission #0.55 # # old value 0.62, when old PS values and not new LIU 2016 parameters used. Discussed with Reyes 2024-03-18 from last year's performance, then
     # 0.79 reasonable, but then starting intensity Nb0 = 2.5e8 ions was used. For space charge limit, use Nb = 3.5e8 and 0.62 as transmission
-    SPS_slipstacking_transmission = 1.0 # for now assume the 0.98 transmission is most likely included in SPS transmission value to match LIU ion values for LHC
+    SPS_to_LHC_transmission = 0.97 # in 2024, recorded about 3% losses
             
     def __post_init__(self):
         ###### LEIR #####

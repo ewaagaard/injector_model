@@ -90,10 +90,6 @@ class InjectorChain:
         self.LEIR_bunches = LEIR_bunches
         self.PS_splitting = PS_splitting
         self.PS_factor_SC = PS_factor_SC
-        
-        # SPS slip-stacking transmission
-        self.SPS_slipstacking_transmission = Reference_Values.SPS_slipstacking_transmission
-
 
     def load_Pb_lines(self) -> None:
         """
@@ -171,7 +167,7 @@ class InjectorChain:
         
         # Values from first tables in Roderik's notebook
         self.linac3_current = self.ion_data['Linac3 current [uA]'] * 1e-6
-        self.linac3_pulseLength = self.ion_data['Linac3 pulse length [us]'] * 1e-6
+        self.linac3_pulseLength = 300e-6 # 2024 values  # self.ion_data['Linac3 pulse length [us]'] * 1e-6
         self.LEIR_PS_stripping_efficiency = self.ion_data['LEIR-PS Stripping Efficiency']
         self.load_ion_energy()
         
@@ -510,7 +506,7 @@ class InjectorChain:
         dQx_LEIR, dQy_LEIR = self.LEIR_tune_shifts(Nb_max=totalIntLEIR) # calculate tune shifts for LEIR if max new intensity is injected
         
         #### PS ####
-        ionsPerBunchInjectedPS = ionsPerBunchExtractedLEIR * (self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else 1)
+        ionsPerBunchInjectedPS = ionsPerBunchExtractedLEIR * (self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else Reference_Values.LEIR_PS_Transmission)
         dQx_PS, dQy_PS = self.PS_tune_shifts(Nb_max=ionsPerBunchInjectedPS ) # calculate tune shifts for PS if max new intensity is injected
         spaceChargeLimitPS, dQx0_PS, dQy0_PS = self.PS_SC_limit()
         
@@ -537,7 +533,7 @@ class InjectorChain:
         dQx_SPS, dQy_SPS = self.SPS_tune_shifts(Nb_max=ionsPerBunchSPSinj) # calculate tune shifts for SPS if max new intensity is injected
         spaceChargeLimitSPS, dQx0_SPS, dQy0_SPS = self.SPS_SC_limit()
         SPS_space_charge_limit_hit = True if ionsPerBunchSPSinj > spaceChargeLimitSPS else False
-        ionsPerBunchLHC = min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * Reference_Values.SPS_transmission * self.SPS_slipstacking_transmission
+        ionsPerBunchLHC = min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * Reference_Values.SPS_transmission * Reference_Values.SPS_to_LHC_transmission
 
         result = {
             "Ion": self.ion_type,
