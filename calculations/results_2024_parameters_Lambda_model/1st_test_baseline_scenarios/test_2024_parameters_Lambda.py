@@ -22,4 +22,8 @@ for i, item in enumerate(df.items()):
         print('{:25}: {}'.format(item[0], item[1]))
 
 # Scan over all ions 
-df2 = injector_chain1.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name = '1_Baseline_with_2024_Pb_ion_parameters')
+df1 = injector_chain1.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name = '1_Baseline_with_2024_Pb_ion_parameters')
+
+# Then run similar tests, but with no electron cooling limits
+injector_chain2 = InjectorChain(account_for_LEIR_ecooling=False)
+df2 = injector_chain2.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name = '2_Baseline_with_2024_Pb_ion_parameters_no_ecooling_limits')
