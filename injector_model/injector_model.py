@@ -256,7 +256,15 @@ class InjectorChain:
         
         #### PS ####
         ionsPerBunchInjectedPS = ionsPerBunchExtractedLEIR * (self.LEIR_PS_stripping_efficiency if self.LEIR_PS_strip else ref.LEIR_PS_Transmission)
-        # Ignore PS space charge limit for now
+        
+        # Hypothetical space charge limit - calculate just to project what it would be
+        Lambda_PS = self.Lambda(charge = self.Q_PS, 
+                                           m = self.mass_GeV, 
+                                           gamma = self.PS_gamma_inj,
+                                           charge_0 = ref.Q0_PS, 
+                                           m_0 = ref.m0_GeV, 
+                                           gamma_0 = ref.gamma0_PS_inj) 
+        spaceChargeLimitPS = ref.Nb0_PS_inj * Lambda_PS # what we can successfully inject
         
         # Check that injected momentum is not too low for the PS B-field
         self.p_PS_inj = self.calcMomentum_from_gamma(self.PS_gamma_inj, self.Q_PS)
@@ -325,6 +333,7 @@ class InjectorChain:
             "SPS_gamma_inj": self.SPS_gamma_inj,
             "SPS_gamma_extr": self.SPS_gamma_extr,
             "PS_B_field_is_too_low": self.PS_B_field_is_too_low,
+            "PS_space_charge_limit_hypothetical": spaceChargeLimitPS,
             "LEIR_space_charge_limit_hit": LEIR_space_charge_limit_hit,
             "SPS_space_charge_limit_hit": SPS_space_charge_limit_hit,
             "LEIR_ratio_SC_limit_maxIntensity": spaceChargeLimitLEIR / totalIntLEIR,

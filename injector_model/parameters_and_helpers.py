@@ -105,6 +105,7 @@ class Reference_Values:
         
         ##### PS #####
         self.Nb0_PS_extr = self.Nq0_PS_extr/self.Q0_PS
+        self.Nb0_PS_inj = self.Nb0_PS_extr/self.PS_transmission
         self.gamma0_PS_inj = (self.m0_GeV + self.E_kin_per_A_PS_inj * self.A0)/self.m0_GeV
         self.gamma0_PS_extr = (self.m0_GeV + self.E_kin_per_A_PS_extr * self.A0)/self.m0_GeV
         
