@@ -57,10 +57,6 @@ class InjectorChain:
         whether to factor electron cooling time in LEIR, which is longer for lighter ions
     LEIR_PS_strip : bool
         whether stripping foil should be placed between LEIR and PS. If "False", then default stripping between PS and SPS
-    PS_factor_SC : float
-        acceptance factor, number of times by which we accept the SC limit in PS to be exceeded compared to Pb. Relies on
-        assumption that we are not limited by space charge in PS today. For example, a PS_factor_SC = 1.5 will allow SC limit to
-        cause tune shifts 1.5 higher than today. np.inf removes space charge limit entirely
     round_number_of_ecool_injections_up : bool
         whether to round up the number of Pb LEIR injections, and not down. Default is False, i.e. round down 
     """
@@ -70,7 +66,6 @@ class InjectorChain:
                  PS_splitting = 2,
                  account_for_LEIR_ecooling=True,
                  LEIR_PS_strip=False,
-                 PS_factor_SC = 1.0,
                  round_number_of_LEIR_inj_up=False
                  ):
         
@@ -88,7 +83,6 @@ class InjectorChain:
             self.nPulsesLEIR_default = nPulsesLEIR
         self.LEIR_bunches = LEIR_bunches
         self.PS_splitting = PS_splitting
-        self.PS_factor_SC = PS_factor_SC
 
     def Lambda(self, charge, m, gamma, charge_0, m_0, gamma_0):
         """
@@ -97,7 +91,7 @@ class InjectorChain:
         that space charge stays constant, and that geometric
         emittance and bunch length are constant for all ion species
         """
-        Lambda = (m/m_0)*(charge_0/charge)**2*( (gamma(gamma**2-1)) / (gamma_0(gamma_0**2-1)))  
+        Lambda = (m/m_0)*(charge_0/charge)**2*( (gamma*(gamma**2-1)) / (gamma_0*(gamma_0**2-1)))  
         return Lambda 
 
     def init_ion(self, ion_type, ion_data_custom=None) -> None:
@@ -186,7 +180,6 @@ class InjectorChain:
         self.PS_gamma_extr = ion_energy['PS_gamma_extr']
         self.SPS_gamma_inj = ion_energy['SPS_gamma_inj']
         self.SPS_gamma_extr = ion_energy['SPS_gamma_extr']
-        print('\nIon type {} with Q_PS = {}: \nPS extr gamma: {:.3f}'.format(self.ion_type, self.Q_PS, self.PS_gamma_extr))
 
 
     def beta(self, gamma):
@@ -306,22 +299,23 @@ class InjectorChain:
             "Q_SPS": int(self.Q_SPS),
             "Linac3_current [A]": self.linac3_current,
             "Linac3_pulse_length [s]": self.linac3_pulseLength, 
-            "Linac3_ionsPerPulse": ionsPerPulseLinac3,
             "LEIR_numberofPulses": self.nPulsesLEIR,
             "LEIR_injection_efficiency": Reference_Values.LEIR_injection_efficiency, 
             "LEIR_no_bunches": self.LEIR_bunches,
-            "LEIR_maxIntensity": totalIntLEIR,
-            "LEIR_space_charge_limit": spaceChargeLimitLEIR,
             "LEIR_transmission": Reference_Values.LEIR_transmission, 
-            "LEIR_extractedIonPerBunch": ionsPerBunchExtractedLEIR,
             "PS_splitting": self.PS_splitting, 
             "PS_transmission": Reference_Values.PS_transmission, 
-            "PS_maxIntensity": ionsPerBunchInjectedPS,
-            "PS_ionsExtractedPerBunch":  ionsPerBunchExtracted_PS,
             "PS_SPS_stripping_efficiency": Reference_Values.PS_SPS_stripping_efficiency, 
             "SPS_transmission": Reference_Values.SPS_transmission, 
+            "Linac3_ionsPerPulse": ionsPerPulseLinac3,
+            "LEIR_maxIntensity": totalIntLEIR,
+            "LEIR_space_charge_limit": spaceChargeLimitLEIR,
+            "LEIR_extractedIonPerBunch": ionsPerBunchExtractedLEIR,
+            "PS_maxIntensity": ionsPerBunchInjectedPS,
+            "PS_ionsExtractedPerBunch":  ionsPerBunchExtracted_PS,
             "SPS_maxIntensity": ionsPerBunchSPSinj,
             "SPS_space_charge_limit": spaceChargeLimitSPS,
+            "SPS_extracted_ions_per_bunch": min(spaceChargeLimitSPS, ionsPerBunchSPSinj) * ref.SPS_transmission,
             "LHC_ionsPerBunch": ionsPerBunchLHC,
             "LHC_chargesPerBunch": ionsPerBunchLHC * self.Z,
             "LEIR_gamma_inj": self.LEIR_gamma_inj,
@@ -338,6 +332,7 @@ class InjectorChain:
             "LEIR_Lambda": Lambda_LEIR,
             "SPS_Lambda": Lambda_SPS
         }
+        print('SPS gamma0: {:.5f}'.format(ref.gamma0_SPS_inj))
 
         # Add key of LEIR-PS stripping efficiency if this is done 
         if self.LEIR_PS_strip:

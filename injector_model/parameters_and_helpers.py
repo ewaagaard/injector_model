@@ -67,7 +67,7 @@ class Reference_Values:
     max_injections_into_LEIR = 8 #7
     E_kin_per_A_LEIR_inj = 4.2e-3 # kinetic energy per nucleon in LEIR before RF capture, same for all species
     E_kin_per_A_LEIR_extr = 7.22e-2 # kinetic energy per nucleon in LEIR at exit, same for all species
-    Nq0_LEIR_extr = 10e10  # number of observed charges extracted at LEIR
+    Nq0_LEIR_extr = 10.6e10  # 2024, best typically observed charges extracted at LEIR
     Q0_LEIR = 54.0
 
     ### PS reference case for Pb54+ --> BEFORE stripping ###
@@ -99,6 +99,7 @@ class Reference_Values:
     def __post_init__(self):
         ###### LEIR #####
         self.Nb0_LEIR_extr = self.Nq0_LEIR_extr/self.Q0_LEIR
+        self.Nb0_LEIR_inj = self.Nb0_LEIR_extr/self.LEIR_transmission
         self.gamma0_LEIR_inj = (self.m0_GeV + self.E_kin_per_A_LEIR_inj * self.A0)/self.m0_GeV
         self.gamma0_LEIR_extr = (self.m0_GeV + self.E_kin_per_A_LEIR_extr * self.A0)/self.m0_GeV
         
@@ -108,8 +109,9 @@ class Reference_Values:
         self.gamma0_PS_extr = (self.m0_GeV + self.E_kin_per_A_PS_extr * self.A0)/self.m0_GeV
         
         ##### SPS #####
-        self.Nb0_SPS_extr = 2.21e8/self.SPS_transmission # outgoing ions per bunch from SPS (2015 values), adjusted for 62% transmission
+        self.Nb0_SPS_inj = 3.94e8 # 2024 typically best observed injected stable bunch intensities
+        self.Nb0_SPS_extr = 2.8e8  # 2024 typically best observed extracted stable bunch intensities
         self.Nq0_SPS_extr = self.Nb0_SPS_extr*self.Q0_SPS
-        self.gamma0_SPS_inj = (self.m0_GeV + self.E_kin_per_A_SPS_inj * self.A0)/self.m0_GeV
+        self.gamma0_SPS_inj = (self.m0_GeV + self.E_kin_per_A_SPS_inj * self.A0)/self.m0_GeV # approximate value
         self.gamma0_SPS_extr = (self.m0_GeV + self.E_kin_per_A_SPS_extr * self.A0)/self.m0_GeV
 
