@@ -437,7 +437,7 @@ class InjectorChain:
             dataframe containing all IBS growth rates
         """        
         # Check that output directory exists
-        os.makedirs('output_csv', exist_ok=True)
+        os.makedirs('output/output_csv', exist_ok=True)
 
         # Iterate over all ions in data 
         all_ion_IBS_dict = {}
@@ -456,7 +456,7 @@ class InjectorChain:
             all_ion_IBS_dict[ion_str] = growth_rates_dict
 
         df_IBS = pd.DataFrame(all_ion_IBS_dict)
-        df_IBS.to_csv('output_csv/{}'.format(output_name))
+        df_IBS.to_csv('output/output_csv/{}'.format(output_name))
 
         return df_IBS
 
@@ -472,7 +472,8 @@ class InjectorChain:
             pandas dataframe containing result of all ions
         """
         # Check that output directory exists
-        os.makedirs('output_csv', exist_ok=True)
+        os.makedirs('output', exist_ok=True)
+        os.makedirs('output/output_csv', exist_ok=True)
         
         # Initialize full dicionary
         full_result = defaultdict(list)
@@ -499,14 +500,14 @@ class InjectorChain:
             # First save full CSV
             df_save = df_all_ions.copy()
             df_save0 = df_save.T
-            df_save0.to_csv("output_csv/{}.csv".format(output_name))
+            df_save0.to_csv("output/output_csv/{}.csv".format(output_name))
             
             # Then save copy in exponential form with decimal number for paper - only some columns
-            float_columns = df_all_ions.select_dtypes(include=['float']).columns
-            for col in float_columns:
-                df_save[col] = df_save[col].apply(lambda x: '{:.1e}'.format(x))
+            #float_columns = df_all_ions.select_dtypes(include=['float']).columns
+            #for col in float_columns:
+            #    df_save[col] = df_save[col].apply(lambda x: '{:.1e}'.format(x))
             #df_SC_and_max_intensity = df_save[['LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity', 'PS_space_charge_limit', 
             #            'SPS_maxIntensity', 'SPS_space_charge_limit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
-            df_save.to_csv("output_csv/{}_for_paper.csv".format(output_name), index=True)
+            #df_save.to_csv("output/output_csv/{}_for_paper.csv".format(output_name), index=True)
             
         return df_all_ions
