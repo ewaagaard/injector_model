@@ -52,7 +52,7 @@ def read_charge_scan_results(ion_type, output_extra_str, count, stripped):
     Nb0 = float(df1.loc['LHC_ionsPerBunch'].iloc[ind_Q_default])
 
     #### PLOTTING - performance of all charge states ####
-    fig, ax = plt.subplots(1, 1, figsize = (6,5))
+    fig, ax = plt.subplots(1, 1, figsize = (6,5), constrained_layout=True)
     #fig.suptitle(ion, fontsize=20)
     #if row['Z'] > 2.0:
     #    ax.axvspan(0.0, np.max(Q_states[Q_states / row['A'] < LinacLEIRlim]), alpha=0.25, color='coral', label='Not accessible LINAC3-LEIR')
@@ -64,7 +64,7 @@ def read_charge_scan_results(ion_type, output_extra_str, count, stripped):
     ax.set_ylabel('LHC bunch intensity')
     ax.set_xlabel('LEIR charge state')
     ax.legend(fontsize=12)
-    fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+    #fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     fig.savefig('output/figures/{}_{}_LEIR_charge_state_scan{}.png'.format(ion_type, output_extra_str, ecool_str), dpi=250)
     plt.close()
     

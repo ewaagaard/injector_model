@@ -10,22 +10,27 @@ from injector_model import InjectorChain
 import numpy as np
 from pathlib import Path
 import os
+import re
 
 # Load ion data and initialize for test for bunch intensities 
 data_folder = Path(__file__).resolve().parent.joinpath('../../../data').absolute()
 os.makedirs('output/figures', exist_ok=True)
 os.makedirs('output/output_for_paper', exist_ok=True)
 
-
 # Compare to reference intensities - WG5 and Roderik
 ref_Table_SPS = pd.read_csv('{}/test_and_benchmark_data/SPS_final_intensities_WG5_and_Hannes.csv'.format(data_folder), index_col=0)
 Roderik_LHC_charges_per_bunch = pd.read_csv('{}/test_and_benchmark_data/Roderik_2021_LHC_charges_per_bunch_output.csv'.format(data_folder), index_col=0)
 ref_val = Roderik_LHC_charges_per_bunch.sort_values('Z')
 
+# Function to convert to LaTeX-style charge states
+def convert_ion_charge_state_label(ion_str, charge):
+    return f"{ion_str}$^{{{charge}+}}$"
+
+
 # Define all relevant scenarios (baseline, stripping, PS splitting, etc) in a function
 def calculate_LHC_intensities_all_scenarios(output_extra_str = '', # to identify case
                                             savefig=True,
-                                            generate_tables_for_paper = False,
+                                            generate_tables_for_paper = True,
                                             return_dataframes = False 
                                             ):
     
@@ -33,7 +38,7 @@ def calculate_LHC_intensities_all_scenarios(output_extra_str = '', # to identify
     output_1 = '1_baseline{}'.format(output_extra_str)
     injector_chain1 = InjectorChain(LEIR_bunches = 2,
                                     PS_splitting = 2,
-                                    account_for_LEIR_ecooling=True
+                                    LEIR_PS_strip=False
                                     )
     result = injector_chain1.calculate_LHC_bunch_intensity()
     
@@ -42,10 +47,16 @@ def calculate_LHC_intensities_all_scenarios(output_extra_str = '', # to identify
     
     if generate_tables_for_paper:
         # output in single-decimal exponential_notation
-        df_SC_and_max_intensity = df[['LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity', 'PS_space_charge_limit', 
-        			'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
+        df_SC_and_max_intensity = df[["LEIR_numberofPulses", 'LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity',
+        			'SPS_maxIntensity', 'SPS_space_charge_limit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
         for col in df_SC_and_max_intensity.columns:
             df_SC_and_max_intensity[col] = df_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
+            
+        # Convert labels to LaTex friendly charge states
+        latex_labels1 = []
+        for i, label in enumerate(df_SC_and_max_intensity.index):
+            latex_labels1.append(convert_ion_charge_state_label(label, df["Q_LEIR"].iloc[i]))
+        df_SC_and_max_intensity.index = latex_labels1
         df_SC_and_max_intensity.to_csv('output/output_for_paper/{}_for_paper.csv'.format(output_1), index=True)
     
     
@@ -54,15 +65,21 @@ def calculate_LHC_intensities_all_scenarios(output_extra_str = '', # to identify
     output_2 ='2_no_PS_splitting{}'.format(output_extra_str)
     injector_chain2 = InjectorChain(LEIR_bunches = 2,
                                     PS_splitting = 1,
-                                    account_for_LEIR_ecooling=True
+                                    LEIR_PS_strip=False
                                     )
     df2 = injector_chain2.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name=output_2)
     
     if generate_tables_for_paper:
-        df2_SC_and_max_intensity = df2[['LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity', 'PS_space_charge_limit', 
-        			'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
+        df2_SC_and_max_intensity = df2[["LEIR_numberofPulses", 'LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity',
+        			'SPS_maxIntensity', 'SPS_space_charge_limit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
         for col in df2_SC_and_max_intensity.columns:
             df2_SC_and_max_intensity[col] = df2_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
+            
+        # Convert labels to LaTex friendly charge states
+        latex_labels2 = []
+        for i, label in enumerate(df2_SC_and_max_intensity.index):
+            latex_labels2.append(convert_ion_charge_state_label(label, df2["Q_LEIR"].iloc[i]))
+        df2_SC_and_max_intensity.index = latex_labels2
         df2_SC_and_max_intensity.to_csv('output/output_for_paper/{}_for_paper.csv'.format(output_2), index=True)
     
     
@@ -71,16 +88,21 @@ def calculate_LHC_intensities_all_scenarios(output_extra_str = '', # to identify
     
     injector_chain3 = InjectorChain(LEIR_bunches = 2,
                                     PS_splitting = 2,
-                                    account_for_LEIR_ecooling=True,
                                     LEIR_PS_strip=True)
     
     df3 = injector_chain3.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name=output_3)
     
     if generate_tables_for_paper:
-        df3_SC_and_max_intensity = df3[['LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity', 'PS_space_charge_limit', 
-        			'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
+        df3_SC_and_max_intensity = df3[["LEIR_numberofPulses", 'LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity',
+        			'SPS_maxIntensity', 'SPS_space_charge_limit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
         for col in df3_SC_and_max_intensity.columns:
             df3_SC_and_max_intensity[col] = df3_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
+            
+        # Convert labels to LaTex friendly charge states
+        latex_labels3 = []
+        for i, label in enumerate(df3_SC_and_max_intensity.index):
+            latex_labels3.append(convert_ion_charge_state_label(label, df3["Q_LEIR"].iloc[i]))
+        df3_SC_and_max_intensity.index = latex_labels3
         df3_SC_and_max_intensity.to_csv('output/output_for_paper/{}_for_paper.csv'.format(output_3), index=True)
     
     
@@ -88,16 +110,20 @@ def calculate_LHC_intensities_all_scenarios(output_extra_str = '', # to identify
     output_4 = '4_no_PS_splitting_and_LEIR_PS_stripping{}'.format(output_extra_str)
     injector_chain4 = InjectorChain(LEIR_bunches = 2,
                                     PS_splitting = 1,
-                                    account_for_LEIR_ecooling=True,
                                     LEIR_PS_strip=True
                                     )
     df4 = injector_chain4.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name=output_4)
     
     if generate_tables_for_paper:
-        df4_SC_and_max_intensity = df4[['LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity', 'PS_space_charge_limit', 
-        			'SPS_maxIntensity', 'SPS_spaceChargeLimit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
+        df4_SC_and_max_intensity = df4[["LEIR_numberofPulses", 'LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity',
+        			'SPS_maxIntensity', 'SPS_space_charge_limit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
         for col in df4_SC_and_max_intensity.columns:
             df4_SC_and_max_intensity[col] = df4_SC_and_max_intensity[col].apply(lambda x: '{:.1e}'.format(x))
+        # Convert labels to LaTex friendly charge states
+        latex_labels4 = []
+        for i, label in enumerate(df4_SC_and_max_intensity.index):
+            latex_labels4.append(convert_ion_charge_state_label(label, df4["Q_LEIR"].iloc[i]))
+        df4_SC_and_max_intensity.index = latex_labels4
         df4_SC_and_max_intensity.to_csv('output/output_for_paper/{}_for_paper.csv'.format(output_4), index=True)
     
     #### PLOT THE DATA #######

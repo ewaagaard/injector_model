@@ -17,6 +17,10 @@ os.makedirs('output', exist_ok=True)
 # Define output string for optimistic value
 ions_not_stripped = ['He', 'O', 'Mg', 'Ar'] #'Kr' performs better with stripping
 
+# Function to convert to LaTeX-style charge states
+def convert_ion_charge_state_label(ion_str, charge):
+    return f"{ion_str}$^{{{charge}+}}$"
+
 # Load reference ion data
 ion_data = pd.read_csv("../../../data/Ion_species.csv", header=0, index_col=0).T
 mass_number = ion_data.loc['A']
@@ -39,7 +43,7 @@ isotope_dict['Best A'] = np.array(list(map(float, isotope_dict['Best A'])))
 
 #### BASELINE ####
 # Load baseline result - from baseline scenario
-full_result_baseline = pd.read_csv('../001_baseline_scenarios/output_csv/1_baseline.csv', index_col=0)
+full_result_baseline = pd.read_csv('../001_baseline_scenarios/output/output_csv/1_baseline.csv', index_col=0)
 
 #### OPTIMISTIC ####
 # --> find currents, charge states (isotopes not for now)
@@ -89,6 +93,11 @@ for col in float_columns:
     df_save[col] = df_save[col].apply(lambda x: '{:.1e}'.format(x))
 df_SC_and_max_intensity = df_save[['LEIR_numberofPulses_ecooling', 'LEIR_maxIntensity', 'LEIR_space_charge_limit', 'PS_maxIntensity',
             'SPS_maxIntensity', 'SPS_space_charge_limit', 'LHC_ionsPerBunch', 'LHC_chargesPerBunch']]
+# Convert labels to LaTex friendly charge states
+latex_labels1 = []
+for i, label in enumerate(df_SC_and_max_intensity.index):
+    latex_labels1.append(convert_ion_charge_state_label(label, df_optimistic["Q_LEIR"].iloc[i]))
+df_SC_and_max_intensity.index = latex_labels1
 df_SC_and_max_intensity.to_csv('output/2_no_PS_bunch_splitting_optimistic_for_paper.csv', index=True)
 
 ratio = df_optimistic['LHC_ionsPerBunch'] / full_result_baseline.T['LHC_ionsPerBunch'].astype(float)

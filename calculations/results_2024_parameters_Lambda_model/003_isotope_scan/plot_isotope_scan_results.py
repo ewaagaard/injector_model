@@ -58,7 +58,7 @@ def read_isotope_scan_results(ion_type, output_extra_str, count):
     Nb0 = float(df1.loc['LHC_ionsPerBunch'].iloc[ind_A_default])
 
     #### PLOTTING - performance of all charge states ####
-    fig, ax = plt.subplots(1, 1, figsize = (6,5))
+    fig, ax = plt.subplots(1, 1, figsize = (6,5), constrained_layout=True)
     ax.plot(A_default, Nb0, 'ro', markersize=13, alpha=0.8, label='1: Baseline with\ndefault charge state')
     ax.plot(A_states, np.array(list(map(float, df1.loc['LHC_ionsPerBunch'].values))), marker='o', color='blue', linewidth=4.2, linestyle='-', label='1: Baseline')
     ax.plot(A_states, np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))), marker='o', linestyle='--', color='gold', linewidth=3.8, label='2: No PS splitting') #
@@ -70,7 +70,7 @@ def read_isotope_scan_results(ion_type, output_extra_str, count):
         ax.tick_params(axis='x', which='major', labelsize=12)
     ax.set_xlabel('Mass number A')
     ax.legend(fontsize=12)
-    fig.tight_layout()
+    #fig.tight_layout()
     fig.savefig('output/figures/{}{}_isotope_state_scan{}.png'.format(ion_type, output_extra_str, ecool_str), dpi=250)
     plt.close()
     
