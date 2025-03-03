@@ -130,6 +130,7 @@ class InjectionEnergies:
         self.Brho_PS_inj = self.calcBrho(self.p_PS_inj, q_PS) # same as LEIR extraction if no stripping, else will be different  
         
         B_PS_inj = self.Brho_PS_inj / self.PS_rho
+        print(f'B-field as PS injection: {B_PS_inj}')
 
         # Check if Brho in PS is too low or too high 
         if B_PS_inj < self.PS_MinB:
