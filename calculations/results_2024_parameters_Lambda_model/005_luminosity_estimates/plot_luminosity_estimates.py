@@ -16,8 +16,13 @@ index = ['O', 'Ar', 'Ca', 'Kr', 'In', 'Xe', 'Pb']
 x = np.arange(len(index))
 bar_width = 0.19
 
-df_AA = pd.read_csv('ion_lumi_1month_AA_2025.csv', index_col=0)
-df_NN = pd.read_csv('ion_lumi_1month_NN_2025.csv', index_col=0)
+# Old 2024 scaled values
+#df_AA = pd.read_csv('ion_lumi_1month_AA_2025.csv', index_col=0)
+#df_NN = pd.read_csv('ion_lumi_1month_NN_2025.csv', index_col=0)
+
+# New 2025 values considering emittance evolution during LHC fill
+df_AA = pd.read_excel('natalia_2025_data/ion_lumi_1month_AA_2025.xlsx', index_col=0)
+df_NN = pd.read_excel('natalia_2025_data/ion_lumi_1month_NN_2025.xlsx', index_col=0)
 
 # Plot integrated luminosity
 fig, ax = plt.subplots(1, 1, figsize = (6,5), constrained_layout=True)
