@@ -44,13 +44,14 @@ def read_isotope_scan_results(ion_type, output_extra_str, count):
     output_3 = '3_LEIR_PS_stripping{}'.format(output_extra_str)
     output_4 = '4_no_PS_splitting_and_LEIR_PS_stripping{}'.format(output_extra_str)
     
-    df1 = pd.read_csv("output/isotope_scan_results/{}_{}{}.csv".format(ion_type, output_1, ecool_str), header=3, index_col=0)
-    df2 = pd.read_csv("output/isotope_scan_results/{}_{}{}.csv".format(ion_type, output_2, ecool_str), header=3, index_col=0)
-    df3 = pd.read_csv("output/isotope_scan_results/{}_{}{}.csv".format(ion_type, output_3, ecool_str), header=3, index_col=0)
-    df4 = pd.read_csv("output/isotope_scan_results/{}_{}{}.csv".format(ion_type, output_4, ecool_str), header=3, index_col=0)
+    df1 = pd.read_csv("output/isotope_scan_results/{}_{}{}.csv".format(ion_type, output_1, ecool_str), header=1, index_col=0)
+    df2 = pd.read_csv("output/isotope_scan_results/{}_{}{}.csv".format(ion_type, output_2, ecool_str), header=1, index_col=0)
+    df3 = pd.read_csv("output/isotope_scan_results/{}_{}{}.csv".format(ion_type, output_3, ecool_str), header=1, index_col=0)
+    df4 = pd.read_csv("output/isotope_scan_results/{}_{}{}.csv".format(ion_type, output_4, ecool_str), header=1, index_col=0)
     
     # Convert strings of charge states to numpy array
-    A_states = np.array(list(map(int, df1.columns.values)))
+    #A_states = np.array(list(map(int, df1.columns.values)))
+    A_states = np.array(list(map(int, df1.loc['massNumber'])))
     
     # Find default isotope and its performance in baseline scenario
     A_default = full_ion_data[ion_type]['A']
@@ -73,30 +74,51 @@ def read_isotope_scan_results(ion_type, output_extra_str, count):
     #fig.tight_layout()
     fig.savefig('output/figures/{}{}_isotope_state_scan{}.png'.format(ion_type, output_extra_str, ecool_str), dpi=250)
     plt.close()
+
+    #### PLOTTING - performance of all charge states ####
+    fig2, ax2 = plt.subplots(1, 1, figsize = (6,5), constrained_layout=True)
+    ax2.plot(A_default, Nb0*A_default, 'ro', markersize=13, alpha=0.8, label='1: Baseline with\ndefault charge state')
+    ax2.plot(A_states, np.array(list(map(float, df1.loc['LHC_ionsPerBunch'].values))) * np.array(list(map(float, df1.loc['massNumber'].values))), marker='o', color='blue', linewidth=4.2, linestyle='-', label='1: Baseline')
+    ax2.plot(A_states, np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))) * np.array(list(map(float, df2.loc['massNumber'].values))), marker='o', linestyle='--', color='gold', linewidth=3.8, label='2: No PS splitting') #
+    ax2.plot(A_states, np.array(list(map(float, df3.loc['LHC_ionsPerBunch'].values))) * np.array(list(map(float, df3.loc['massNumber'].values))), marker='o', linestyle='-.', color='limegreen', linewidth=3.5, label='3: LEIR-PS stripping') #
+    ax2.plot(A_states, np.array(list(map(float, df4.loc['LHC_ionsPerBunch'].values))) * np.array(list(map(float, df1.loc['massNumber'].values))), marker='o', linestyle='--', color='gray', linewidth=3, label='4: LEIR-PS stripping, \nno PS splitting') #
+    plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
+    ax2.set_ylabel('LHC nucleons per bunch')
+    if ion_type == 'Xe':
+        ax2.tick_params(axis='x', which='major', labelsize=12)
+    ax2.set_xlabel('Mass number A')
+    ax2.legend(fontsize=12)
+    #fig.tight_layout()
+    fig2.savefig('output/figures/{}{}_isotope_state_scan_nucleons_{}.png'.format(ion_type, output_extra_str, ecool_str), dpi=250)
+    plt.close()
     
     # Also fill in the combined superplot
     row3 = (count-1) // num_cols  # Row index
     col3 = (count-1) % num_cols  # Column index
     ax3 = axs[row3, col3]  # Select the current subplot
-    ax3.plot(A_default, Nb0, 'ro', markersize=13, alpha=0.8, label='1: Baseline with\ndefault charge state')
-    ax3.plot(A_states, np.array(list(map(float, df1.loc['LHC_ionsPerBunch'].values))), marker='o', color='blue', linewidth=4.2, linestyle='-', label='1: Baseline')
-    ax3.plot(A_states, np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))), marker='o', linestyle='--', color='gold', linewidth=3.8, label='2: No PS splitting') #
-    ax3.plot(A_states, np.array(list(map(float, df3.loc['LHC_ionsPerBunch'].values))), marker='o', linestyle='-.', color='limegreen', linewidth=3.5, label='3: LEIR-PS stripping') #
-    ax3.plot(A_states, np.array(list(map(float, df4.loc['LHC_ionsPerBunch'].values))), marker='o', linestyle='--', color='gray', linewidth=3, label='4: LEIR-PS stripping, \nno PS splitting') #
+    ax3.plot(A_default, Nb0 * A_default, 'ro', markersize=13, alpha=0.8, label='1: Baseline with\ndefault charge state')
+    ax3.plot(A_states, np.array(list(map(float, df1.loc['LHC_ionsPerBunch'].values))) * np.array(list(map(float, df1.loc['massNumber'].values))), marker='o', color='blue', linewidth=4.2, linestyle='-', label='1: Baseline')
+    ax3.plot(A_states, np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))) * np.array(list(map(float, df2.loc['massNumber'].values))), marker='o', linestyle='--', color='gold', linewidth=3.8, label='2: No PS splitting') #
+    ax3.plot(A_states, np.array(list(map(float, df3.loc['LHC_ionsPerBunch'].values))) * np.array(list(map(float, df3.loc['massNumber'].values))), marker='o', linestyle='-.', color='limegreen', linewidth=3.5, label='3: LEIR-PS stripping') #
+    ax3.plot(A_states, np.array(list(map(float, df4.loc['LHC_ionsPerBunch'].values))) * np.array(list(map(float, df4.loc['massNumber'].values))), marker='o', linestyle='--', color='gray', linewidth=3, label='4: LEIR-PS stripping, \nno PS splitting') #
     ax3.tick_params(axis='both', which='major', labelsize=14)
     ax3.xaxis.set_major_locator(MaxNLocator(integer=True))
     
     # Determine where to place ion label
     if count == 1:
         vtext_loc = 0.81
-    elif count>1 and count<7:
-        vtext_loc = 0.65
+    elif count>1 and count<4:
+        vtext_loc = 0.5
+    elif count == 4:
+        vtext_loc = 0.64
+    elif count>4 and count<7:
+        vtext_loc = 0.48
     elif count == 7:
         vtext_loc = 0.42
     elif count == 8:
         vtext_loc = 0.6
     else:
-        vtext_loc = 0.45
+        vtext_loc = 0.41
     
     ax3.text(0.023, vtext_loc, '{}'.format(ion_type), fontsize=18, weight='bold', transform=ax3.transAxes)
     #ax3.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
@@ -110,17 +132,22 @@ def read_isotope_scan_results(ion_type, output_extra_str, count):
     print('Default A: {}'.format(A_default))
     print('Scenario 2: no bunch splitting')
     Nb0_case2 = float(df2.loc['LHC_ionsPerBunch'].iloc[ind_A_default])
+    A0_case2 = float(df2.loc['massNumber'].iloc[ind_A_default])
     Nb_case2_relative = np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))) / Nb0_case2
+    nucleons_case2_relative = (np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))) * np.array(list(map(float, df2.loc['massNumber'].values))) ) / (Nb0_case2 * A0_case2)
     ind_A_max = np.argmax(Nb_case2_relative)
+    ind_nucleon_max = np.argmax(nucleons_case2_relative)
     print('Best A = {}, with {:.2f} percent of outgoing Nb\n'.format(A_states[ind_A_max], 100 * Nb_case2_relative[ind_A_max]))
+    print('A max index: {}, nucleon max index: {}'.format(ind_A_max, ind_nucleon_max))
     
-    return A_states[ind_A_max], float(Nb_case2_relative[ind_A_max])
+    return A_states[ind_A_max], float(Nb_case2_relative[ind_A_max]), float(nucleons_case2_relative[ind_A_max])
     
 
 # Make empty dictionary 
 isotope_dict = {'Ion' : [],
                 'Best A': [],
-                'Scenario2_Nb0_improvement_factor': []
+                'Scenario2_Nb0_improvement_factor': [],
+                'Scenario2_nucleon_improvement_factor': []
                 }
 
 # Keep track of subplot position
@@ -130,11 +157,12 @@ count = 1
 for ion_type in full_ion_data.columns:
 
     # Plot results
-    best_A, improvement_Nb_case2_rel = read_isotope_scan_results(ion_type, '', count)
+    best_A, improvement_Nb_case2_rel, improvement_nucleon_case2_rel = read_isotope_scan_results(ion_type, '', count)
     
     isotope_dict['Ion'].append(ion_type)
     isotope_dict['Best A'].append(best_A)
     isotope_dict['Scenario2_Nb0_improvement_factor'].append(improvement_Nb_case2_rel)
+    isotope_dict['Scenario2_nucleon_improvement_factor'].append(improvement_nucleon_case2_rel)
     
     count += 1
     
@@ -148,7 +176,7 @@ axs[-1, -1].axis('off')
 
 # Share y-label for the same row
 for row in axs:
-    row[0].set_ylabel('$N_{b}$ into LHC', fontsize=13)
+    row[0].set_ylabel('$\mathcal{N}_{b}$ into LHC', fontsize=13)
 
 #### PLOT SETTINGS #######
 fig0.savefig('output/figures/Combined_isotope_scan.png', dpi=250)
