@@ -12,3 +12,8 @@ inj2 = InjectorChain(ion_type='O')
 inj2.linac3_current = 90e-6
 result_90A = inj2.calculate_LHC_bunch_intensity()
 
+print('70 A:')
+result_70A
+
+print('90 A:')
+result_90A
