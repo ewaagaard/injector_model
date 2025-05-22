@@ -1,6 +1,6 @@
 "Ion","Z","A","Q before stripping","mass [GeV]","LEIR-PS Stripping Efficiency","Linac3 current [uA]","Linac3 pulse length [us]","Relative_LEIR_ecooling_time"
 "He",2,4,1,3.72738,0.9,160,200,48.81
-"O",8,16,4,14.8951,0.9,70,200,11.32
+"O",8,16,4,14.8951,0.9,90,200,11.32
 "Mg",12,24,7,22.36,0.9,20,200,5.89
 "Ar",18,40,11,37.2156,0.9,60,200,4.1
 "Ca",20,40,17,37.2147,0.9,25,200,1.85
