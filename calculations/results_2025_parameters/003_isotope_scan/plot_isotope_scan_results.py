@@ -103,6 +103,7 @@ def read_isotope_scan_results(ion_type, output_extra_str, count):
     ax3.plot(A_states, np.array(list(map(float, df4.loc['LHC_ionsPerBunch'].values))) * np.array(list(map(float, df4.loc['massNumber'].values))), marker='o', linestyle='--', color='gray', linewidth=3, label='4: LEIR-PS stripping, \nno PS splitting') #
     ax3.tick_params(axis='both', which='major', labelsize=14)
     ax3.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax3.grid(alpha=0.45)
     
     # Determine where to place ion label
     if count == 1:

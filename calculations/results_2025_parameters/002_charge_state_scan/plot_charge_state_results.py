@@ -80,6 +80,7 @@ def read_charge_scan_results(ion_type, output_extra_str, count, stripped):
     ax3.tick_params(axis='both', which='major', labelsize=14)
     ax3.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax3.text(0.023, 0.71, '{}'.format(ion_type), fontsize=18, weight='bold', transform=ax3.transAxes, color='teal' if stripped else 'purple')
+    ax3.grid(alpha=0.45)
     #ax3.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
     
     # Add legend in oxygen plot
