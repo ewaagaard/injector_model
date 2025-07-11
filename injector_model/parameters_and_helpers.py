@@ -14,6 +14,8 @@ from dataclasses import dataclass
 import pandas as pd
 
 data_folder = Path(__file__).resolve().parent.joinpath('../data').absolute()
+# Load precalculated PS lifetimes
+ps_tau = pd.read_csv('{}/ps_lifetimes_and_transmissions/PS_tau_values.csv'.format(data_folder), index_col=0) 
 
 @dataclass
 class BeamParams_SPS:
@@ -63,6 +65,7 @@ class Reference_Values:
     ion_type : str = 'Pb'
     Q_PS : int = 54
     PS_split : int = 2
+    LEIR_PS_strip : bool = False
     account_for_PS_rest_gas : bool = True
     m0_GeV = 193.687 # rest mass in GeV for Pb reference case 
     A0 : int = 208  # mass number
@@ -109,8 +112,20 @@ class Reference_Values:
         self.gamma0_LEIR_extr = (self.m0_GeV + self.E_kin_per_A_LEIR_extr * self.A0)/self.m0_GeV
         
         ##### PS #####        
-        # PS transmission depends on beam-gas lifetime, which depends on ion type. Load pre-calculated excel file with value
         cycle_length = 1.2*self.PS_split
+        # PS transmission depends on beam-gas lifetime, which depends on ion type. Load pre-calculated excel file with value        
+        # Assume that we have around unknwon 2.5% losses as observed for Pb, rest is from beam-gas interactions
+        if self.account_for_PS_rest_gas and not self.LEIR_PS_strip:
+            tau_PS_average = ps_tau['tau_PS_avg']['{}{}'.format(self.ion_type, int(self.Q_PS))]
+            
+            # inversely add unknown loss factor and beam-gas interactions 
+            tau_unknown_loss = -2.4/np.log(0.975) # assume Pb beam loses 2% over 2.4 seconds
+            tau_total = 1/(1/tau_PS_average + 1/tau_unknown_loss)
+            self.PS_transmission = min(np.exp(-cycle_length/tau_total), 0.92)
+        # Else flatten at 92%
+        else:
+            self.PS_transmission = 0.92 # typical transmission end of 2024-11 
+        '''
         if self.ion_type == 'O' and self.Q_PS == 4 and self.account_for_PS_rest_gas:
             self.PS_transmission = np.exp(-cycle_length/4.4) # average PS lifetime measured on 2025-06-17
         elif self.ion_type == 'O' and self.Q_PS == 5 and self.account_for_PS_rest_gas:
@@ -121,6 +136,7 @@ class Reference_Values:
             self.PS_transmission = np.exp(-cycle_length/7.65) # calculated average lifetime over cycle
         else:
             self.PS_transmission = 0.92 # typical transmission end of 2024-11  #0.95
+        '''
         print('Ion type: {} with Q_PS = {}'.format(self.ion_type, self.Q_PS))
         print('Account for rest gas in PS transmission: {}, assume transmission = {} for cycle length: {:.1f} s'.format(self.account_for_PS_rest_gas, self.PS_transmission,
                                                                                                                         cycle_length))

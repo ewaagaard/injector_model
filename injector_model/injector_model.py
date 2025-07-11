@@ -217,7 +217,7 @@ class InjectorChain:
         through Linac3, LEIR, PS and SPS considering full lattice integral space charge limits of the injectors
         """        
         # Instantiate reference values
-        ref = Reference_Values(self.ion_type, self.Q_PS, self.PS_splitting, self.account_for_PS_rest_gas)
+        ref = Reference_Values(self.ion_type, self.Q_PS, self.PS_splitting, self.LEIR_PS_strip, self.account_for_PS_rest_gas)
         
         ### LINAC3 ### 
         ionsPerPulseLinac3 = (self.linac3_current * self.linac3_pulseLength) / (self.Q_LEIR * constants.e)
