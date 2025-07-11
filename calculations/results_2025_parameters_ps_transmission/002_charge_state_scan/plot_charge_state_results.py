@@ -93,7 +93,10 @@ def read_charge_scan_results(ion_type, output_extra_str, count, stripped):
     print('Scenario 2: no bunch splitting')
     Nb0_case2 = float(df2.loc['LHC_ionsPerBunch'].iloc[ind_Q_default])
     Nb_case2_relative = np.array(list(map(float, df2.loc['LHC_ionsPerBunch'].values))) / Nb0_case2
-    ind_Q_max = np.argmax(Nb_case2_relative)
+    if ion_type == 'O':
+        ind_Q_max = 1 # we exclude O6+ as LEIR cannot handle these energies
+    else:
+        ind_Q_max = np.argmax(Nb_case2_relative)
     print('Best Q = {}, with {:.2f} percent of outgoing Nb\n'.format(Q_states[ind_Q_max], 100 * Nb_case2_relative[ind_Q_max]))
     
     return Q_states[ind_Q_max], float(Nb_case2_relative[ind_Q_max])

@@ -115,6 +115,8 @@ class Reference_Values:
             self.PS_transmission = np.exp(-cycle_length/4.4) # average PS lifetime measured on 2025-06-17
         elif self.ion_type == 'O' and self.Q_PS == 5 and self.account_for_PS_rest_gas:
             self.PS_transmission = np.exp(-cycle_length/3.6) # calculated average lifetime over cycle
+        elif self.ion_type == 'O' and self.Q_PS == 6 and self.account_for_PS_rest_gas:
+            self.PS_transmission = 0.9 # assumed transmission with average PS lifetime of 24 s
         elif self.ion_type == 'Mg' and self.account_for_PS_rest_gas:
             self.PS_transmission = np.exp(-cycle_length/7.65) # calculated average lifetime over cycle
         else:

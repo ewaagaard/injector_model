@@ -148,6 +148,9 @@ for ion_type in full_ion_data.columns:
         df = pd.read_parquet(ion_path)
         print('\nIon type: {}, STRIPPED'.format(ion_type))
 
+        # Remove not relevant charge states, cannot go above Z
+        df = df.drop(df[df['Charge state'] > full_ion_data[ion_type].Z].index)
+
         Q_dist = df['Charge state']
         Linac3_current = df['Linac3 current']
 

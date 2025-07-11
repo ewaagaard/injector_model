@@ -1,0 +1,31 @@
+"""
+Main script to take calculated projectile input and compute PS lifetime from beam-gas interactions
+"""
+import pandas as pd
+import beam_gas_collisions
+import numpy as np
+
+# Load pre-calculated projectile data
+class DataObject:
+    def __init__(self):
+        self.projectile_data = pd.read_csv('PS_SPS_strip_all_projectile_data.csv', index_col=0)
+
+# Load data 
+projectile = 'Pb54'
+data = DataObject()
+
+# Instantiate classes for LEIR, PS, SPS
+PS = beam_gas_collisions.IonLifetimes(machine='PS')
+taus_PS = np.zeros(len(data.projectile_data))
+
+i = 0
+for projectile, row in data.projectile_data.iterrows():
+    PS.projectile = projectile
+    PS.set_projectile_data(data)
+    taus_PS[i] = PS.calculate_total_lifetime_full_gas()
+    i += 1
+
+df_tau = pd.DataFrame({'Projectile': data.projectile_data.index, 
+                       'tau_PS': taus_PS})
+df_tau = df_tau.set_index(df_tau.columns[0])
+df_tau.to_csv('PS_tau_values.csv')
