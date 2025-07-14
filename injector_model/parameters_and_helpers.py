@@ -112,7 +112,7 @@ class Reference_Values:
         self.gamma0_LEIR_extr = (self.m0_GeV + self.E_kin_per_A_LEIR_extr * self.A0)/self.m0_GeV
         
         ##### PS #####        
-        cycle_length = 1.2*self.PS_split
+        cycle_length = 1.2 #*self.PS_split --> beam stays only 1.2 s in any case, even if split into 2
         # PS transmission depends on beam-gas lifetime, which depends on ion type. Load pre-calculated excel file with value        
         # Assume that we have around unknwon 2.5% losses as observed for Pb, rest is from beam-gas interactions
         if self.account_for_PS_rest_gas and not self.LEIR_PS_strip:
