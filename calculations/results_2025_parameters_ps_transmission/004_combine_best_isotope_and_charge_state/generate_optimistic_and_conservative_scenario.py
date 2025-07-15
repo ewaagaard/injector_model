@@ -105,14 +105,14 @@ print('Final ratio optimistic vs baseline:\n{}'.format(ratio))
 
 # Make new dataframe with optimistic and baseline scenario
 df_both = pd.DataFrame()
-df_both['Baseline LHC_ionsPerBunch'] = full_result_baseline.T['LHC_ionsPerBunch'].astype(float)
-df_both['Optimistic LHC_ionsPerBunch'] = df_optimistic['LHC_ionsPerBunch']
-df_both['Ratio opt over conserv'] = ratio
+df_both['Baseline_LHC_ionsPerBunch'] = full_result_baseline.T['LHC_ionsPerBunch'].astype(float)
+df_both['Optimistic_LHC_ionsPerBunch'] = df_optimistic['LHC_ionsPerBunch']
+df_both['Ratio_opt_over_conserv'] = ratio
 df_both.to_csv('output/Baseline_vs_optimistic_scenario.csv')
 
 # Print baseline ratio vs Roderik's baseline values from 2021 - in charges per bunch
 print('Ratio number of charges into LHC: new baseline with ecooling / Roderik 2021 values:')
-print(df_both['Baseline LHC_ionsPerBunch'] * ion_data.T['Z'] / Roderik_values['Baseline'])
+print(df_both['Baseline_LHC_ionsPerBunch'] * ion_data.T['Z'] / Roderik_values['Baseline'])
 
 # Define bar width for bar plot
 bar_width2 = 0.25
@@ -120,8 +120,8 @@ x = np.arange(len(df_both.index))
 
 fig3, ax3 = plt.subplots(1, 1, figsize = (6,5))
 bar31 = ax3.bar(x - bar_width2, ref_Table_SPS['WG5 Intensity'] * ion_data.T['A'], bar_width2, color='red', label='WG5') #
-bar32 = ax3.bar(x, df_both['Baseline LHC_ionsPerBunch'] * ion_data.T['A'], bar_width2, color='blue', label='Baseline scenario') #
-bar33 = ax3.bar(x + bar_width2, df_both['Optimistic LHC_ionsPerBunch'] * ion_data.T['A'], bar_width2, color='lime', label='Optimistic scenario') #
+bar32 = ax3.bar(x, df_both['Baseline_LHC_ionsPerBunch'] * ion_data.T['A'], bar_width2, color='blue', label='Baseline scenario') #
+bar33 = ax3.bar(x + bar_width2, df_both['Optimistic_LHC_ionsPerBunch'] * ion_data.T['A'], bar_width2, color='lime', label='Optimistic scenario') #
 ax3.set_xticks(x)
 ax3.set_xticklabels(df_both.index)
 ax3.set_ylabel("Nucleons per bunch")
