@@ -14,16 +14,21 @@ class InjectionEnergies:
     def __init__(self,
                  A,
                  Q_low, # charge state after linac3
-                 m_ion_in_u, # mass in atomic units (Dalton)
+                 m_ion, 
                  Z,
-                 LEIR_PS_strip=False
+                 LEIR_PS_strip=False,
+                 mass_is_in_u = True  # whether mass in atomic units (Dalton) or in eV
                  ):
         self.A = A
         self.Z = Z
         self.Q_low = Q_low
         self.Q_high = Z # charge state after next stripping - this is full stripping, meaning Z
-        self.m_ion_in_u = m_ion_in_u
-        self.m_ion = m_ion_in_u * constants.physical_constants['atomic mass unit-electron volt relationship'][0] 
+        if mass_is_in_u:
+            self.m_ion_in_u = m_ion
+            self.m_ion = self.m_ion_in_u * constants.physical_constants['atomic mass unit-electron volt relationship'][0] 
+        else:
+            self.m_ion = self.m_ion
+            self.m_ion_in_u = self.m_ion / constants.physical_constants['atomic mass unit-electron volt relationship'][0]
         self.LEIR_PS_strip = LEIR_PS_strip  # if stripping occurs between LEIR-PS or PS-SPS (as today)
 
         # Magnetic rigidity of different accelerators 
@@ -220,6 +225,9 @@ class InjectionEnergies:
             "PS_gamma_extr": self.gamma_PS_extr,
             "SPS_gamma_inj": self.gamma_SPS_inj,
             "SPS_gamma_extr": self.gamma_SPS_extr,
+            "LEIR_beta_inj": self.beta_from_gamma(self.gamma_LEIR_inj),
+            "PS_beta_inj": self.beta_from_gamma(self.gamma_PS_inj),
+            "SPS_beta_inj": self.beta_from_gamma(self.gamma_SPS_inj),
             "LEIR_Ekin_per_u_inj": 1e-9 * self.E_kin_per_u_LEIR_inj,
             "LEIR_Ekin_per_u_extr": 1e-9 * self.E_kin_per_u_LEIR_extr,
             "PS_Ekin_per_u_inj": 1e-9 * self.E_kin_per_u_PS_inj,

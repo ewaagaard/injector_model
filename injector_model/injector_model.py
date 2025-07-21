@@ -66,12 +66,14 @@ class InjectorChain:
                  PS_splitting = 2,
                  account_for_LEIR_ecooling=True,
                  LEIR_PS_strip=False,
+                 account_for_PS_rest_gas=True,
                  round_number_of_LEIR_inj_up=False
                  ):
         
         # Import reference data and initiate ion
         self.full_ion_data = pd.read_csv("{}/Ion_species.csv".format(data_folder), header=0, index_col=0).T
         self.LEIR_PS_strip = LEIR_PS_strip
+        self.account_for_PS_rest_gas = account_for_PS_rest_gas
         self.account_for_LEIR_ecooling = account_for_LEIR_ecooling
         self.round_number_of_ecool_injections_up = round_number_of_LEIR_inj_up
         self.init_ion(ion_type)
@@ -215,7 +217,7 @@ class InjectorChain:
         through Linac3, LEIR, PS and SPS considering full lattice integral space charge limits of the injectors
         """        
         # Instantiate reference values
-        ref = Reference_Values()
+        ref = Reference_Values(self.ion_type, self.Q_PS, self.PS_splitting, self.LEIR_PS_strip, self.account_for_PS_rest_gas)
         
         ### LINAC3 ### 
         ionsPerPulseLinac3 = (self.linac3_current * self.linac3_pulseLength) / (self.Q_LEIR * constants.e)
@@ -308,13 +310,13 @@ class InjectorChain:
             "Linac3_current [A]": self.linac3_current,
             "Linac3_pulse_length [s]": self.linac3_pulseLength, 
             "LEIR_numberofPulses": self.nPulsesLEIR,
-            "LEIR_injection_efficiency": Reference_Values.LEIR_injection_efficiency, 
+            "LEIR_injection_efficiency": ref.LEIR_injection_efficiency, 
             "LEIR_no_bunches": self.LEIR_bunches,
-            "LEIR_transmission": Reference_Values.LEIR_transmission, 
+            "LEIR_transmission": ref.LEIR_transmission, 
             "PS_splitting": self.PS_splitting, 
-            "PS_transmission": Reference_Values.PS_transmission, 
-            "PS_SPS_stripping_efficiency": Reference_Values.PS_SPS_stripping_efficiency, 
-            "SPS_transmission": Reference_Values.SPS_transmission, 
+            "PS_transmission": ref.PS_transmission, 
+            "PS_SPS_stripping_efficiency": ref.PS_SPS_stripping_efficiency, 
+            "SPS_transmission": ref.SPS_transmission, 
             "Linac3_ionsPerPulse": ionsPerPulseLinac3,
             "LEIR_maxIntensity": totalIntLEIR,
             "LEIR_space_charge_limit": spaceChargeLimitLEIR,
