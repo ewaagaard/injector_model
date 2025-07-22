@@ -1,6 +1,6 @@
 # Injector Model for Ions at CERN
 
-A Python package for simulating ion beam propagation through the CERN accelerator complex (Linac3 → LEIR → PS → SPS → LHC injection), with realistic physics modeling including space charge limitations, electron cooling, and operational scenarios.
+A Python package for simulating **ion beam intensity propagation** through the CERN accelerator complex (Linac3 → LEIR → PS → SPS → LHC injection), with realistic physics modeling including space charge limitations, electron cooling, and operational scenarios.
 
 ## Overview
 
@@ -12,7 +12,7 @@ This numerical tool was developed to study future ion beams for the ALICE3 detec
 - **Stripper foil placement** (LEIR-PS vs PS-SPS)
 - **Rest gas transmission** and other realistic losses
 
-The model is based on the framework by [Bruce (2021)](https://indico.cern.ch/event/1085343/contributions/4563386/attachments/2326159/3964426/2021.10.12--LIU_ions--Run4_light_ion_scenarios.pdf) and validated against [Working Group 5](https://cds.cern.ch/record/2650176) estimates.
+The model is based on the framework by [Bruce (2021)](https://indico.cern.ch/event/1085343/contributions/4563386/attachments/2326159/3964426/2021.10.12--LIU_ions--Run4_light_ion_scenarios.pdf) and validated against [Working Group 5](https://cds.cern.ch/record/2650176) estimates. The CERN Ion Injector Chain - composed of Linac3, LEIR, the PS and the SPS - are shown below, with default Pb charge states and stripper foil locations. An alternative second stripper foil location is also marked.
 
 ![CERN_ion_injector_chain](https://github.com/ewaagaard/injector_model/assets/68541324/43abd382-aa74-4439-b864-bcf02f925fe5)
 
@@ -26,8 +26,8 @@ git clone https://github.com/ewaagaard/injector_model.git
 cd injector_model
 
 # Create conda environment with core dependencies
-conda create --name injector_model python=3.11 numpy==2.3.1 scipy==1.15.3
-conda activate injector_model
+conda create --name injector_model_env python=3.11 numpy==2.3.1 scipy==1.15.3
+conda activate injector_model_env
 
 # Install specific versions for optimal compatibility
 pip install matplotlib==3.10.0 pandas==2.2.3

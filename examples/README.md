@@ -87,8 +87,8 @@ These examples are designed to:
 Follow the installation instructions in the main [README.md](../README.md) for the complete setup with specific package versions:
 
 ```bash
-conda create --name injector_model python=3.11 numpy==2.3.1 scipy==1.15.3
-conda activate injector_model
+conda create --name injector_model_env python=3.11 numpy==2.3.1 scipy==1.15.3
+conda activate injector_model_env
 pip install matplotlib==3.10.0 pandas==2.2.3
 pip install xdeps==0.10.5 xfields==0.25.0 xobjects==0.5.0 xpart==0.23.0 xtrack==0.86.1
 pip install jupyter  # For running the notebooks
