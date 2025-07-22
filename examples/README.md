@@ -4,14 +4,13 @@ This folder contains Jupyter notebook examples demonstrating the functionality a
 
 ## Overview
 
-The `injector_model` package simulates ion beam propagation through the CERN injector complex (Linac3 → LEIR → PS → SPS → LHC), accounting for realistic physics limitations including space charge effects, electron cooling, rest gas transmission, and various operational scenarios.
+The `injector_model` package simulates **ion beam intensity propagation** through the CERN injector complex (Linac3 → LEIR → PS → SPS → LHC), accounting for realistic physics limitations including space charge effects, electron cooling, rest gas transmission, and various operational scenarios.
 
 These examples are designed to:
 - Demonstrate core functionality of the package
 - Provide realistic physics examples for accelerator operations
 - Show best practices for analysis and visualization
 - Guide optimization studies for different ion species
-- Support requirements analysis for future light ion physics programs such as ALICE3
 
 ## Notebook Contents
 
@@ -114,7 +113,7 @@ Then open any of the `.ipynb` files in your browser.
 
 The examples progress from basic usage to advanced analysis techniques:
 
-1. **Basic Usage**: Start here to understand the core functionality
+1. **Basic Usage**: Start here to understand the core functionality and model flow
 2. **Electron Cooling**: Learn about critical physics effects for light ions  
 3. **Bunch Splitting**: Optimize PS splitting strategies
 4. **Stripper Foil**: Compare different stripping configurations
@@ -123,44 +122,13 @@ Each notebook builds on previous concepts while being self-contained for referen
 
 ## Physics Concepts and Analysis Techniques
 
-### Core Physics Concepts:
+### Core Concepts:
 - Space charge limitations in circular accelerators
 - Electron cooling physics and applications
 - Ion stripping and charge state optimization
 - Beam dynamics in multi-stage accelerator systems
-
-### Analysis Techniques:
-- Multi-parameter optimization
-- Comparative scenario analysis
-- Performance visualization (heatmaps, bar charts, scatter plots)
-- Physics-goal-driven optimization
-- Quantitative beam dynamics analysis
-
-### Practical Applications:
 - Using the `InjectorChain` class effectively
-- Interpreting simulation results
-- Creating scientific plots for analysis
-- Making data-driven operational recommendations
 
-## Applications
-
-### For Accelerator Physicists:
-- **Operational optimization**: Find optimal parameters for specific ion species
-- **Performance prediction**: Estimate achievable bunch intensities
-- **Limitations analysis**: Understand space charge and other physical constraints
-- **Upgrade planning**: Evaluate impact of potential improvements
-
-### For Experimental Physicists:
-- **Luminosity estimation**: Predict nucleon-nucleon collision rates for physics analysis
-- **Species selection**: Choose optimal ions for specific physics requirements
-- **Run planning**: Understand beam availability and characteristics
-- **Proposal development**: Quantify performance requirements and feasibility
-
-### For Future Light Ion Programs:
-- **Requirements validation**: Check feasibility of requested luminosities for programs like ALICE3
-- **Ion optimization**: Maximize nucleon-nucleon collision rates across species
-- **Operational scenarios**: Plan beam delivery strategies
-- **Performance maximization**: Optimize physics output through parameter tuning
 
 ## Key Results and Physics Insights
 

@@ -21,6 +21,11 @@ The model is based on the framework by [Bruce (2021)](https://indico.cern.ch/eve
 Create a conda environment with specific package versions for compatibility:
 
 ```bash
+# Clone the repository
+git clone https://github.com/ewaagaard/injector_model.git
+cd injector_model
+
+# Create conda environment with core dependencies
 conda create --name injector_model python=3.11 numpy==2.3.1 scipy==1.15.3
 conda activate injector_model
 
@@ -28,13 +33,16 @@ conda activate injector_model
 pip install matplotlib==3.10.0 pandas==2.2.3
 pip install xdeps==0.10.5 xfields==0.25.0 xobjects==0.5.0 xpart==0.23.0 xtrack==0.86.1
 
-# Install the injector model package (from repository root)
+# Install the injector model package in editable mode
 python -m pip install -e .
 ```
 
 ## Quick Start
 
 ```python
+# Optional: Install ipython for interactive Python sessions
+# conda install ipython
+
 from injector_model import InjectorChain
 
 # Create injector chain instance
