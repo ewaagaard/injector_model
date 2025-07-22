@@ -81,38 +81,18 @@ These examples are designed to:
 - How charge state affects space charge in each accelerator stage
 - Ion-dependent optimization requirements for stripping strategies
 
----
-
-### [05_advanced_scenarios.ipynb](05_advanced_scenarios.ipynb)
-**Multi-Parameter Optimization and Analysis**
-
-- Multi-parameter optimization studies
-- Realistic operational scenario comparison
-- Performance heatmaps and visualization
-- Physics-goal-driven optimization
-- Comprehensive recommendations for operations
-
-**Learning Outcomes:**
-- Advanced analysis techniques for accelerator physics
-- Multi-dimensional parameter optimization
-- Physics-based decision making for ion beam production
-- Comprehensive scientific analysis and reporting
-
 ## Quick Start Guide
 
 ### Prerequisites
 
+Follow the installation instructions in the main [README.md](../README.md) for the complete setup with specific package versions:
+
 ```bash
-# Create and activate a Python environment
-conda create -n injector_model python=3.11 numpy pandas scipy matplotlib jupyter
+conda create --name injector_model python=3.11 numpy==2.3.1 scipy==1.15.3
 conda activate injector_model
-
-# Install the injector_model package (from the parent directory)
-cd ..  # Go to main injector_model directory
-pip install -e .
-
-# Optional: Install additional packages for enhanced visualizations
-pip install seaborn
+pip install matplotlib==3.10.0 pandas==2.2.3
+pip install xdeps==0.10.5 xfields==0.25.0 xobjects==0.5.0 xpart==0.23.0 xtrack==0.86.1
+pip install jupyter  # For running the notebooks
 ```
 
 ### Running the Examples
@@ -124,11 +104,22 @@ cd examples
 # Start Jupyter notebook
 jupyter notebook
 
-# Or use Jupyter Lab
+# Or use Jupyter Lab (if installed: pip install jupyterlab)
 jupyter lab
 ```
 
 Then open any of the `.ipynb` files in your browser.
+
+## Notebook Overview
+
+The examples progress from basic usage to advanced analysis techniques:
+
+1. **Basic Usage**: Start here to understand the core functionality
+2. **Electron Cooling**: Learn about critical physics effects for light ions  
+3. **Bunch Splitting**: Optimize PS splitting strategies
+4. **Stripper Foil**: Compare different stripping configurations
+
+Each notebook builds on previous concepts while being self-contained for reference.
 
 ## Physics Concepts and Analysis Techniques
 
@@ -189,7 +180,6 @@ Then open any of the `.ipynb` files in your browser.
 - **Baseline Configuration**: LEIR electron cooling + PS splitting optimization + strategic stripper foil placement
 - **Light Ion Operation**: Electron cooling mandatory, higher splitting beneficial for space charge relief
 - **Heavy Ion Operation**: Lower splitting preferred, focus on operational stability and transmission
-- **Future Programs**: Achievable intensity goals with optimized configurations for most ion species of interest
 
 ## Advanced Usage
 
@@ -220,31 +210,16 @@ for config in configurations:
     results[str(config)] = chain.calculate_LHC_bunch_intensity_all_ion_species()
 ```
 
-### Custom Analysis:
-The notebooks demonstrate various analysis techniques that can be adapted for specific physics studies and operational requirements.
-
 ## Further Reading
 
-- **Package Documentation**: See main [README.md](../README.md) for package overview
-- **Scientific Background**: [Injector Model publication (2025)](https://arxiv.org/abs/2501.00000) for detailed physics models
-- **Ion Data Sources**: See `data/` directory for input parameters and validation data
+- **Package Documentation**: See main [README.md](../README.md) for package overview and installation
+- **Ion Data Sources**: See `data/` directory for input parameters and reference values
 - **ALICE3 Proposal**: [Letter of Intent](https://arxiv.org/abs/2211.02491) for future light ion physics program context
 
 ## Contributing
 
-If you develop additional examples or identify improvements:
-1. Follow the existing analysis style with clear physics explanations
-2. Test thoroughly to ensure reproducibility
-3. Document the physics background and interpretation
-4. Consider contributing back to the community
-
-## Support
-
-- **Installation issues**: Verify Python environment and package dependencies
-- **Physics questions**: Refer to the publication and package documentation  
-- **Technical problems**: Ensure compatible Python environment (≥3.9)
-- **Package issues**: Report bugs through the main repository
+Follow the existing analysis style with clear physics explanations, test thoroughly, and document the physics background and interpretation.
 
 ---
 
-These examples provide a foundation for understanding and optimizing ion beam performance in the CERN accelerator complex. Whether you're optimizing operations, planning experiments, or exploring physics possibilities, these tools enable quantitative, physics-based decision making.
+These examples provide a foundation for understanding and optimizing ion beam performance in the CERN accelerator complex, enabling quantitative, physics-based decision making for operations, experiments, and future physics programs.
