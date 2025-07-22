@@ -10,9 +10,9 @@ from .sequence_makers import Sequences
 from .parameters_and_helpers import Reference_Values,BeamParams_LEIR, BeamParams_PS, BeamParams_SPS
 
 # Import xibs for IBS growth rate calculations
-from xibs.inputs import BeamParameters, OpticsParameters
-from xibs.kicks import KineticKickIBS
-from xibs.analytical import NagaitsevIBS
+#from xibs.inputs import BeamParameters, OpticsParameters
+#from xibs.kicks import KineticKickIBS
+#from xibs.analytical import NagaitsevIBS
 #from .parameters_and_helpers import Reference_Values, BeamParams_LEIR, BeamParams_PS, BeamParams_SPS
 
 class SC_Tune_Shifts:
@@ -286,18 +286,32 @@ class IBS_Growth_Rates:
             array containing Tx, Ty and Tz - growth rates in respective plane
         """
 
-        beamparams = BeamParameters.from_line(line, n_part=beamParams.Nb)
-        opticsparams = OpticsParameters.from_line(line)
+        #beamparams = BeamParameters.from_line(line, n_part=beamParams.Nb)
+        #opticsparams = OpticsParameters.from_line(line)
 
         # Instantiate analytical Nagaitsev IBS class
-        NIBS = NagaitsevIBS(beamparams, opticsparams)
-        growth_rates_in_class = NIBS.growth_rates(beamParams.exn, 
-                                         beamParams.eyn, 
-                                         beamParams.sigma_delta, 
-                                         beamParams.sigma_z,
-                                         normalized_emittances=True)
-        growth_rates = np.array([growth_rates_in_class.Tx, growth_rates_in_class.Ty, growth_rates_in_class.Tz])
+        #NIBS = NagaitsevIBS(beamparams, opticsparams)
+        #growth_rates_in_class = NIBS.growth_rates(beamParams.exn, 
+        #                                 beamParams.eyn, 
+        #                                 beamParams.sigma_delta, 
+        #                                 beamParams.sigma_z,
+        #                                 normalized_emittances=True)
         
+        tw = line.twiss(method="4d")
+        nag_growth_rates = tw.get_ibs_growth_rates(
+            formalism="nagaitsev",
+            total_beam_intensity=beamParams.Nb,
+            nemitt_x=beamParams.exn,
+            nemitt_y=beamParams.eyn,
+            sigma_delta=beamParams.sigma_delta,
+            bunch_length=beamParams.sigma_z,
+            bunched=True,
+        )
+
+        
+        growth_rates = np.array([nag_growth_rates.Kx, nag_growth_rates.Ky, nag_growth_rates.Kz])
+        
+        '''
         if also_calculate_kinetic:
             # Instantiate kinetic IBS class
             IBS = KineticKickIBS(beamparams, opticsparams)
@@ -315,6 +329,7 @@ class IBS_Growth_Rates:
 
             return growth_rates, kinetic_kick_coefficients
         else:       
-            return growth_rates
+        '''
+        return growth_rates
 
         

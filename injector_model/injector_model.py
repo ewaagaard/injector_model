@@ -18,6 +18,7 @@ from .parameters_and_helpers import Reference_Values, BeamParams_LEIR, BeamParam
 from .sequence_makers import Sequences
 from .space_charge_and_ibs import SC_Tune_Shifts, IBS_Growth_Rates
 from .injection_energies import InjectionEnergies
+from .sequence_makers import Sequences
 
 #### PLOT SETTINGS #######
 plt.rcParams.update(
@@ -375,10 +376,13 @@ class InjectorChain:
 
         # Instantiate IBS analytical model
         IBS = IBS_Growth_Rates()
+        seq = Sequences()
         
         # LEIR growth rates
-        leir_line = self.line_LEIR_Pb0.copy()
-        leir_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_LEIR, gamma0 = self.LEIR_gamma_inj)
+        #leir_line = self.line_LEIR_Pb0.copy()
+        #leir_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_LEIR, gamma0 = self.LEIR_gamma_inj)
+        leir_line = seq.get_LEIR_line(self.mass_GeV, self.Q_LEIR, self.LEIR_gamma_inj)
+        
         beamParams_LEIR = BeamParams_LEIR()
         beamParams_LEIR.Nb = Nb_LEIR
         if self.ion_type == 'Ca':
@@ -386,8 +390,10 @@ class InjectorChain:
         growth_rates_leir = IBS.get_growth_rates(leir_line, beamParams_LEIR)
         
         # PS growth rates
-        ps_line = self.line_PS_Pb0.copy()
-        ps_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_PS, gamma0 = self.PS_gamma_inj)
+        #ps_line = self.line_PS_Pb0.copy()
+        #ps_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_PS, gamma0 = self.PS_gamma_inj)
+        
+        ps_line = seq.get_LEIR_line(self.mass_GeV, self.Q_PS, self.PS_gamma_inj)
         beamParams_PS = BeamParams_PS()
         beamParams_PS.Nb = Nb_PS
         if self.ion_type == 'Ca':
@@ -396,8 +402,9 @@ class InjectorChain:
         growth_rates_ps = IBS.get_growth_rates(ps_line, beamParams_PS)
         
         # SPS growth rates
-        sps_line = self.line_SPS_Pb0.copy()
-        sps_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_SPS, gamma0 = self.SPS_gamma_inj)
+        #sps_line = self.line_SPS_Pb0.copy()
+        #sps_line.particle_ref = xp.Particles(mass0 = 1e9 * self.mass_GeV, q0 = self.Q_SPS, gamma0 = self.SPS_gamma_inj)
+        sps_line = seq.get_LEIR_line(self.mass_GeV, self.Q_SPS, self.SPS_gamma_inj)
         beamParams_SPS = BeamParams_SPS()
         beamParams_SPS.Nb = Nb_SPS
         if self.ion_type == 'Ca':
@@ -424,7 +431,7 @@ class InjectorChain:
         return self.ion_str, growth_rates_dict
 
 
-    def calculate_IBS_growth_rates_all_ion_species(self, output_name='IBS_growth_rates.csv'):
+    def calculate_IBS_growth_rates_all_ion_species(self, output_name='IBS_growth_rates.csv', save_file=False):
         """
         Calculate analytical Nagaitsev IBS growth rates for all ions in LEIR, PS and SPS
 
@@ -451,14 +458,15 @@ class InjectorChain:
             # calculate propagated bunch intensity
             result = self.calculate_LHC_bunch_intensity() 
             Nb_LEIR = result['LEIR_space_charge_limit']
-            Nb_PS = result['PS_space_charge_limit']
+            Nb_PS = result['PS_space_charge_limit_hypothetical']
             Nb_SPS = result['SPS_space_charge_limit']
             
             ion_str, growth_rates_dict = self.calculate_IBS_growth_rates(Nb_LEIR, Nb_PS, Nb_SPS)
             all_ion_IBS_dict[ion_str] = growth_rates_dict
 
         df_IBS = pd.DataFrame(all_ion_IBS_dict)
-        df_IBS.to_csv('output/output_csv/{}'.format(output_name))
+        if save_file:
+            df_IBS.to_csv('output/output_csv/{}'.format(output_name))
 
         return df_IBS
 
