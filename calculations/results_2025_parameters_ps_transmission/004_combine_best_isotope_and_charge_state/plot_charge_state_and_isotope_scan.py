@@ -28,10 +28,10 @@ isotope_dict['Best A'] = np.array(list(map(float, isotope_dict['Best A'])))
 
 
 # Load data from scenarios
-df1 = pd.read_csv('../001_baseline_scenarios/output/output_csv/1_baseline.csv', index_col=0).T
-df2 = pd.read_csv('../001_baseline_scenarios/output/output_csv/2_no_PS_splitting.csv', index_col=0).T
-df3 = pd.read_csv('../001_baseline_scenarios/output/output_csv/3_LEIR_PS_stripping.csv', index_col=0).T
-df4 = pd.read_csv('../001_baseline_scenarios/output/output_csv/4_no_PS_splitting_and_LEIR_PS_stripping.csv', index_col=0).T
+df1 = pd.read_csv('../001_baseline_scenarios/output/output_csv/1_baseline_ps_rest_gas.csv', index_col=0).T
+df2 = pd.read_csv('../001_baseline_scenarios/output/output_csv/2_no_PS_splitting_ps_rest_gas.csv', index_col=0).T
+df3 = pd.read_csv('../001_baseline_scenarios/output/output_csv/3_LEIR_PS_stripping_ps_rest_gas.csv', index_col=0).T
+df4 = pd.read_csv('../001_baseline_scenarios/output/output_csv/4_no_PS_splitting_and_LEIR_PS_stripping_ps_rest_gas.csv', index_col=0).T
 
 # Define bar width for bar plot
 bar_width5 = 0.09

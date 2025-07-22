@@ -44,10 +44,10 @@ def read_isotope_scan_results(ion_type, output_extra_str, count):
     output_3 = '3_LEIR_PS_stripping{}'.format(output_extra_str)
     output_4 = '4_no_PS_splitting_and_LEIR_PS_stripping{}'.format(output_extra_str)
     
-    df1 = pd.read_csv("output/isotope_scan_results/{}_{}{}.csv".format(ion_type, output_1, ecool_str), header=1, index_col=0)
-    df2 = pd.read_csv("output/isotope_scan_results/{}_{}{}.csv".format(ion_type, output_2, ecool_str), header=1, index_col=0)
-    df3 = pd.read_csv("output/isotope_scan_results/{}_{}{}.csv".format(ion_type, output_3, ecool_str), header=1, index_col=0)
-    df4 = pd.read_csv("output/isotope_scan_results/{}_{}{}.csv".format(ion_type, output_4, ecool_str), header=1, index_col=0)
+    df1 = pd.read_csv("output/isotope_scan_results/{}_{}{}_ps_rest_gas.csv".format(ion_type, output_1, ecool_str), header=1, index_col=0)
+    df2 = pd.read_csv("output/isotope_scan_results/{}_{}{}_ps_rest_gas.csv".format(ion_type, output_2, ecool_str), header=1, index_col=0)
+    df3 = pd.read_csv("output/isotope_scan_results/{}_{}{}_ps_rest_gas.csv".format(ion_type, output_3, ecool_str), header=1, index_col=0)
+    df4 = pd.read_csv("output/isotope_scan_results/{}_{}{}_ps_rest_gas.csv".format(ion_type, output_4, ecool_str), header=1, index_col=0)
     
     # Convert strings of charge states to numpy array
     #A_states = np.array(list(map(int, df1.columns.values)))
