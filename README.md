@@ -1,59 +1,124 @@
-# Injector Model for ions at CERN 
+# Injector Model for Ions at CERN
 
-### Background
+A Python package for simulating ion beam propagation through the CERN accelerator complex (Linac3 → LEIR → PS → SPS → LHC injection), with realistic physics modeling including space charge limitations, electron cooling, and operational scenarios.
 
-As of today, the LHC ion physics programme is mostly based on Pb ion collisions. Lighter ions species have the potential to yield higher nucleon-nucleon luminosities, as requested from the ALICE3 detector proposal. This proposal was recently discussed in the [2022 Letter of Intent](https://arxiv.org/abs/2211.02491). To achieve the requested luminosity increase, the CERN Ion Injector chain (consisting of Linac3, LEIR, PS and SPS) will need to provide significantly higher beam intensities with light ion beams as compared to the Pb ion beams. So far the operational experience with light ion beams inthe injectors is very limited and the beam dynamics limitations for these beams are not well known. 
+## Overview
 
-In this repository, we develop a simulation tool for different ions based on the Mathematica notebook presented by [Bruce (2021)](https://indico.cern.ch/event/1085343/contributions/4563386/attachments/2326159/3964426/2021.10.12--LIU_ions--Run4_light_ion_scenarios.pdf). The tool is contained in a class to represent the Injector Chain, taking an ion species as input and returning the calculated bunch intensity into the LHC. We compare the output to estimates from the [Working Group 5 (WG5) report](https://cds.cern.ch/record/2650176). The Injector Model class calculates the propagated beam parameters and intensitities from LINAC3 through LEIR, PS and SPS into the LHC. The present Pb ion configuration is shown below. In this class, we explore different options with stripper foil locations and bunch splitting in the PS. 
+This numerical tool was developed to study future ion beams for the ALICE3 detector upgrade proposal, which among other experiments is interested in lighter ions for their physics program. It calculates bunch intensities through the CERN ion injector chain, accounting for:
+
+- **Space charge limitations** in each accelerator stage
+- **Electron cooling** effects in LEIR (may be critical for light ions)  
+- **Bunch splitting in the PS**
+- **Stripper foil placement** (LEIR-PS vs PS-SPS)
+- **Rest gas transmission** and other realistic losses
+
+The model is based on the framework by [Bruce (2021)](https://indico.cern.ch/event/1085343/contributions/4563386/attachments/2326159/3964426/2021.10.12--LIU_ions--Run4_light_ion_scenarios.pdf) and validated against [Working Group 5](https://cds.cern.ch/record/2650176) estimates.
 
 ![CERN_ion_injector_chain](https://github.com/ewaagaard/injector_model/assets/68541324/43abd382-aa74-4439-b864-bcf02f925fe5)
 
+## Installation
 
-### Set-up
+Create a conda environment with specific package versions for compatibility:
 
-When using Python for scientific computing, it is important to be aware of dependencies and compatibility of different packages. This guide gives a good explanation: [Python dependency manager guide](https://aaltoscicomp.github.io/python-for-scicomp/dependencies/#dependency-management). An isolated environment allows installing packages without affecting the rest of your operating system or any other projects. A useful resource to handle virtual environments is [Anaconda](https://www.anaconda.com/) (or its lighter version Miniconda), when once installed has many useful commands of which many can be found in the [Conda cheat sheet](https://docs.conda.io/projects/conda/en/4.6.0/_downloads/52a95608c49671267e40c689e0bc00ca/conda-cheatsheet.pdf) 
+```bash
+conda create --name injector_model python=3.11 numpy==2.3.1 scipy==1.15.3
+conda activate injector_model
 
-To directly start calculating different ion performances with the `injector_model`, create an isolated virtual environment and perform a local install to use the `injector_model` freely. Once the repository is cloned and from inside the `injector_model` repository, run in the terminal:
+# Install specific versions for optimal compatibility
+pip install matplotlib==3.10.0 pandas==2.2.3
+pip install xdeps==0.10.5 xfields==0.25.0 xobjects==0.5.0 xpart==0.23.0 xtrack==0.86.1
 
-```
-conda create --name test_venv python=3.11 numpy pandas scipy matplotlib
-conda activate test_venv
-cd ..
-python -m pip install -e injector_model
-```
-Then the different scripts in the folder `calculations` can be executed. The virtual environment can also be installed directly from the `requirements.txt`:
-
-```
-python -m pip install -r requirements.txt
+# Install the injector model package (from repository root)
+python -m pip install -e .
 ```
 
-In order to use the IBS module functions from M. Zampetakis on this [GitHub repository](https://github.com/MichZampetakis/IBS_for_Xsuite), which is a submodule in this repository, install the package in the Python virtual environment.
+## Quick Start
+
+```python
+from injector_model import InjectorChain
+
+# Create injector chain instance
+chain = InjectorChain(
+    LEIR_bunches=2,                    # Number of bunches in LEIR
+    PS_splitting=2,                    # PS splitting factor (1 or 2)
+    LEIR_PS_strip=False,               # Stripping location (False = PS-SPS)
+    account_for_LEIR_ecooling=True,    # Include electron cooling
+    account_for_PS_rest_gas=True       # Include PS rest gas losses
+)
+
+# Calculate bunch intensities for all ion species
+results = chain.calculate_LHC_bunch_intensity_all_ion_species()
+
+# Or for a single ion (e.g., Pb)
+pb_result = chain.calculate_LHC_bunch_intensity()
 ```
-python -m pip install -e IBS_for_Xsuite/
+
+## Examples and Tutorials
+
+Comprehensive Jupyter notebook examples are provided in the [`examples/`](examples/) directory:
+
+- **[01_basic_usage.ipynb](examples/01_basic_usage.ipynb)**: Getting started, basic calculations, and output interpretation
+- **[02_electron_cooling_effects.ipynb](examples/02_electron_cooling_effects.ipynb)**: Impact of LEIR electron cooling on different ion species
+- **[03_bunch_splitting_scenarios.ipynb](examples/03_bunch_splitting_scenarios.ipynb)**: PS bunch splitting optimization strategies
+- **[04_stripper_foil_comparison.ipynb](examples/04_stripper_foil_comparison.ipynb)**: LEIR-PS vs PS-SPS stripping analysis
+
+See the [examples README](examples/README.md) for detailed descriptions and learning outcomes.
+
+## Key Features
+
+### Physics Modeling
+- **Full space charge integrals** for LEIR, PS, and SPS using realistic lattice parameters
+- **Ion-dependent electron cooling** with species-specific cooling times
+- **Charge state evolution** through stripping scenarios
+- **Transmission efficiencies** for each accelerator stage
+
+### Analysis Capabilities  
+- **Multi-ion species** calculations for systematic studies
+- **Parameter optimization** for different physics goals
+- **Comparative scenario analysis** with visualization tools
+- **Performance prediction** for future ion programs
+
+### Ion Species Coverage
+Currently supports: **He, C, N, O, Ne, Mg, Ar, Ca, Kr, Xe, Pb** with extensible framework for additional species.
+
+## Applications
+
+- **Operational optimization**: Find optimal parameters for specific ion species
+- **Performance prediction**: Estimate achievable bunch intensities  
+- **Limitations analysis**: Understand space charge and other constraints
+- **Upgrade impact assessment**: Evaluate potential improvements
+
+## Key Results
+
+From systematic analysis across ion species:
+
+- **Electron cooling**: Factor 2-10 intensity improvements for light ions
+- **PS splitting**: Optimal factors typically 1-2, species-dependent
+- **Stripper placement**: Ion-specific optimization between LEIR-PS and PS-SPS
+- **Space charge**: SPS limitations dominate for most high-intensity scenarios
+- **Light ion potential**: Higher nucleon-nucleon rates achievable vs heavy ions
+
+## Repository Structure
+
+```
+injector_model/
+├── injector_model/           # Main package code
+│   ├── injector_model.py    # Core InjectorChain class
+│   ├── parameters_and_helpers.py  # Reference values and utilities  
+│   └── space_charge_and_ibs.py    # Physics calculations
+├── examples/                 # Jupyter notebook tutorials
+├── data/                     # Ion species data and reference values
+├── calculations/             # Analysis scripts and studies
+└── tests/                    # Validation and test scripts
 ```
 
-### Usage 
+## Support and Development
 
-- The Python class `CERN_Injector_Chain()` contained in `Injector_Chain.py` aims at modelling different ion species throughout the CERN accelerators. 
-- The example script `Calculate_LHC_intensities.py` imports this class and generates both plots and table for different cases also discussed by Bruce (2021). 
-- The directory `data` contains input data for different ion in `Ion_species.csv` and stable isotopes for all considered ion species, generated from `stable_isotopes.py`
-- **Input**: pandas dataframe with ion data, can be loaded from `data/Ion_species.csv`. The intensity limit for a single ion can be calculated (specifying the ion type). The class is instantiated as in this example:
-  ```python
-  from injector_model import Injector_Chain
-  
-  injector_chain = CERN_Injector_Chain(ion_type, 
-                        ion_data, 
-                        nPulsesLEIR = 0, # 0 = automatic maximum number of pulses
-                        LEIR_bunches = 2,
-                        PS_splitting = 1,
-                        account_for_SPS_transmission=True,
-                        LEIR_PS_strip=True
-                        )
-  ```
-- **Output**: after instantiation, the method `CERN_Injector_Chain.calculate_LHC_bunch_intensity_all_ion_species(save_csv=True, output_name='output1')` calculates the extracted bunch intensity from LEIR, PS and the SPS going into the LHC. This limit comes from either the total maximum intensity from the previous injector or from the space charge limit, for now calculated from the linear space charge tune shift corresponding to the maximum tune shift for present Pb beams. Also information about bunches, splitting, stripping and the relativistic $\gamma$ for each accelerator is calculated. If desired, this full csv table is saved in `Output`.   
+- **Documentation**: See example notebooks and docstrings
+- **Issues**: Report bugs through GitHub issues  
+- **Contributing**: Follow existing analysis patterns, ensure reproducibility
+- **Physics validation**: Results benchmarked against WG5 estimates and operational data
 
-### Example output plot for different scenarios
+---
 
-Various plots are generated in the example script `calculate_lhc_intensities.py`. The last one, comparing different cases, is presented here:
-
-![3_LEIR_PS_stripping|200](https://github.com/ewaagaard/InjectorModel/assets/68541324/cacad841-63fd-4aff-8b58-e5ed89b971b5)
+This package enables **quantitative, physics-based optimization** of ion beam production at CERN, supporting both current operations and future light ion physics programs.
